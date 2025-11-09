@@ -110,5 +110,3 @@ Follow these steps to get the project running on your local machine.
 
 ---
 
-Enjoy your personalized coding adventure with CodeWithMee!
-](https://ibb.co/TM6SbWFg)
