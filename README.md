@@ -94,6 +94,14 @@ The architecture is designed for scalability and ecosystem expansion.
 
 ---
 
+## 🏗️ Architecture Diagram
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ArnavMurdande/CodeWithMee/aef405d65c3066990cd20d46d9fd2572b85e6606/CodeWithMe%20Architecture%20diagram.png" width="900"/>
+</p>
+
+---
+
 ## ✅ Completed Features
 
 ### 1. Interactive Split-Screen Sandbox
