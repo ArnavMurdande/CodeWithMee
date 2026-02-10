@@ -1,0 +1,244 @@
+.dashboard-container {
+  min-height: 100vh;
+  padding: 3rem 4rem;
+  box-sizing: border-box;
+  color: white;
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dashboard-welcome {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  text-align: left;
+}
+
+.dashboard-grid {
+  display: grid;
+  /* --- FIX: Changed to a 2-column grid --- */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
+}
+
+.dashboard-card {
+  /* Enhanced Dark Card Effect - More Visible */
+  background: linear-gradient(145deg, rgba(15, 15, 20, 0), rgba(10, 10, 15, 0.95));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  padding: 1.5rem 2rem;
+  min-height: 280px; /* Reduced from 350px */
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 1rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.card-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Add small gap between elements */
+}
+
+/* --- FIX: Improved alignment for empty cards --- */
+.card-content.empty {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Stats section styling */
+.stat-number {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.95rem;
+  color: #b0b0b0;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+/* Divider between stats and list */
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-item {
+  display: grid;
+  grid-template-columns: 1fr 80px 35px;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  margin: -0.25rem -0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.progress-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+.progress-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a900ff, #00f8f1);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(0, 248, 241, 0.3);
+}
+
+.progress-percent {
+  color: #b0b0b0;
+  text-align: right;
+  font-weight: 600;
+}
+
+.notes-list {
+  margin-top: auto;
+}
+
+.note-item {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+.note-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.motivational-quote {
+  font-style: italic;
+  color: #ccc;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  /* --- FIX: Ensure quote takes up space to push button down --- */
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(90deg, #a900ff, #00f8f1);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
+}
+
+.card-button:disabled {
+  background: #555;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- FIX: Responsive Grid Layout --- */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 2rem 1rem;
+        width: 100%;
+        box-sizing: border-box;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .dashboard-welcome {
+        font-size: 2.5rem;
+        text-align: left;
+    }
+}
+

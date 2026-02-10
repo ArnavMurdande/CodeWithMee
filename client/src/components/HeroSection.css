@@ -1,0 +1,105 @@
+.hero-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  padding: 1rem;
+  margin-top: -11rem; /* ADD THIS LINE TO FIX THE CENTERING */
+}
+
+.hero-title {
+  font-family: "Martian Mono", monospace;
+  font-size: 6rem;
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+  min-height: 1.2em;
+  margin-bottom: 1.5rem; /* Added margin to create space between title and box */
+}
+
+.hero-title span::after {
+  font-weight: 100 !important;
+}
+
+.hero-box {
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle white border */
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.85); /* Darker background for text pop */
+  backdrop-filter: blur(8px);
+  animation: fadeInBox 1s ease-out forwards;
+  opacity: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4); /* Subtle depth */
+}
+
+@keyframes fadeInBox {
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-subtitle {
+  font-family: "Fira Code", "Courier New", Courier, monospace;
+  font-size: 1.5rem;
+  font-weight: 700; /* Bold for visibility */
+  color: #9cdcfe; /* VS Code string color */
+  margin: 0 auto; /* Adjusted margin to center */
+  max-width: 500px;
+  letter-spacing: 0.02em;
+}
+
+.hero-subtitle .bracket {
+  color: #808080; /* VS Code comment color for brackets */
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 1rem;
+    margin-top: -8rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero-title {
+    font-size: 3rem;
+    white-space: normal; /* Allow text wrapping */
+    line-height: 1.2;
+  }
+
+  .hero-box {
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 0 auto;
+    max-width: calc(100% - 2rem);
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    margin-top: -5rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-box {
+    padding: 1rem;
+    margin: 0 0.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.85rem;
+  }
+}

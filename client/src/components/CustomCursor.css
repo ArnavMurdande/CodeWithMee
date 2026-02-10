@@ -1,0 +1,21 @@
+/* src/components/CustomCursor.css */
+
+.Cursor {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 99999;
+  width: 24px;
+  height: auto;
+  /* Removed mix-blend-mode and filter as requested */
+}
+
+/* Removed .Cursor span styles since we are using an img tag now */
+
+/* Globally hide the default cursor on desktop/mouse devices */
+@media (pointer: fine) {
+    *, *::before, *::after {
+        cursor: none !important;
+    }
+}

@@ -1,0 +1,42 @@
+/* The track for our scrollbar */
+.scroll-track {
+    position: fixed;
+    top: 20vh; /* Starts 20% from the top */
+    right: 20px;
+    width: 4px;
+    height: 60vh; /* Spans 60% of the viewport height */
+    background-color: rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    border-radius: 2px;
+    overflow: hidden; /* Important for the thumb animation */
+}
+
+/* The moving part of the scrollbar */
+.scroll-thumb {
+    width: 100%;
+    height: 0%; /* Starts at 0 height, GSAP will animate this */
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 2px;
+    position: relative;
+}
+
+/* The "bulge" effect using a pseudo-element */
+.scroll-thumb::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; /* Positioned at the bottom of the thumb */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px; /* Wider than the track */
+    height: 16px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    filter: blur(5px); /* Creates the soft glow/bulge */
+}
+
+/* Hide the custom scrollbar on mobile and tablet */
+@media (max-width: 768px) {
+    .scroll-track {
+        display: none;
+    }
+}

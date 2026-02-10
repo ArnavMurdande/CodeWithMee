@@ -1,0 +1,342 @@
+/* ===================================
+   HEADER PILL (TOP - FLOATING)
+   =================================== */
+
+.header-pill {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  width: auto;
+  max-width: none;
+  padding: 0.85rem 2.5rem;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+
+  background-color: rgba(15, 15, 15, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* ===================================
+   LOGO & LEFT
+   =================================== */
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.brand-name {
+  font-family: 'Martian Mono', monospace;
+  font-size: 1.6rem; /* Slightly larger brand */
+  font-weight: 1000;
+  color: white;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.logo-circles {
+  position: relative;
+  width: 2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.9, 0, 0.1, 1);
+  width: 1.2rem;
+  height: 1.2rem;
+  background-color: #ffffff;
+  top: 50%;
+}
+
+.circle-1 { left: 0; transform: translate(0, -50%); }
+.circle-2 { left: 0.8rem; transform: translate(0, -50%); mix-blend-mode: exclusion; }
+.logo-container:hover .circle-1 { transform: translate(-0.4rem, -50%); }
+.logo-container:hover .circle-2 { transform: translate(0.4rem, -50%); }
+
+/* ===================================
+   DESKTOP NAVIGATION (CENTER)
+   =================================== */
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  flex: 1;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-family: 'Martian Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+  padding: 0.6rem 0.2rem;
+  position: relative;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: white;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.65);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #00ff88;
+  box-shadow: 0 0 12px #00ff88;
+  border-radius: 2px;
+}
+
+/* ===================================
+   RIGHT SIDE - USER TOOLS
+   =================================== */
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.control-divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Profile Icon */
+.header-profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-icon img {
+  width: 40px; /* Slightly larger */
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: border-color 0.2s ease;
+}
+
+.profile-icon img:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Signup Button */
+.signup-login-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  color: white;
+  font-family: 'Martian Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.signup-login-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ===================================
+   MOBILE DOCK (BOTTOM - FIXED)
+   =================================== */
+
+.mobile-dock {
+  display: none;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN (MOBILE)
+   =================================== */
+
+@media (max-width: 768px) {
+  
+  /* --- Top Header Adjustments --- */
+  .header-pill {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    padding: 0.4rem 0.8rem;
+  }
+
+  /* Show brand name in mobile but smaller */
+  .brand-name {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  /* Smaller logo circles for mobile */
+  .logo-circles {
+    width: 1.4rem;
+    height: 0.9rem;
+  }
+
+  .circle {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .circle-2 {
+    left: 0.5rem;
+  }
+
+  .logo-container {
+    gap: 0.5rem;
+  }
+
+  /* Smaller timer for mobile */
+  .user-controls {
+    gap: 0.6rem;
+  }
+
+  .pomodoro-container .pomodoro-button {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  /* Smaller profile icon for mobile */
+  .profile-icon img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .control-divider {
+    height: 18px;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  /* --- Mobile Dock (Show) --- */
+  .mobile-dock {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    
+    padding: 0.6rem 1.2rem;
+    
+    background-color: rgba(20, 20, 20, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  .dock-item {
+    color: rgba(255, 255, 255, 0.55);
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .dock-item:hover, .dock-item.active {
+    color: #fff;
+    transform: translateY(-4px) scale(1.08);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dock-item.active {
+    color: #00ff88;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.25);
+  }
+
+  .dock-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .dock-icon svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+}
+
+/* Large screens - ensure proper scaling */
+@media (min-width: 1400px) {
+  .header-pill {
+    left: 40px;
+    right: 40px;
+  }
+  
+  .desktop-nav {
+    gap: 3rem;
+  }
+  
+  .nav-link {
+    font-size: 1.2rem;
+  }
+}
+
+/* Extra large screens */
+@media (min-width: 1800px) {
+  .header-pill {
+    left: 60px;
+    right: 60px;
+  }
+  
+  .desktop-nav {
+    gap: 3.5rem;
+  }
+  
+  .nav-link {
+    font-size: 1.25rem;
+  }
+}

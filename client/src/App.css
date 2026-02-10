@@ -1,0 +1,45 @@
+body {
+  background-color: #141414;
+  font-family: sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+  /* Prevent bounce on mobile */
+  overscroll-behavior-y: none;
+}
+
+/* This ensures the main app container takes up the full space */
+.app-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* MOVED 3D PERSPECTIVE TO MAIN to avoid breaking position:fixed on children */
+}
+
+main {
+  padding-top: 7rem;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* On pages where the header is hidden (like /auth), we remove the padding. */
+main.no-header-padding {
+  padding-top: 0;
+}
+
+
+
+/* --- Hide Default Browser Scrollbar --- */
+/* Apply to both html and body to be safe */
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+}
+
+html, body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

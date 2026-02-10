@@ -1,0 +1,615 @@
+/* client/src/pages/CreateChallenge.css */
+
+/* --- Import the PrismJS theme --- */
+@import url('prismjs/themes/prism-tomorrow.css');
+
+.create-challenge-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 4rem;
+    color: white;
+}
+
+.create-challenge-form {
+    background: rgba(20, 20, 22, 0.85);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.create-challenge-form h2 {
+    margin-top: 0;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    margin-bottom: 2rem;
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(90deg, #a900ff, #00f8f1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+.dropdown-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.dropdown-button:focus {
+    border-color: #00f8f1;
+    outline: none;
+}
+
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1e1e1e inset !important;
+    -webkit-text-fill-color: white !important;
+    caret-color: white !important;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-editor-wrapper {
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.code-editor {
+    position: relative;
+    background: #2d2d2d;
+}
+
+.code-editor > textarea,
+.code-editor > pre {
+    margin: 0 !important;
+    padding: 15px !important;
+    font-family: "Fira Code", "Courier New", monospace !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    min-height: 150px;
+    white-space: pre !important;
+    word-wrap: normal !important;
+}
+
+.code-editor > textarea {
+    background: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    caret-color: #f8f8f2 !important;
+    z-index: 1;
+}
+
+.code-editor > pre {
+    z-index: 0;
+}
+
+.code-editor > textarea:focus {
+    outline: none;
+}
+
+.custom-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    background-color: rgba(30, 30, 32, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    z-index: 10;
+    padding: 0.5rem;
+    list-style: none;
+    margin: 0;
+}
+
+.dropdown-menu li {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    color: #f1f1f1;
+}
+
+.dropdown-menu li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu li.selected {
+    background-color: rgba(0, 248, 241, 0.2);
+    font-weight: bold;
+}
+
+.test-case-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.test-case-box {
+    flex-grow: 1;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.test-case-box input {
+    margin-bottom: 0;
+}
+
+.test-case-toggle-btn {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    width: 110px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.test-case-toggle-btn.hidden {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+}
+
+.test-case-toggle-btn.example {
+    background-color: #00f8f1;
+    color: #141414;
+    border-color: #00f8f1;
+    font-weight: bold;
+}
+
+.remove-testcase-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-testcase-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: #f87171;
+    transition: fill 0.2s;
+}
+
+.remove-testcase-btn:hover svg {
+    fill: #ef4444;
+}
+
+.add-testcase-btn {
+    background: none;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: #ccc;
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    margin: 1rem 0;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.add-testcase-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.submit-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(90deg, #a900ff, #00f8f1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
+}
+
+.error-message {
+    text-align: center;
+    color: #ff8a80;
+    margin-top: 1rem;
+}
+
+/* ===================================
+   ENHANCED UI STYLES
+   =================================== */
+
+/* Back button with improved visibility */
+.back-button {
+    margin-bottom: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #9b00e6 0%, #0ed9d1 100%);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 4px 20px rgba(169, 0, 255, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(169, 0, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Enhanced form styling */
+.create-challenge-form {
+    background: linear-gradient(145deg, rgba(20, 20, 25, 0.95), rgba(15, 15, 18, 0.98));
+    border-radius: 16px;
+    padding: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.create-challenge-form h2 {
+    margin-top: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    background: linear-gradient(90deg, #ffffff, #a0a0a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Form group enhanced styling */
+.form-group label {
+    margin-bottom: 0.6rem;
+    color: #b0b0b0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea,
+.dropdown-button {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.2s ease;
+}
+
+.form-group input:hover,
+.form-group textarea:hover,
+.dropdown-button:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #00f8f1;
+    box-shadow: 0 0 0 3px rgba(0, 248, 241, 0.1);
+}
+
+/* Enhanced test case styling */
+.test-case-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.test-case-box:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Enhanced buttons */
+.add-testcase-btn {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.add-testcase-btn:hover {
+    background: rgba(0, 248, 241, 0.05);
+    border-color: rgba(0, 248, 241, 0.4);
+    color: #00f8f1;
+}
+
+.submit-button {
+    padding: 0.85rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a900ff, #00f8f1);
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(169, 0, 255, 0.25);
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(169, 0, 255, 0.4);
+}
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.85rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ===================================
+   MOBILE RESPONSIVE STYLES
+   =================================== */
+
+@media (max-width: 900px) {
+    .create-challenge-container {
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+    }
+
+    .create-challenge-form {
+        padding: 2rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .create-challenge-container {
+        padding: 1.5rem 1rem;
+        width: 100%;
+        box-sizing: border-box;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .back-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
+    .create-challenge-form {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+
+    .create-challenge-form h2 {
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .dropdown-button {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+    }
+
+    /* Compact test cases */
+    .test-case-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .test-case-box {
+        padding: 0.6rem 0.8rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .test-case-box input {
+        width: 100%;
+    }
+
+    .test-case-toggle-btn {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .remove-testcase-btn {
+        align-self: flex-end;
+    }
+
+    .add-testcase-btn {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+        margin: 0.75rem 0;
+    }
+
+    /* Form buttons */
+    .form-buttons {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .submit-button,
+    .cancel-btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Code editor */
+    .form-editor-wrapper {
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .create-challenge-container {
+        padding: 1rem 0.75rem;
+    }
+
+    .back-button {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.8rem;
+    }
+
+    .create-challenge-form {
+        padding: 1.25rem;
+    }
+
+    .create-challenge-form h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.75rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .dropdown-button {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        border-radius: 6px;
+    }
+
+    .test-case-box {
+        padding: 0.5rem 0.6rem;
+        gap: 0.4rem;
+        border-radius: 8px;
+    }
+
+    .test-case-toggle-btn {
+        padding: 0.45rem;
+        font-size: 0.8rem;
+    }
+
+    .dropdown-menu {
+        padding: 0.35rem;
+    }
+
+    .dropdown-menu li {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+}

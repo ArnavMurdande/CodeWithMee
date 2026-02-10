@@ -1,0 +1,322 @@
+/* ===================================
+   NEO-BRUTALIST FULLSCREEN SIDEBAR
+   =================================== */
+
+.neo-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.neo-sidebar.open {
+  display: flex;
+}
+
+/* Curtain Background */
+.sidebar-curtain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0a0a0a;
+  border: 6px solid #00ff88;
+  box-sizing: border-box;
+  z-index: 1;
+  transform-origin: top;
+}
+
+/* Close Button - Neo-Brutalist X */
+.neo-close-button {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  background: #00ff88;
+  border: 4px solid #000;
+  box-shadow: 6px 6px 0px 0px #000;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.neo-close-button:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0px 0px #000;
+}
+
+.neo-close-button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px 0px #000;
+}
+
+.close-line {
+  display: block;
+  width: 30px;
+  height: 4px;
+  background-color: #000;
+  position: absolute;
+}
+
+.close-line:first-child {
+  transform: rotate(45deg);
+}
+
+.close-line:last-child {
+  transform: rotate(-45deg);
+}
+
+/* Menu Container */
+.neo-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Menu Item */
+.neo-menu-item {
+  opacity: 0;
+}
+
+/* Menu Link Button */
+.neo-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 2rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Martian Mono', 'Courier New', monospace;
+  font-size: clamp(1.5rem, 5vw, 3.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  transition: color 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.neo-menu-link:hover {
+  color: #00ff88;
+}
+
+.neo-menu-link:hover .link-text {
+  transform: translateX(10px);
+}
+
+.neo-menu-link:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Link Number */
+.link-number {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #00ff88;
+  opacity: 0.7;
+  min-width: 2rem;
+}
+
+/* Link Text */
+.link-text {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.link-text::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 4px;
+  background: #00ff88;
+  transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.neo-menu-link:hover .link-text::after {
+  width: 100%;
+}
+
+/* Arrow */
+.link-arrow {
+  font-size: 2rem;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  color: #00ff88;
+}
+
+/* Footer */
+.neo-footer {
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 3rem;
+  z-index: 5;
+}
+
+.neo-tagline,
+.neo-year {
+  font-family: 'Martian Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Decorative Corner Blocks */
+.neo-sidebar::before,
+.neo-sidebar::after {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 4px solid #00ff88;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.neo-sidebar::before {
+  top: 2rem;
+  left: 2rem;
+  border-right: none;
+  border-bottom: none;
+}
+
+.neo-sidebar::after {
+  bottom: 2rem;
+  right: 2rem;
+  border-left: none;
+  border-top: none;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 768px) {
+  .neo-close-button {
+    top: 1rem;
+    right: 1rem;
+    width: 50px;
+    height: 50px;
+    box-shadow: 4px 4px 0px 0px #000;
+  }
+
+  .close-line {
+    width: 24px;
+    height: 3px;
+  }
+
+  .neo-menu-link {
+    font-size: clamp(1.2rem, 6vw, 2rem);
+    padding: 0.75rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .link-number {
+    font-size: 0.75rem;
+    min-width: 1.5rem;
+  }
+
+  .link-arrow {
+    font-size: 1.5rem;
+  }
+
+  .neo-footer {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1.5rem;
+  }
+
+  .neo-sidebar::before,
+  .neo-sidebar::after {
+    width: 40px;
+    height: 40px;
+  }
+
+  .neo-sidebar::before {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .neo-sidebar::after {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}
+
+/* Alternative Color Schemes (uncomment to use) */
+
+/* Hot Pink Theme */
+/*
+.sidebar-curtain {
+  border-color: #ff0080;
+}
+.neo-close-button {
+  background: #ff0080;
+}
+.neo-menu-link:hover,
+.link-number,
+.link-arrow,
+.link-text::after {
+  color: #ff0080;
+  background: #ff0080;
+}
+.neo-sidebar::before,
+.neo-sidebar::after {
+  border-color: #ff0080;
+}
+*/
+
+/* Electric Blue Theme */
+/*
+.sidebar-curtain {
+  border-color: #00f0ff;
+}
+.neo-close-button {
+  background: #00f0ff;
+}
+.neo-menu-link:hover,
+.link-number,
+.link-arrow {
+  color: #00f0ff;
+}
+.link-text::after {
+  background: #00f0ff;
+}
+.neo-sidebar::before,
+.neo-sidebar::after {
+  border-color: #00f0ff;
+}
+*/

@@ -1,0 +1,14 @@
+.language-network-canvas {
+  /* Make the canvas fill the entire screen */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* Place it behind other page content if necessary */
+  z-index: -1; 
+
+  /* You can set the background here or on a parent element */
+  /* background-color: #111; */
+}

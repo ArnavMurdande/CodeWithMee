@@ -1,0 +1,489 @@
+/* --- NEW: Page Container & Title --- */
+.sandbox-page-container {
+  width: 100%;
+  height: calc(100vh - 7rem); /* Full viewport height minus header */
+  padding: 0 2rem 2rem 2rem;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.sandbox-topic-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 1.5rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+/* --- NEW: Main Resizable Container --- */
+.sandbox-container {
+  flex-grow: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.left-pane, .right-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* --- Dividers --- */
+.vertical-divider, .horizontal-divider {
+  background-color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.vertical-divider {
+  width: 6px;
+  cursor: col-resize;
+  border-radius: 3px;
+}
+.vertical-divider:hover {
+  background-color: #00f8f1;
+}
+
+.horizontal-divider {
+  height: 6px;
+  cursor: row-resize;
+  border-radius: 3px;
+}
+.horizontal-divider:hover {
+  background-color: #00f8f1;
+}
+
+
+/* --- Left Pane Components --- */
+.video-pane {
+  position: relative;
+  background-color: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* wrapper for iframe so it fills correctly */
+.youtube-embed-wrapper {
+  position: absolute;
+  inset: 0; /* top/right/bottom/left: 0 */
+  width: 100%;
+  height: 100%;
+}
+
+.youtube-embed-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.loading-video {
+  color: #888;
+  font-style: italic;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ai-assistant {
+  background-color: rgba(20, 20, 22, 0.85);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-history {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.chat-message {
+  margin-bottom: 1rem;
+  max-width: 95%;
+}
+
+.chat-message > div { /* Target the div from dangerouslySetInnerHTML */
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.chat-message.user > div {
+  background-color: #a900ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+  margin-left: auto;
+  max-width: 90%;
+}
+
+.chat-message.ai > div {
+  background-color: #3a3a3e;
+  color: #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+
+/* --- NEW: Styles for code snippets in AI chat --- */
+.chat-message.ai pre {
+  background-color: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+}
+.chat-message.ai code {
+  color: #ce9178; /* Default code color */
+}
+
+
+.chat-input-form {
+  display: flex;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-input-form input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+.chat-input-form button {
+  background-color: #00f8f1;
+  color: #141414;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.chat-input-form button:disabled {
+  opacity: 0.5;
+}
+
+
+/* --- Right Pane Components --- */
+.editor-pane, .terminal-pane {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.editor-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #aaa;
+}
+
+.run-button {
+  padding: 0.6rem 1.2rem;
+  background: #00f8f1;
+  border: none;
+  border-radius: 6px;
+  color: #141414;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.run-button:hover {
+  opacity: 0.9;
+}
+
+.run-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.terminal-pane h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #aaa;
+}
+
+.output-text {
+  font-family: 'Courier New', Courier, monospace;
+  color: #ccc;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex-grow: 1;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.custom-dropdown-sandbox {
+    position: relative;
+    width: 150px;
+}
+
+.dropdown-button-sandbox {
+    width: 100%;
+    background-color: #2d2d2d;
+    border: 1px solid rgba(0, 248, 241, 0.5);
+    color: white;
+    border-radius: 8px; /* Slightly more rounded */
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.dropdown-button-sandbox:hover {
+    border-color: #00f8f1;
+}
+
+.dropdown-menu-sandbox {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    background-color: rgba(30, 30, 32, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    padding: 0.5rem;
+    list-style: none;
+    margin: 0;
+}
+
+.dropdown-menu-sandbox li {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    color: #f1f1f1;
+    font-size: 0.9rem;
+}
+
+.dropdown-menu-sandbox li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu-sandbox li.selected {
+    background-color: rgba(0, 248, 241, 0.2);
+    font-weight: bold;
+}
+
+/* ===== MOBILE STYLES FOR SANDBOX ===== */
+@media (max-width: 768px) {
+  .sandbox-page-container {
+    height: auto;
+    min-height: calc(100vh - 7rem);
+    padding: 0 1rem 6rem 1rem;
+    overflow-y: auto;
+  }
+
+  .sandbox-topic-title {
+    font-size: 1.1rem;
+    margin: 1rem 0;
+  }
+
+  .sandbox-container {
+    flex-direction: column;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  /* Hide resize dividers on mobile */
+  .vertical-divider,
+  .horizontal-divider {
+    display: none;
+  }
+
+  /* Stack panes vertically */
+  .left-pane,
+  .right-pane {
+    width: calc(100% - 1rem) !important;
+    margin: 0 0.5rem;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Video pane - fixed aspect ratio */
+  .video-pane {
+    height: 200px !important;
+    min-height: 200px;
+    width: 100%;
+    border-radius: 10px;
+  }
+
+  /* AI Assistant pane */
+  .ai-assistant {
+    height: 280px !important;
+    min-height: 280px;
+    width: 100%;
+    border-radius: 10px;
+  }
+
+  .chat-history {
+    padding: 0.75rem;
+  }
+
+  .chat-message > div {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  .chat-input-form {
+    padding: 0.4rem;
+  }
+
+  .chat-input-form input {
+    font-size: 0.9rem;
+    padding: 0.4rem;
+  }
+
+  .chat-input-form button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* Editor pane */
+  .editor-pane {
+    height: 320px !important;
+    min-height: 320px;
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  /* Monaco editor container - ensure it has explicit height and horizontal scroll */
+  .editor-pane > section,
+  .editor-pane > div:not(.editor-header) {
+    height: calc(100% - 50px) !important;
+    min-height: 200px !important;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  .editor-pane .monaco-editor,
+  .editor-pane .monaco-editor .overflow-guard {
+    min-height: 200px !important;
+  }
+
+  /* Ensure editor wrapper allows horizontal scroll */
+  .editor-pane .monaco-scrollable-element {
+    overflow-x: auto !important;
+  }
+
+  .editor-header {
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .editor-header h3 {
+    font-size: 1rem;
+  }
+
+  .custom-dropdown-sandbox {
+    width: 120px;
+  }
+
+  .dropdown-button-sandbox {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .dropdown-menu-sandbox li {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .run-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Terminal pane */
+  .terminal-pane {
+    height: 180px !important;
+    min-height: 180px;
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .terminal-pane h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+  }
+
+  .output-text {
+    font-size: 0.85rem;
+    overflow-x: auto;
+    white-space: pre;
+    max-width: 100%;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .sandbox-page-container {
+    padding: 0 0.75rem 6rem 0.75rem;
+  }
+
+  .video-pane {
+    height: 180px !important;
+    min-height: 180px;
+  }
+
+  .ai-assistant {
+    height: 250px !important;
+    min-height: 250px;
+  }
+
+  .editor-pane {
+    height: 280px !important;
+    min-height: 280px;
+  }
+
+  .terminal-pane {
+    height: 150px !important;
+    min-height: 150px;
+  }
+
+  .editor-header {
+    justify-content: space-between;
+  }
+
+  .custom-dropdown-sandbox {
+    width: 100px;
+  }
+}
