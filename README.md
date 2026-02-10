@@ -1,112 +1,285 @@
-# CodeWithMee 🚀
+# CodeWithMee 🚀  
+**AI-Powered Interactive Coding Learning Platform**
 
-Welcome to CodeWithMee, an interactive, AI-powered learning environment designed to make coding an adventure. This platform generates personalized learning roadmaps and provides a split-screen sandbox where you can watch video tutorials and code simultaneously, all with the help of a personal AI assistant.
+CodeWithMee is an AI-powered learning operating system that transforms passive coding education into an active, collaborative, and development-driven experience. Instead of just watching tutorials, users practice in a live sandbox, receive AI guidance, and build real projects inside a social ecosystem.
 
+---
 
+## 📌 Project Overview
 
-<img width="1024" height="1024" alt="Gemini_Generated_Image_7hy9217hy9217hy9" src="https://github.com/user-attachments/assets/1473a345-04bc-449a-a0b2-98d4bd0e94ca" />
+CodeWithMee combines learning, development, and collaboration into a single environment.
 
+The platform integrates:
 
+- 🧠 AI mentor with contextual coding assistance
+- 💻 Interactive split-screen coding sandbox
+- 📚 AI-generated learning roadmaps
+- 🤝 Social and collaborative learning features
+- 🏗️ AI-powered project scaffolding
+- 🎮 Gamification and engagement systems
 
-
+The goal is to function as a **learning operating system**, not just a website.
 
 ---
 
 ## ✨ Key Features
 
-* **🤖 AI-Powered Roadmap Generation**: Enter a programming language and your skill level (Beginner, Intermediate, Advanced), and our AI will generate a complete, step-by-step learning path for you.
-* **📚 Interactive Learning Sandbox**: Each topic in your roadmap links to a split-screen view featuring:
-    * A **dynamically fetched YouTube tutorial** relevant to the topic.
-    * A live **code editor** with Python syntax highlighting.
-    * An **output console** to see the results of your code instantly.
-* **🧠 Personal AI Assistant ("Mee")**: Stuck on a problem? Ask Mee a question about your code directly within the sandbox, and get instant, helpful answers.
-* **🔐 Full User Authentication**: Secure user registration and login system using JWT (JSON Web Tokens) to save and track progress.
-* **🎨 Stunning Frontend**: A modern, responsive, and visually appealing user interface with custom animations and a unique theme.
+### 🤖 AI-Powered Roadmap Generation
+Generate personalized step-by-step learning paths based on language and skill level.
+
+### 💻 Interactive Learning Sandbox
+Split-screen environment where users can:
+
+- watch YouTube tutorials
+- write code simultaneously
+- execute Python code in real time
+- view output instantly
+
+Powered by Monaco Editor + backend execution engine.
+
+### 🧠 Persistent AI Assistant (“Mee”)
+Context-aware AI mentor that:
+
+- explains code
+- helps debug logic
+- answers questions
+- generates learning roadmaps
+- provides guided assistance during practice
+
+### 🔐 Secure User System
+- JWT authentication
+- hashed passwords (bcrypt)
+- protected API routes
+- persistent sessions
+
+### 🎨 Modern UI/UX
+- animated dashboard
+- motion-driven interface
+- custom cursor & visual effects
+- Pomodoro timer
+- developer-style workspace
+
+---
+
+## 🏗️ Core Architecture
+
+CodeWithMee follows a modular MERN architecture:
+
+**Frontend**
+- React
+- Monaco Editor
+- Framer Motion
+- GSAP animations
+
+**Backend**
+- Node.js
+- Express.js
+
+**Database**
+- MongoDB
+
+**Authentication**
+- JWT + BcryptJS
+
+**AI Engine**
+- Google Gemini API
+
+**Code Execution**
+- Secure Python execution via Piston / python-shell
+
+**Future Layer**
+- VS Code extension for IDE integration
+
+The architecture is designed for scalability and ecosystem expansion.
+
+---
+
+## ✅ Completed Features
+
+### 1. Interactive Split-Screen Sandbox
+Live coding + tutorial viewing with real-time execution.
+
+### 2. Persistent AI Assistant
+Gemini-powered mentor integrated into coding workflow.
+
+### 3. Secure Authentication System
+JWT login + encrypted user credentials.
+
+### 4. Database Infrastructure
+Collections implemented:
+
+- Users
+- Challenges
+- Submissions
+- YouTube Cache
+
+Foundation for gamification & analytics.
+
+### 5. Code Execution Backend
+Server-side Python execution engine:
+
+- secure sandboxed execution
+- console output capture
+- frontend integration
+
+### 6. Modern UI System
+Animated and immersive developer-style interface.
+
+---
+
+## 🚧 Future Scope
+
+### AI Debugger (Auto-Fix Engine)
+One-click debugging:
+
+- captures runtime errors
+- sends code to AI
+- returns corrected version
+- diff viewer for learning
+
+### Gamified Social System
+- streak tracking
+- activity reinforcement
+- leaderboards
+- course competition
+
+### Advanced Sandbox v2
+- video resume memory
+- resizable panes
+- IDE-like workspace
+
+### Study Buddy System
+Peer matching for collaborative learning.
+
+### Project Builder Ecosystem
+4-layer system:
+
+1. Idea board
+2. AI scaffolding generator
+3. contribution approval system
+4. progress feed
+
+### VS Code Extension
+Local IDE integration with AI assistant.
+
+### Company Training Portal
+Enterprise dashboard for internal learning systems.
+
+---
+
+## 🧠 Technical Themes
+
+- AI-assisted education
+- sandboxed code execution
+- collaborative development systems
+- gamification psychology
+- scalable MERN architecture
+- IDE ecosystem integration
+- community-driven learning
 
 ---
 
 ## 💻 Tech Stack
 
-This project is a full-stack application built with the MERN stack and integrated with powerful external APIs.
-
-| Category   | Technology                                                                                                                              |
-| :--------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend** | ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white) |
-| **Backend** | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)                               |
-| **Database** | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)                                   |
-| **APIs** | ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B7?style=for-the-badge) ![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)          |
+| Category | Technology |
+|---------|------------|
+| Frontend | React, JavaScript, CSS3, Monaco Editor |
+| Backend | Node.js, Express |
+| Database | MongoDB |
+| AI | Google Gemini API |
+| Authentication | JWT + Bcrypt |
+| Execution Engine | Python sandbox execution |
+| APIs | YouTube Data API |
 
 ---
 
-## 🛠️ Setup and Installation
-
-Follow these steps to get the project running on your local machine.
+## 🛠️ Setup & Installation
 
 ### Prerequisites
 
-* [Node.js](https://nodejs.org/) (v14 or later)
-* [npm](https://www.npmjs.com/)
-* [Git](https://git-scm.com/)
-* A free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account
-* A [Google AI API Key](https://aistudio.google.com/) for Gemini
-* A [YouTube Data API v3 Key](https://console.cloud.google.com/apis/library/youtube.googleapis.com)
-
-1.  **Clone the Repository**
-
-    Clone the project to your local machine:
-    ```bash
-    git clone [https://github.com/TanishkOjha24/CodeWithMee002.git](https://github.com/TanishkOjha24/CodeWithMee002.git)
-    cd CodeWithMee002
-    ```
-
-2.  **Install Dependencies**
-
-    You'll need to install dependencies for both the `server` and the `client`.
-
-    ```bash
-    # Install server dependencies
-    cd server
-    npm install
-
-    # Install client dependencies
-    cd ../client
-    npm install
-    ```
-
-3.  **Set Up Environment Variables**
-
-    The backend requires secret keys to connect to the database and external APIs.
-
-    1.  Navigate to the `server` directory.
-    2.  Create a new file named `.env`.
-    3.  Add the following variables to your `.env` file, replacing the placeholder values with your actual keys:
-
-        ```
-        MONGO_URI=your_mongodb_connection_string
-        JWT_SECRET=a_long_and_random_secret_string_for_jwt
-        GEMINI_API_KEY=your_google_ai_api_key
-        YOUTUBE_API_KEY=your_youtube_data_api_key
-        ```
-
-        **Note:** It is crucial that these keys are kept private and that the `.env` file is never committed to Git.
-
-4.  **Run the Application**
-
-    You need to start both the backend server and the frontend client in separate terminals.
-
-    * **To start the server:**
-        ```bash
-        cd server
-        npm start
-        ```
-        The server will be running on `http://localhost:5001`.
-
-    * **To start the client:**
-        ```bash
-        cd client
-        npm start
-        ```
-        The React application will open in your browser at `http://localhost:3000`.
+- Node.js (v14+)
+- npm
+- Git
+- MongoDB Atlas account
+- Google Gemini API key
+- YouTube Data API key
 
 ---
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/TanishkOjha24/CodeWithMee002.git
+cd CodeWithMee002
+```
+
+---
+
+### 2. Install Dependencies
+
+```bash
+cd server
+npm install
+
+cd ../client
+npm install
+```
+
+---
+
+### 3. Environment Variables
+
+Create `.env` inside `/server`:
+
+```
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+GEMINI_API_KEY=your_google_api_key
+YOUTUBE_API_KEY=your_youtube_api_key
+```
+
+⚠️ Never commit `.env` to Git.
+
+---
+
+### 4. Run Application
+
+Start backend:
+
+```bash
+cd server
+npm start
+```
+
+Start frontend:
+
+```bash
+cd client
+npm start
+```
+
+Server → http://localhost:5001  
+Client → http://localhost:3000
+
+---
+
+## 🎯 Vision
+
+CodeWithMee aims to become:
+
+> An AI-powered learning operating system that merges education, collaboration, and real-world development into one unified ecosystem.
+
+Users don’t just learn — they build, collaborate, and grow inside a guided AI environment.
+
+---
+
+## 👨‍💻 Authors
+
+Developed as an academic and experimental AI learning platform project by Arnav Murdande & Tanishk Ojha
+
+---
+
+## ⭐ Support
+
+If you like the project, consider starring the repository!
 
