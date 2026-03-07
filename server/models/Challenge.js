@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const TestCaseSchema = new Schema({
   input: { type: String, required: true },
   output: { type: String, required: true },
-  isExample: { type: Boolean, default: false }
+  isExample: { type: Boolean, default: false },
 });
 
 // Using a forward declaration for recursive schema
@@ -12,11 +12,21 @@ const CommentSchema = new Schema();
 
 CommentSchema.add({
   text: { type: String, required: true },
-  author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  author: { type: Schema.Types.ObjectId, ref: "User", required: true },
   createdAt: { type: Date, default: Date.now },
-  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  replies: [CommentSchema] // Nested replies
+  likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  dislikes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  awards: [
+    {
+      user: { type: Schema.Types.ObjectId, ref: "User" },
+      type: {
+        type: String,
+        enum: ["star", "fire", "heart", "rocket", "diamond"],
+      },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
+  replies: [CommentSchema], // Nested replies
 });
 
 const ChallengeSchema = new Schema({
@@ -36,13 +46,13 @@ const ChallengeSchema = new Schema({
   },
   difficulty: {
     type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
+    enum: ["Easy", "Medium", "Hard"],
     required: true,
-    index: true // Index added for faster filtering
+    index: true, // Index added for faster filtering
   },
   tags: {
     type: [String],
-    index: true // Index added for faster searching by tag
+    index: true, // Index added for faster searching by tag
   },
   score: {
     type: Number,
@@ -52,7 +62,7 @@ const ChallengeSchema = new Schema({
   },
   author: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
   solution: {
@@ -61,8 +71,8 @@ const ChallengeSchema = new Schema({
   },
   testCases: [TestCaseSchema],
   comments: [CommentSchema],
-  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  dislikes: [{ type: Schema.Types.ObjectId, ref: "User" }],
   successfulAttempts: { type: Number, default: 0 },
   totalAttempts: { type: Number, default: 0 },
   createdAt: {
@@ -71,4 +81,4 @@ const ChallengeSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model('Challenge', ChallengeSchema);
+module.exports = mongoose.model("Challenge", ChallengeSchema);

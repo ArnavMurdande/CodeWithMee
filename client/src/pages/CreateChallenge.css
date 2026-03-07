@@ -147,7 +147,9 @@
     top: calc(100% + 5px);
     left: 0;
     width: 100%;
-    background-color: rgba(30, 30, 32, 0.85);
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: rgba(30, 30, 32, 0.95);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.15);

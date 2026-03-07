@@ -20,6 +20,15 @@ const ConversationSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+// Schema for storing sandbox AI conversations (per pathway/chapter)
+const SandboxConversationSchema = new mongoose.Schema({
+  pathway: { type: String, default: 'General' },
+  chapter: { type: String, default: 'General' },
+  prompt: { type: String, required: true },
+  response: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now }
+});
+
 // Defines the structure for user documents in the MongoDB database.
 const UserSchema = new mongoose.Schema({
   username: {
@@ -46,7 +55,8 @@ const UserSchema = new mongoose.Schema({
     default: 'local',
   },
   roadmaps: [RoadmapSchema],
-  conversations: [ConversationSchema], // Added for Sandbox chat history
+  conversations: [ConversationSchema], // Legacy - kept for backward compatibility
+  sandboxConversations: [SandboxConversationSchema], // New - per pathway/chapter
   jobSims: [{
     title: String,
     progress: { type: Number, default: 0 }
@@ -64,7 +74,14 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  savedChallenges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' }]
+  savedChallenges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' }],
+  themePreferences: {
+    preset: { type: String, default: 'ocean' },
+    color1: { type: String, default: '#149ecc' },
+    color2: { type: String, default: '#412ecc' },
+    color3: { type: String, default: '#44cf87' },
+    customColors: { type: Boolean, default: false },
+  }
 });
 
 // Middleware to hash password before saving

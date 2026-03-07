@@ -1,6 +1,7 @@
 import React, { useState, useContext, Component } from 'react';
 import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
+import { ThemeContext } from './context/ThemeContext';
 // Import Components
 import AnimatedBackground from './components/AnimatedBackground';
 import CustomCursor from './components/CustomCursor';
@@ -17,6 +18,7 @@ import Profile from './pages/Profile';
 import Challenges from './pages/Challenges';
 import CreateChallenge from './pages/CreateChallenge';
 import ChallengeSolver from './pages/ChallengeSolver';
+import Settings from './pages/Settings';
 
 // Import Styles
 import './App.css';
@@ -73,6 +75,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   const location = useLocation();
   const { isAuthenticated } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
 
   const [viewRoadmapsHandler, setViewRoadmapsHandler] = useState(null);
   const [pageTitle, setPageTitle] = useState('');
@@ -93,7 +96,7 @@ function App() {
 
       <CustomCursor />
       <ScrollProgress />
-      <AnimatedBackground />
+      <AnimatedBackground color1={theme.color1} color2={theme.color2} color3={theme.color3} />
 
       {showHeader && <Header onViewRoadmapsClick={viewRoadmapsHandler} pageTitle={pageTitle} />}
 
@@ -124,6 +127,7 @@ function App() {
               }
             />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
             <Route path="/challenges/new" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
             <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeSolver /></ProtectedRoute>} />

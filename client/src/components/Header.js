@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import ProfileDropdown from './ProfileDropdown';
@@ -58,6 +58,18 @@ const Header = ({ onViewRoadmapsClick, pageTitle }) => {
     const auth = useContext(AuthContext);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [profilePicUrl, setProfilePicUrl] = useState('https://i.imgur.com/3YQeY9r.png');
+    const profileRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (profileRef.current && !profileRef.current.contains(e.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (auth.user && auth.user.profilePictureUrl) {
@@ -129,7 +141,7 @@ const Header = ({ onViewRoadmapsClick, pageTitle }) => {
                             
                             <div className="control-divider"></div>
                             
-                            <div className="header-profile-container" onClick={toggleDropdown}>
+                            <div className="header-profile-container" onClick={toggleDropdown} ref={profileRef}>
                                 <div className="profile-icon">
                                     <img src={profilePicUrl} alt="Profile" key={profilePicUrl} />
                                 </div>

@@ -133,5 +133,42 @@ router.put('/save-challenge/:id', authMiddleware, async (req, res) => {
 });
 
 
+// @route   GET api/user/theme
+// @desc    Get user's theme preferences
+// @access  Private
+router.get('/theme', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('themePreferences');
+        res.json(user?.themePreferences || {
+            preset: 'ocean',
+            color1: '#149ecc',
+            color2: '#412ecc',
+            color3: '#44cf87',
+            customColors: false,
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PUT api/user/theme
+// @desc    Save user's theme preferences
+// @access  Private
+router.put('/theme', authMiddleware, async (req, res) => {
+    try {
+        const { preset, color1, color2, color3, customColors } = req.body;
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        user.themePreferences = { preset, color1, color2, color3, customColors };
+        await user.save();
+        res.json(user.themePreferences);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // FIX: Removed the extra 'r' from the end of this line
 module.exports = router;

@@ -297,7 +297,7 @@ const Pathways = ({ setViewRoadmapsHandler }) => {
                         <p>{item.description}</p>
                     </div>
                     <Link
-                        to={`/sandbox?topic=${encodeURIComponent(item.topic)}&q=${encodeURIComponent(item.youtube_query)}`}
+                        to={`/sandbox?topic=${encodeURIComponent(item.topic)}&q=${encodeURIComponent(item.youtube_query)}&pathway=${encodeURIComponent(activeRoadmap.title)}&roadmapId=${activeRoadmap._id}`}
                         className="start-learning-link"
                     >
                         Start Learning →

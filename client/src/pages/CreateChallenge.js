@@ -82,6 +82,19 @@ const CreateChallenge = () => {
     { value: 'javascript', label: 'JavaScript' },
     { value: 'java', label: 'Java' },
     { value: 'cpp', label: 'C++' },
+    { value: 'c', label: 'C' },
+    { value: 'rust', label: 'Rust' },
+    { value: 'ruby', label: 'Ruby' },
+    { value: 'go', label: 'Go' },
+    { value: 'kotlin', label: 'Kotlin' },
+    { value: 'swift', label: 'Swift' },
+    { value: 'scala', label: 'Scala' },
+    { value: 'dart', label: 'Dart' },
+    { value: 'php', label: 'PHP' },
+    { value: 'perl', label: 'Perl' },
+    { value: 'r', label: 'R' },
+    { value: 'elixir', label: 'Elixir' },
+    { value: 'bash', label: 'Bash' },
   ];
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
