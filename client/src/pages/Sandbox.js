@@ -90,6 +90,14 @@ const Sandbox = ({ setPageTitle }) => {
   const chatHistoryRef = useRef(null);
   const sandboxContainerRef = useRef(null);
 
+  // --- Active Recall Checkpoint State ---
+  const [savedProgress, setSavedProgress] = useState(null); // { timestamp, duration }
+  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
+  const [videoProgressPercent, setVideoProgressPercent] = useState(0);
+  const ytPlayerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+  const ytPlayerContainerRef = useRef(null);
+
   // Chat context selectors
   const [selectedPathway, setSelectedPathway] = useState(pathwayParam || 'General');
   const [selectedChapter, setSelectedChapter] = useState(topic || 'General');
@@ -583,6 +591,185 @@ _start:
     }
   }, [chatHistory]);
 
+  // --- Load YouTube IFrame API script ---
+  useEffect(() => {
+    if (window.YT && window.YT.Player) return; // Already loaded
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode.insertBefore(tag, firstScript);
+  }, []);
+
+  // --- Save video progress to backend ---
+  const saveVideoProgress = useCallback(async (vid, time, dur) => {
+    if (!token || !vid || time === undefined) return;
+    try {
+      await axios.put('http://localhost:5001/api/user/video-progress', {
+        videoId: vid,
+        timestamp: Math.floor(time),
+        duration: Math.floor(dur || 0),
+        topic: topic || '',
+        pathway: pathwayParam || '',
+      }, { headers: { 'x-auth-token': token } });
+    } catch (err) {
+      console.error('Failed to save video progress', err);
+    }
+  }, [token, topic, pathwayParam]);
+
+  // --- Fetch saved progress for a video ---
+  const fetchVideoProgress = useCallback(async (vid) => {
+    if (!token || !vid) return null;
+    try {
+      const res = await axios.get(`http://localhost:5001/api/user/video-progress/${vid}`, {
+        headers: { 'x-auth-token': token }
+      });
+      return res.data;
+    } catch (err) {
+      console.error('Failed to fetch video progress', err);
+      return null;
+    }
+  }, [token]);
+
+  // --- Initialize YouTube Player when videoId is available ---
+  useEffect(() => {
+    if (!videoId || isVideoLoading) return;
+
+    const initPlayer = async () => {
+      // Fetch saved progress first
+      const progress = await fetchVideoProgress(videoId);
+      const startSeconds = progress?.timestamp || 0;
+      const totalDuration = progress?.duration || 0;
+
+      if (startSeconds > 5 && totalDuration > 0) {
+        // There's meaningful saved progress — show resume overlay
+        setSavedProgress({ timestamp: startSeconds, duration: totalDuration });
+        setShowResumeOverlay(true);
+        setVideoProgressPercent(Math.min((startSeconds / totalDuration) * 100, 100));
+      } else {
+        setSavedProgress(null);
+        setShowResumeOverlay(false);
+        setVideoProgressPercent(0);
+      }
+
+      // Wait for the YT API to load
+      const waitForYT = () => new Promise((resolve) => {
+        if (window.YT && window.YT.Player) return resolve();
+        window.onYouTubeIframeAPIReady = resolve;
+      });
+      await waitForYT();
+
+      // Destroy existing player if any
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy(); } catch (e) {}
+        ytPlayerRef.current = null;
+      }
+
+      // Clear any existing progress interval
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+
+      // Create new player
+      if (!ytPlayerContainerRef.current) return;
+
+      ytPlayerRef.current = new window.YT.Player(ytPlayerContainerRef.current, {
+        videoId: videoId,
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 0,
+          rel: 0,
+          modestbranding: 1,
+          start: 0, // Always start at 0, the resume overlay handles seeking
+        },
+        events: {
+          onReady: (event) => {
+            // Player is ready
+          },
+          onStateChange: (event) => {
+            const player = event.target;
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              // Start progress tracking every 5 seconds
+              if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = setInterval(() => {
+                try {
+                  const currentTime = player.getCurrentTime();
+                  const duration = player.getDuration();
+                  if (currentTime && duration) {
+                    setVideoProgressPercent(Math.min((currentTime / duration) * 100, 100));
+                    saveVideoProgress(videoId, currentTime, duration);
+                  }
+                } catch (e) {}
+              }, 5000);
+            } else if (event.data === window.YT.PlayerState.PAUSED) {
+              // Save progress on pause
+              if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+                progressIntervalRef.current = null;
+              }
+              try {
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                if (currentTime && duration) {
+                  setVideoProgressPercent(Math.min((currentTime / duration) * 100, 100));
+                  saveVideoProgress(videoId, currentTime, duration);
+                }
+              } catch (e) {}
+            } else if (event.data === window.YT.PlayerState.ENDED) {
+              // Video ended - save as completed
+              if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+                progressIntervalRef.current = null;
+              }
+              try {
+                const duration = player.getDuration();
+                setVideoProgressPercent(100);
+                saveVideoProgress(videoId, duration, duration);
+              } catch (e) {}
+            }
+          },
+        },
+      });
+    };
+
+    initPlayer();
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, [videoId, isVideoLoading, fetchVideoProgress, saveVideoProgress]);
+
+  // --- Resume / Start Fresh handlers ---
+  const handleResumeVideo = () => {
+    setShowResumeOverlay(false);
+    if (ytPlayerRef.current && savedProgress?.timestamp) {
+      ytPlayerRef.current.seekTo(savedProgress.timestamp, true);
+      ytPlayerRef.current.playVideo();
+    }
+  };
+
+  const handleStartFresh = () => {
+    setShowResumeOverlay(false);
+    setSavedProgress(null);
+    setVideoProgressPercent(0);
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.seekTo(0, true);
+    }
+  };
+
+  // --- Format time for display ---
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hrs > 0) return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
@@ -851,15 +1038,30 @@ _start:
               <p className="loading-video">Loading video...</p>
             ) : videoId ? (
               <div className="youtube-embed-wrapper">
-                <iframe
-                  title="YouTube player"
-                  src={`https://www.youtube.com/embed/${videoId}`}
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                  allowFullScreen
-                />
+                <div ref={ytPlayerContainerRef} style={{ width: '100%', height: '100%' }} />
+                {/* Resume Overlay */}
+                {showResumeOverlay && savedProgress && (
+                  <div className="video-resume-overlay">
+                    <div className="resume-overlay-content">
+                      <div className="resume-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                      </div>
+                      <p className="resume-text">Continue from <strong>{formatTime(savedProgress.timestamp)}</strong>?</p>
+                      <div className="resume-actions">
+                        <button className="resume-btn" onClick={handleResumeVideo}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                          Resume
+                        </button>
+                        <button className="start-fresh-btn" onClick={handleStartFresh}>
+                          Start Fresh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="loading-video">No video found for this topic.</p>

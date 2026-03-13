@@ -464,10 +464,11 @@
   pointer-events: none;
 }
 
-/* Cyan highlight on over — only triggers when hovering the parent's specific thread line! */
+/* Cyan highlight — only DIRECT children's curves branching off the hovered thread line */
 .comment-left-col:has(.thread-line-container:hover)
   + .comment-right-col
-  .reddit-comment.nested
+  > .comment-replies
+  > .reddit-comment.nested
   > .comment-left-col::before {
   border-color: #00f8f1;
 }
@@ -973,6 +974,7 @@
   .comments-section {
     margin-top: 1.5rem;
     padding: 1rem 1.25rem;
+    overflow-x: hidden;
   }
 
   .comments-section h3 {
@@ -990,41 +992,128 @@
     font-size: 0.85rem;
   }
 
+  /* Smaller avatars + narrower left col on mobile */
   .comment-left-col {
-    width: 26px;
-    min-width: 26px;
+    width: 22px;
+    min-width: 22px;
+    padding-top: 4px;
   }
 
   .comment-avatar,
   .comment-avatar-placeholder {
-    width: 26px;
-    height: 26px;
-    font-size: 0.7rem;
+    width: 22px;
+    height: 22px;
+    font-size: 0.6rem;
   }
 
   .comment-right-col {
-    padding-left: 0.45rem;
+    padding-left: 0.4rem;
+  }
+
+  /* Tighter spacing so thread lines stay visually connected */
+  .reddit-comment {
+    margin-bottom: 12px;
+  }
+
+  .comment-replies {
+    margin-top: 4px;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .comment-replies > .reddit-comment + .reddit-comment {
+    margin-top: 6px;
+  }
+
+  /* Thread line — remove top/bottom padding so line extends fully */
+  .thread-line-container {
+    padding: 2px 0;
+    min-height: 4px;
+  }
+
+  /* Fix the L-connector curve for smaller mobile layout */
+  /* left = -(padding-left of right-col + half of left-col width) */
+  /* = -(6.4px + 11px) ≈ 17px */
+  .reddit-comment.nested .comment-left-col::before {
+    left: -17px;
+    width: 17px;
+    top: -6px;
+    height: 22px;
+    border-bottom-left-radius: 8px;
   }
 
   .comment-username {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
   }
 
   .comment-time {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
 
   .comment-text {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    margin: 0.25rem 0 0.3rem;
   }
 
+  /* Compact action bar — wrap and show only icons on mobile */
   .comment-action-bar {
     gap: 0;
+    flex-wrap: wrap;
   }
 
   .action-btn {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.4rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.3rem;
+  }
+
+  /* Hide text labels in action buttons, keep only icons */
+  .comment-action-bar .action-btn {
+    gap: 0.15rem;
+  }
+
+  .vote-count {
+    font-size: 0.65rem;
+    min-width: 10px;
+  }
+
+  .action-spacer {
+    width: 4px;
+  }
+
+  /* Award picker compact for mobile */
+  .award-picker {
+    gap: 0.3rem;
+    padding: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .award-option {
+    padding: 0.35rem 0.4rem;
+  }
+
+  .award-icon-large {
+    font-size: 1rem;
+  }
+
+  .award-label-text {
+    font-size: 0.5rem;
+  }
+
+  /* Reply form compact */
+  .reply-form textarea {
+    min-height: 50px;
+    font-size: 0.82rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .reply-form-actions {
+    gap: 0.35rem;
+  }
+
+  .cancel-btn,
+  .submit-reply-btn {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
   }
 
   /* ---------- MODAL MOBILE ---------- */
@@ -1086,5 +1175,50 @@
   .submit-btn {
     padding: 0.55rem 1rem;
     font-size: 0.9rem;
+  }
+
+  /* Even more compact comments at 480px */
+  .comment-left-col {
+    width: 18px;
+    min-width: 18px;
+  }
+
+  .comment-avatar,
+  .comment-avatar-placeholder {
+    width: 18px;
+    height: 18px;
+    font-size: 0.5rem;
+  }
+
+  .comment-right-col {
+    padding-left: 0.3rem;
+  }
+
+  .reddit-comment.nested .comment-left-col::before {
+    left: -14px;
+    width: 14px;
+    top: -4px;
+    height: 18px;
+    border-bottom-left-radius: 6px;
+  }
+
+  /* Hide action button text labels, keep only icons */
+  .comment-action-bar .action-btn {
+    font-size: 0;
+    padding: 0.25rem;
+    gap: 0;
+  }
+
+  .comment-action-bar .action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .vote-count {
+    font-size: 0.6rem;
+  }
+
+  .action-spacer {
+    width: 2px;
   }
 }

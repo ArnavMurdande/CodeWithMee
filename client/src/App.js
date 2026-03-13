@@ -7,6 +7,7 @@ import AnimatedBackground from './components/AnimatedBackground';
 import CustomCursor from './components/CustomCursor';
 import ScrollProgress from './components/ScrollProgress';
 import Header from './components/Header';
+import NotesWidget from './components/NotesWidget';
 
 // Import Pages
 import HomePage from './pages/HomePage';
@@ -135,6 +136,9 @@ function App() {
           </Routes>
       </main>
       
+      {/* Floating Notes Widget — global, visible only when logged in */}
+      {isAuthenticated && <NotesWidget />}
+
       {/* Moved Cursor to bottom to ensure z-index stacking works best */}
       <CustomCursor />
     </div>

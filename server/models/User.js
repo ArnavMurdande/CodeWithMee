@@ -29,6 +29,38 @@ const SandboxConversationSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+// Schema for storing video playback progress (Active Recall Checkpoints)
+const VideoProgressSchema = new mongoose.Schema({
+  videoId: { type: String, required: true },
+  timestamp: { type: Number, default: 0 }, // seconds into the video
+  duration: { type: Number, default: 0 }, // total video duration
+  topic: { type: String, default: '' },
+  pathway: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Schema for storing rich notes (Floating Notes Widget)
+const NoteAttachmentSchema = new mongoose.Schema({
+  fileType: { type: String, enum: ['image', 'audio', 'video'], required: true },
+  url: { type: String, required: true },
+  name: { type: String, default: '' },
+  uploadedAt: { type: Date, default: Date.now }
+});
+
+const NoteSchema = new mongoose.Schema({
+  title: { type: String, default: 'Untitled Note' },
+  content: { type: String, default: '' },
+  attachments: [NoteAttachmentSchema],
+  formatting: {
+    fontSize: { type: Number, default: 14 },
+    fontWeight: { type: String, default: 'normal' },
+    color: { type: String, default: '#e0e0e0' },
+  },
+  canvasData: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
 // Defines the structure for user documents in the MongoDB database.
 const UserSchema = new mongoose.Schema({
   username: {
@@ -39,7 +71,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    index: true // Index added for faster email lookups
+    index: true
   },
   password: {
     type: String,
@@ -55,17 +87,14 @@ const UserSchema = new mongoose.Schema({
     default: 'local',
   },
   roadmaps: [RoadmapSchema],
-  conversations: [ConversationSchema], // Legacy - kept for backward compatibility
-  sandboxConversations: [SandboxConversationSchema], // New - per pathway/chapter
+  conversations: [ConversationSchema],
+  sandboxConversations: [SandboxConversationSchema],
+  videoProgress: [VideoProgressSchema],
   jobSims: [{
     title: String,
     progress: { type: Number, default: 0 }
   }],
-  notes: [{
-    title: String,
-    content: String,
-    createdAt: { type: Date, default: Date.now }
-  }],
+  notes: [NoteSchema],
   solvedChallenges: [{
     challenge: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' },
     solvedAt: { type: Date, default: Date.now }
