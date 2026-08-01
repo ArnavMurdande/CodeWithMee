@@ -1,0 +1,100 @@
+.app-container {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+  color: var(--cwm-color-text);
+  background: var(--cwm-color-canvas);
+}
+
+.app-main {
+  position: relative;
+  z-index: var(--cwm-z-content);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding-top: var(--cwm-header-offset);
+}
+
+.app-main--without-header {
+  padding-top: 0;
+}
+
+.cwm-svg-definitions {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cwm-skip-link {
+  position: fixed;
+  top: var(--cwm-space-3);
+  left: var(--cwm-space-3);
+  z-index: var(--cwm-z-toast);
+  padding: var(--cwm-space-3) var(--cwm-space-4);
+  color: var(--cwm-color-canvas);
+  background: var(--cwm-color-focus);
+  border-radius: var(--cwm-radius-sm);
+  font: 750 0.9rem / 1 var(--cwm-font-sans);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--cwm-space-6)));
+  transition: transform var(--cwm-motion-fast) var(--cwm-ease-standard);
+}
+
+.cwm-skip-link:focus {
+  transform: translateY(0);
+}
+
+.cwm-button {
+  min-height: var(--cwm-control-min-size);
+  padding: var(--cwm-space-3) var(--cwm-space-5);
+  color: var(--cwm-color-text);
+  background: var(--cwm-color-surface-strong);
+  border: 1px solid var(--cwm-color-border-strong);
+  border-radius: var(--cwm-radius-pill);
+  font: 750 0.9rem / 1 var(--cwm-font-sans);
+  cursor: pointer;
+  transition:
+    background var(--cwm-motion-fast) var(--cwm-ease-standard),
+    border-color var(--cwm-motion-fast) var(--cwm-ease-standard),
+    transform var(--cwm-motion-fast) var(--cwm-ease-standard);
+}
+
+.cwm-button:hover {
+  border-color: var(--cwm-color-focus);
+  transform: translateY(-1px);
+}
+
+.cwm-button--primary {
+  color: #07110c;
+  background: var(--cwm-color-accent-strong);
+  border-color: transparent;
+}
+
+.cwm-text-button,
+.cwm-image-button {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.cwm-image-button {
+  display: inline-grid;
+  place-items: center;
+}
+
+@media (max-width: 48rem) {
+  .app-main {
+    padding-bottom: var(--cwm-mobile-dock-offset);
+  }
+
+  .app-main--without-header {
+    padding-bottom: 0;
+  }
+}

@@ -2,19 +2,16 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const YouTubeCache = require('../models/YouTubeCache'); // Import the new cache model
+const { createLegacyLogger } = require('../utils/legacyLogger');
+
+const legacyLogger = createLegacyLogger('youtube');
 
 // --- API Key Rotation Setup ---
 const { getYoutubeKeys } = require('../utils/keyManager');
 
-// --- API Key Rotation Setup ---
-const apiKeys = getYoutubeKeys();
 let currentKeyIndex = 0;
 
-if (apiKeys.length === 0) {
-    console.error("FATAL: No YouTube API keys found. Please configure YOUTUBE_API_KEY_1, etc. in .env");
-}
-
-const getApiKey = () => {
+const getApiKey = (apiKeys) => {
     if (apiKeys.length === 0) return null;
     const key = apiKeys[currentKeyIndex];
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
@@ -34,13 +31,14 @@ router.get('/search', async (req, res) => {
         const cachedResult = await YouTubeCache.findOne({ query: q });
 
         if (cachedResult) {
-            console.log(`✅ CACHE HIT for "${q}". Video ID: ${cachedResult.videoId}`);
+            legacyLogger.info('cache_hit');
             return res.json({ videoId: cachedResult.videoId });
         }
 
-        console.log(`❌ CACHE MISS for "${q}". Fetching from YouTube API...`);
+        legacyLogger.info('cache_miss');
         
         // --- API Key Rotation Logic (Option 1) ---
+        const apiKeys = getYoutubeKeys();
         if (apiKeys.length === 0) {
             return res.status(500).json({ error: 'Server is not configured with YouTube API keys.' });
         }
@@ -50,9 +48,8 @@ router.get('/search', async (req, res) => {
         let success = false;
 
         while (attempts < apiKeys.length && !success) {
-            const apiKey = getApiKey();
-            const keyNumber = apiKeys.indexOf(apiKey) + 1; // logical number for logging
-            console.log(`Using YouTube API Key #${keyNumber} (Attempt ${attempts + 1}/${apiKeys.length})`);
+            const apiKey = getApiKey(apiKeys);
+            legacyLogger.info('provider_attempt', { attempt: attempts + 1, total: apiKeys.length });
 
             try {
                 const response = await axios.get(url, {
@@ -61,12 +58,12 @@ router.get('/search', async (req, res) => {
 
                 if (response.data.items && response.data.items.length > 0) {
                     const videoId = response.data.items[0].id.videoId;
-                    console.log(`YouTube for "${q}" found video ID: ${videoId}`);
+                    legacyLogger.info('provider_result_found');
 
                     // Save the new result to the cache
                     const newCacheEntry = new YouTubeCache({ query: q, videoId: videoId });
                     await newCacheEntry.save();
-                    console.log(`💾 Saved to cache: "${q}" -> ${videoId}`);
+                    legacyLogger.info('cache_saved');
                     
                     success = true;
                     return res.json({ videoId });
@@ -85,14 +82,11 @@ router.get('/search', async (req, res) => {
                 
                 const isQuotaError = status === 403 || status === 429 || reason === 'quotaExceeded';
 
-                console.error('--- YouTube API Error ---');
-                if(error.response) console.error(`Status: ${status}`, 'Data:', JSON.stringify(error.response.data, null, 2));
-                else console.error('Error:', error.message);
-                console.error('--- End YouTube API Error ---');
+                legacyLogger.error('provider_request_failed', error);
 
                 if (isQuotaError) {
                     attempts++;
-                    console.warn(`⚠️ Quota exceeded (403/429) for key #${keyNumber}. Switching to next key...`);
+                    legacyLogger.warn('provider_quota_exceeded', { code: status });
                     // The loop will continue and getApiKey() will provide the next one.
                 } else {
                     // Non-quota error, abort
@@ -102,12 +96,12 @@ router.get('/search', async (req, res) => {
         }
         
         if (!success) {
-             console.error("All YouTube API keys have exceeded their quota or failed.");
+             legacyLogger.error('provider_keys_exhausted', { code: 'quota_exhausted' });
              return res.status(429).json({ error: 'All available API keys have exceeded their daily quota.' });
         }
 
     } catch (dbError) {
-        console.error("--- Database Error ---", dbError);
+        legacyLogger.error('cache_database_failed', dbError);
         res.status(500).json({ error: 'A database error occurred.' });
     }
 });

@@ -1,0 +1,12 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">Default profile avatar</title>
+  <desc id="description">A neutral person silhouette on a dark blue background.</desc>
+  <rect width="128" height="128" rx="64" fill="#172238" />
+  <circle cx="64" cy="47" r="24" fill="#91a6c7" />
+  <path d="M22 116c4-27 20-41 42-41s38 14 42 41" fill="#91a6c7" />
+</svg>

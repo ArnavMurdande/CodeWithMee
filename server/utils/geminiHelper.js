@@ -1,5 +1,8 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { getGeminiKeys } = require("./keyManager");
+const { createLegacyLogger } = require("./legacyLogger");
+
+const legacyLogger = createLegacyLogger("gemini");
 
 /**
  * Generates content using Google Gemini with automatic load balancing and failover.
@@ -28,7 +31,7 @@ const generateContentWithRetry = async (modelName, prompt) => {
             const genAI = new GoogleGenerativeAI(key);
             const model = genAI.getGenerativeModel({ model: modelName });
             
-            console.log(`Using Gemini Key [${key.substring(0, 4)}...] (Attempt ${i + 1}/${shuffledKeys.length})`);
+            legacyLogger.info("provider_attempt", { attempt: i + 1, total: shuffledKeys.length });
             
             const result = await model.generateContent(prompt);
             return result; // Success!
@@ -44,17 +47,17 @@ const generateContentWithRetry = async (modelName, prompt) => {
                                 (error.message && (error.message.includes('429') || error.message.includes('503')));
 
             if (isRetryable) {
-                console.warn(`⚠️ Gemini request failed with status ${status}. Switching to next key...`);
+                legacyLogger.warn("provider_retry", { code: status });
                 continue; // Try next key
             } else {
                 // Non-retryable error (e.g., 400 Bad Request, blocked content)
-                console.error(`❌ Gemini Non-Retryable Error: ${error.message}`);
+                legacyLogger.error("provider_non_retryable", error);
                 throw error;
             }
         }
     }
 
-    console.error("All Gemini API keys exhausted.");
+    legacyLogger.error("provider_keys_exhausted", lastError);
     throw lastError;
 };
 

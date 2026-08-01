@@ -1,0 +1,11 @@
+**/node_modules/**
+client/build/**
+client/coverage/**
+server/uploads/**
+coverage/**
+dist/**
+*.lock
+package-lock.json
+
+# Existing application source is migrated and formatted in inspected vertical slices.
+# P0A-S2 formats only the new root tooling surface to avoid rewriting user changes.

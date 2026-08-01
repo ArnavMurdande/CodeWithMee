@@ -1,114 +1,237 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { AuthContext } from '../context/AuthContext';
-import { useGoogleLogin } from '@react-oauth/google';
-import './Auth.css';
+import { resolveBackendUrl } from '../config/runtime';
+import { apiProblemCode } from '../lib/api';
+
+function authenticationMessage(error) {
+  const code = apiProblemCode(error);
+  const messages = {
+    account_unavailable: 'This account is currently unavailable.',
+    google_auth_unavailable: 'Google sign-in is not configured for this environment.',
+    invalid_credentials: 'The email or password is incorrect.',
+    invalid_or_expired_token: 'This link is invalid or has expired.',
+    password_compromised: 'Choose a password that has not appeared in known breaches.',
+    password_policy_failed: 'Use a unique password between 12 and 128 characters.',
+    registration_unavailable: 'An account with those details cannot be created.',
+  };
+  return messages[code] || 'The request could not be completed. Please try again.';
+}
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
   const auth = useContext(AuthContext);
+  const { confirmEmailVerification } = auth;
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const resetToken = searchParams.get('reset');
+  const verificationToken = searchParams.get('verify');
+  const initialMode = resetToken
+    ? 'reset'
+    : searchParams.get('mode') === 'forgot'
+      ? 'forgot'
+      : 'login';
+  const [mode, setMode] = useState(initialMode);
+  const [form, setForm] = useState({ displayName: '', email: '', password: '' });
+  const [error, setError] = useState(
+    searchParams.get('error') === 'google_auth_failed'
+      ? 'Google sign-in could not be completed.'
+      : '',
+  );
+  const [notice, setNotice] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [verifying, setVerifying] = useState(Boolean(verificationToken));
 
-  const { username, email, password } = formData;
-
-  const onChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const switchModeHandler = () => {
-    setIsLogin(prevState => !prevState);
-    setError('');
-  };
-
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await axios.post('http://localhost:5001/api/auth/google-profile', {
-          access_token: tokenResponse.access_token,
-        });
-        auth.login(res.data.token);
-      } catch (err) {
-        setError('Google Sign-In failed. Please try again.');
-        console.error(err);
-      }
-    },
-    onError: () => {
-      setError('Google Sign-In was unsuccessful.');
-    }
-  });
-
-  const onSubmit = async e => {
-    e.preventDefault();
-    setError('');
-
-    const endpoint = isLogin ? 'login' : 'register';
-    const url = `http://localhost:5001/api/auth/${endpoint}`;
-
-    try {
-      const body = isLogin ? { email, password } : { username, email, password };
-      const res = await axios.post(url, body, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  useEffect(() => {
+    if (!verificationToken) return;
+    let active = true;
+    confirmEmailVerification(verificationToken)
+      .then(() => {
+        if (!active) return;
+        setNotice('Email verified. You can now sign in or continue learning.');
+        setSearchParams({}, { replace: true });
+      })
+      .catch((requestError) => {
+        if (active) setError(authenticationMessage(requestError));
+      })
+      .finally(() => {
+        if (active) setVerifying(false);
       });
+    return () => {
+      active = false;
+    };
+  }, [confirmEmailVerification, setSearchParams, verificationToken]);
 
-      auth.login(res.data.token);
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Something went wrong. Please try again.';
-      setError(errorMessage);
-      console.error('Authentication error:', errorMessage);
+  const heading = useMemo(() => {
+    if (mode === 'register') return 'Create your account';
+    if (mode === 'forgot') return 'Reset your password';
+    if (mode === 'reset') return 'Choose a new password';
+    return 'Welcome back';
+  }, [mode]);
+
+  const changeMode = (nextMode) => {
+    setMode(nextMode);
+    setError('');
+    setNotice('');
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setNotice('');
+    setSubmitting(true);
+    try {
+      if (mode === 'login') {
+        await auth.signIn({ email: form.email, password: form.password });
+        navigate('/dashboard', { replace: true });
+      } else if (mode === 'register') {
+        await auth.register({
+          displayName: form.displayName,
+          email: form.email,
+          password: form.password,
+        });
+        navigate('/dashboard', { replace: true });
+      } else if (mode === 'forgot') {
+        await auth.requestPasswordReset(form.email);
+        setNotice('If the account is eligible, password-reset instructions have been queued.');
+      } else if (mode === 'reset') {
+        await auth.resetPassword({ password: form.password, resetToken });
+        setNotice('Password updated. Sign in again on every device.');
+        setSearchParams({}, { replace: true });
+        setMode('login');
+        setForm((current) => ({ ...current, password: '' }));
+      }
+    } catch (requestError) {
+      setError(authenticationMessage(requestError));
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const startGoogleSignIn = () => {
+    const returnTo = encodeURIComponent('/dashboard');
+    window.location.assign(resolveBackendUrl(`/api/v1/auth/google/start?returnTo=${returnTo}`));
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
-        
-        <form onSubmit={onSubmit}>
-          {!isLogin && (
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input type="text" id="username" name="username" value={username} onChange={onChange} required />
+        <h1>{heading}</h1>
+        <p className="auth-helper-text">
+          One human account can learn, join providers, and hold scoped organization roles.
+        </p>
+
+        {verifying ? (
+          <p className="auth-status" role="status">
+            Verifying your email…
+          </p>
+        ) : (
+          <form onSubmit={submit}>
+            {mode === 'register' && (
+              <div className="form-group">
+                <label htmlFor="displayName">Display name</label>
+                <input
+                  autoComplete="name"
+                  id="displayName"
+                  maxLength="80"
+                  onChange={(event) => setForm({ ...form, displayName: event.target.value })}
+                  required
+                  type="text"
+                  value={form.displayName}
+                />
+              </div>
+            )}
+
+            {mode !== 'reset' && (
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  autoComplete="email"
+                  id="email"
+                  maxLength="254"
+                  onChange={(event) => setForm({ ...form, email: event.target.value })}
+                  required
+                  type="email"
+                  value={form.email}
+                />
+              </div>
+            )}
+
+            {mode !== 'forgot' && (
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  id="password"
+                  maxLength="128"
+                  minLength={mode === 'login' ? 1 : 12}
+                  onChange={(event) => setForm({ ...form, password: event.target.value })}
+                  required
+                  type="password"
+                  value={form.password}
+                />
+                {mode !== 'login' && <small>Use 12–128 unique characters.</small>}
+              </div>
+            )}
+
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+            {notice && (
+              <p className="success-message" role="status">
+                {notice}
+              </p>
+            )}
+
+            <div className="button-group">
+              <button className="auth-button" disabled={submitting} type="submit">
+                {submitting
+                  ? 'Please wait…'
+                  : mode === 'login'
+                    ? 'Sign in'
+                    : mode === 'register'
+                      ? 'Create account'
+                      : mode === 'forgot'
+                        ? 'Send reset instructions'
+                        : 'Reset password'}
+              </button>
+              {mode === 'login' && (
+                <button className="google-button" onClick={startGoogleSignIn} type="button">
+                  Continue with Google
+                </button>
+              )}
             </div>
+          </form>
+        )}
+
+        <div className="auth-mode-actions">
+          {mode === 'login' && (
+            <>
+              <button
+                className="switch-button"
+                onClick={() => changeMode('register')}
+                type="button"
+              >
+                Create an account
+              </button>
+              <button className="switch-button" onClick={() => changeMode('forgot')} type="button">
+                Forgot password?
+              </button>
+            </>
           )}
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" value={email} onChange={onChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" value={password} onChange={onChange} required minLength="6" />
-          </div>
-
-          {error && <p className="error-message">{error}</p>}
-          
-          <div className="button-group">
-            <button type="submit" className="auth-button">
-              {isLogin ? 'Login' : 'Create Account'}
+          {mode !== 'login' && mode !== 'reset' && (
+            <button className="switch-button" onClick={() => changeMode('login')} type="button">
+              Back to sign in
             </button>
-            <button type="button" onClick={() => handleGoogleLogin()} className="google-button">
-               {isLogin ? 'Log in with ' : 'Sign up with '}
-               <span className="g-blue">G</span>
-               <span className="g-red">o</span>
-               <span className="g-yellow">o</span>
-               <span className="g-blue">g</span>
-               <span className="g-green">l</span>
-               <span className="g-red">e</span>
-            </button>
-          </div>
-        </form>
+          )}
+        </div>
 
-        <button onClick={switchModeHandler} className="switch-button">
-          {isLogin ? 'Switch to Sign Up' : 'Switch to Login'}
-        </button>
+        <p className="provider-auth-note">
+          Course providers sign in here, then create or join an organization with their verified
+          email.
+        </p>
       </div>
     </div>
   );

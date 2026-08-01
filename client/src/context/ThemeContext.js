@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
-import axios from 'axios';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import axios from '../lib/api';
 import { AuthContext } from './AuthContext';
 
 // Predefined theme presets
@@ -70,16 +70,40 @@ const defaultTheme = {
   customColors: false,
 };
 
+const THEME_COLOR = /^#[0-9a-f]{6}$/i;
+const THEME_COLOR_KEYS = new Set(['color1', 'color2', 'color3']);
+
+function normalizeTheme(candidate) {
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    return defaultTheme;
+  }
+  const preset = Object.prototype.hasOwnProperty.call(themePresets, candidate.preset)
+    ? candidate.preset
+    : candidate.preset === 'custom'
+      ? 'custom'
+      : defaultTheme.preset;
+  const presetFallback = themePresets[preset] || defaultTheme;
+  return {
+    preset,
+    color1: THEME_COLOR.test(candidate.color1) ? candidate.color1 : presetFallback.color1,
+    color2: THEME_COLOR.test(candidate.color2) ? candidate.color2 : presetFallback.color2,
+    color3: THEME_COLOR.test(candidate.color3) ? candidate.color3 : presetFallback.color3,
+    customColors: preset === 'custom' && candidate.customColors === true,
+  };
+}
+
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const { token, isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
   const [theme, setTheme] = useState(() => {
     try {
       const saved = localStorage.getItem('cwm-theme');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
+      if (saved) return normalizeTheme(JSON.parse(saved));
+    } catch {
+      // Ignore invalid or unavailable local persistence and use the safe default.
+    }
     return defaultTheme;
   });
 
@@ -88,50 +112,52 @@ export const ThemeProvider = ({ children }) => {
 
   // Save to localStorage immediately (instant feedback)
   useEffect(() => {
-    localStorage.setItem('cwm-theme', JSON.stringify(theme));
+    try {
+      localStorage.setItem('cwm-theme', JSON.stringify(theme));
+    } catch {
+      // Theme persistence is optional; the in-memory theme remains usable.
+    }
   }, [theme]);
 
   // Load theme from backend on login
   useEffect(() => {
-    if (!isAuthenticated || !token) return;
+    if (!isAuthenticated) return;
     const loadTheme = async () => {
       try {
-        const res = await axios.get('http://localhost:5001/api/user/theme', {
-          headers: { 'x-auth-token': token },
-        });
+        const res = await axios.get('/api/user/theme');
         if (res.data && res.data.preset) {
-          const serverTheme = {
+          const serverTheme = normalizeTheme({
             preset: res.data.preset,
             color1: res.data.color1 || defaultTheme.color1,
             color2: res.data.color2 || defaultTheme.color2,
             color3: res.data.color3 || defaultTheme.color3,
             customColors: res.data.customColors || false,
-          };
+          });
           setTheme(serverTheme);
-          localStorage.setItem('cwm-theme', JSON.stringify(serverTheme));
         }
-      } catch (err) {
+      } catch {
         // Fall back to localStorage if backend is unavailable
         console.warn('Could not load theme from server, using local cache.');
       }
     };
     loadTheme();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   // Debounced save to backend
-  const saveToBackend = useCallback((newTheme) => {
-    if (!isAuthenticated || !token) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        await axios.put('http://localhost:5001/api/user/theme', newTheme, {
-          headers: { 'x-auth-token': token },
-        });
-      } catch (err) {
-        console.warn('Could not save theme to server.');
-      }
-    }, 800); // Wait 800ms after last change before saving (prevents spam)
-  }, [isAuthenticated, token]);
+  const saveToBackend = useCallback(
+    (newTheme) => {
+      if (!isAuthenticated) return;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        try {
+          await axios.put('/api/user/theme', newTheme);
+        } catch {
+          console.warn('Could not save theme to server.');
+        }
+      }, 800); // Wait 800ms after last change before saving (prevents spam)
+    },
+    [isAuthenticated],
+  );
 
   const applyPreset = (presetKey) => {
     const preset = themePresets[presetKey];
@@ -148,7 +174,8 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const setCustomColor = (colorKey, value) => {
-    setTheme(prev => {
+    if (!THEME_COLOR_KEYS.has(colorKey) || !THEME_COLOR.test(value)) return;
+    setTheme((prev) => {
       const newTheme = {
         ...prev,
         [colorKey]: value,

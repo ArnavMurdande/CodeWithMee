@@ -1,0 +1,54 @@
+{
+  "baseline": "20260801000100_core_baseline",
+  "database": "PostgreSQL 16+",
+  "migration": {
+    "bytes": 42059,
+    "path": "prisma/migrations/20260801000100_core_baseline/migration.sql",
+    "sha256": "954d0412113ae2ad137002654d9d33b3d8ae042f0bf3ca7a672783e0230aa7d8"
+  },
+  "migrations": [
+    {
+      "bytes": 42059,
+      "name": "20260801000100_core_baseline",
+      "path": "prisma/migrations/20260801000100_core_baseline/migration.sql",
+      "sha256": "954d0412113ae2ad137002654d9d33b3d8ae042f0bf3ca7a672783e0230aa7d8"
+    },
+    {
+      "bytes": 33414,
+      "name": "20260801000200_normalized_legacy_domains",
+      "path": "prisma/migrations/20260801000200_normalized_legacy_domains/migration.sql",
+      "sha256": "0288958ff8631ae4f8818031639187500d78a5e0d23acdc127bb23923410b297"
+    },
+    {
+      "bytes": 2823,
+      "name": "20260801000300_normalized_legacy_interactions",
+      "path": "prisma/migrations/20260801000300_normalized_legacy_interactions/migration.sql",
+      "sha256": "86f771b34218ef6a47b30420f02225e5a7f6b797580f00df87f7b7b3ee58796d"
+    },
+    {
+      "bytes": 645,
+      "name": "20260801000400_persistence_cutover_runtime",
+      "path": "prisma/migrations/20260801000400_persistence_cutover_runtime/migration.sql",
+      "sha256": "6e0aacdfb6ba5e15a2edb85e6948d0244977faca9b412dcf403ae2d74a43758a"
+    },
+    {
+      "bytes": 617,
+      "name": "20260801000500_restricted_content_formats",
+      "path": "prisma/migrations/20260801000500_restricted_content_formats/migration.sql",
+      "sha256": "ea76c543db71dcf014b860444c4d80a4370c2bff7dd7dc6c4c6e1345ae7b826a"
+    },
+    {
+      "bytes": 619,
+      "name": "20260801000600_operation_reliability",
+      "path": "prisma/migrations/20260801000600_operation_reliability/migration.sql",
+      "sha256": "d7a8fa8b9f53c8a8d9877e1c16bae69612870f9899f09f4c5bafde9a0f35ce16"
+    }
+  ],
+  "prisma": "7.9.1",
+  "schema": {
+    "bytes": 65479,
+    "path": "prisma/schema.prisma",
+    "sha256": "ce1adc102a9f51e48e9bcf029c08fa0ddc0f8fa88582a526d50dd3b9c41d2861"
+  },
+  "verification": "All six checksum-pinned migrations are required in order; fresh PostgreSQL apply, seed, runtime adapter, parity, activation, rollback and drift evidence is recorded in docs/TEST_RESULTS.md."
+}

@@ -1,0 +1,64 @@
+{
+  "auditExceptions": [
+    {
+      "workspace": "client",
+      "packages": ["react-router", "react-router-dom"],
+      "advisoryUrl": "https://github.com/advisories/GHSA-qwww-vcr4-c8h2",
+      "source": 1124282,
+      "severity": "high",
+      "expires": "2026-09-30",
+      "reason": "The application does not enable React Server Components or server actions. The latest verified v7 release and npm's suggested downgrade intersect different high advisory ranges; keep monitoring for a clean supported release."
+    }
+  ],
+  "allowedLicenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BlueOak-1.0.0",
+    "CC-BY-4.0",
+    "CC0-1.0",
+    "EPL-2.0",
+    "ISC",
+    "MIT",
+    "MIT and ISC",
+    "MIT-0",
+    "MPL-2.0",
+    "(MPL-2.0 OR Apache-2.0)",
+    "Unlicense"
+  ],
+  "licenseExceptions": [
+    {
+      "workspace": "client",
+      "package": "gsap",
+      "version": "3.15.0",
+      "license": "Standard 'no charge' license: https://gsap.com/standard-license.",
+      "expires": "2026-09-30",
+      "reason": "Existing direct UI dependency retained for Phase 0; commercial redistribution terms require owner review before production."
+    },
+    {
+      "workspace": "server",
+      "package": "busboy",
+      "version": "1.6.0",
+      "license": null,
+      "expires": "2026-09-30",
+      "reason": "Lock metadata omits the package's bundled MIT license; exact installed artifact was reviewed."
+    },
+    {
+      "workspace": "server",
+      "package": "seq-queue",
+      "version": "0.0.5",
+      "license": null,
+      "expires": "2026-09-30",
+      "reason": "Lock metadata omits the package's bundled MIT license; exact installed artifact was reviewed."
+    },
+    {
+      "workspace": "server",
+      "package": "streamsearch",
+      "version": "1.1.0",
+      "license": null,
+      "expires": "2026-09-30",
+      "reason": "Lock metadata omits the package's bundled MIT license; exact installed artifact was reviewed."
+    }
+  ]
+}

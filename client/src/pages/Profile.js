@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useContext } from 'react';
+import defaultAvatarUrl from '../assets/images/default-avatar.svg';
+import axios, { assetUrl } from '../lib/api';
 import { AuthContext } from '../context/AuthContext';
-import './Profile.css';
 
 const Profile = () => {
-  const { token, user, setUser } = useContext(AuthContext);
-  
+  const { requestPasswordReset, user, setUser } = useContext(AuthContext);
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -15,15 +15,13 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      let finalProfilePicUrl = user.profilePictureUrl || '';
-      // If it's a locally uploaded file, construct the full URL
-      if (finalProfilePicUrl && finalProfilePicUrl.startsWith('/uploads')) {
-        finalProfilePicUrl = `http://localhost:5001${finalProfilePicUrl}`;
-      }
+      const rawPicture = user.avatarUrl || user.profilePictureUrl || '';
+      const picUrl = rawPicture.startsWith('/uploads') ? assetUrl(rawPicture) : rawPicture;
+
       setFormData({
-        username: user.username || '',
+        username: user.username || user.displayName || '',
         email: user.email || '',
-        profilePictureUrl: finalProfilePicUrl,
+        profilePictureUrl: picUrl,
       });
     }
   }, [user]);
@@ -36,16 +34,11 @@ const Profile = () => {
     e.preventDefault();
     setStatusMessage('Updating...');
     try {
-      const res = await axios.put(
-        'http://localhost:5001/api/user/me',
-        { username: formData.username, email: formData.email },
-        { headers: { 'x-auth-token': token } }
-      );
-      // Update the user in the global context
+      const res = await axios.put('/api/user/me', { username: formData.username });
       setUser(res.data);
       setStatusMessage('Profile updated successfully!');
       setTimeout(() => setStatusMessage(''), 3000);
-    } catch (err) {
+    } catch {
       setStatusMessage('Error updating profile.');
       setTimeout(() => setStatusMessage(''), 3000);
     }
@@ -60,25 +53,29 @@ const Profile = () => {
 
     setStatusMessage('Uploading photo...');
     try {
-        const res = await axios.post(
-            'http://localhost:5001/api/user/upload-picture',
-            uploadData,
-            { headers: { 'x-auth-token': token } }
-        );
-        
-        // --- FIX: Immediately update the user in the global context ---
-        // This will trigger the useEffect in this component and the Header to update the image.
-        setUser(prevUser => ({
-          ...prevUser,
-          profilePictureUrl: res.data.profilePictureUrl
-        }));
+      const res = await axios.post('/api/user/upload-picture', uploadData);
+      setUser((prevUser) => ({
+        ...prevUser,
+        avatarUrl: res.data.profilePictureUrl,
+        profilePictureUrl: res.data.profilePictureUrl,
+      }));
 
-        setStatusMessage(res.data.message);
-        setTimeout(() => setStatusMessage(''), 3000);
+      setStatusMessage(res.data.message);
+      setTimeout(() => setStatusMessage(''), 3000);
     } catch (err) {
-        const errorMessage = err.response?.data?.message || 'Photo upload failed.';
-        setStatusMessage(String(errorMessage));
-        setTimeout(() => setStatusMessage(''), 3000);
+      const errorMessage = err.response?.data?.message || 'Photo upload failed.';
+      setStatusMessage(String(errorMessage));
+      setTimeout(() => setStatusMessage(''), 3000);
+    }
+  };
+
+  const requestPasswordChange = async () => {
+    setStatusMessage('Requesting password-reset instructions…');
+    try {
+      await requestPasswordReset(user.email);
+      setStatusMessage('If eligible, password-reset instructions have been queued.');
+    } catch {
+      setStatusMessage('Password-reset instructions could not be requested.');
     }
   };
 
@@ -86,31 +83,62 @@ const Profile = () => {
     <div className="profile-page-container">
       <div className="profile-card">
         <h2>Profile Settings</h2>
-        
+
         <div className="profile-picture-section">
-          <img src={formData.profilePictureUrl || 'https://i.imgur.com/3YQeY9r.png'} alt="Profile" className="profile-picture" />
-          <input type="file" id="file-upload" onChange={onFileChange} style={{display: 'none'}} accept="image/*"/>
-          <label htmlFor="file-upload" className="upload-button">Change Photo</label>
+          <img
+            src={formData.profilePictureUrl || defaultAvatarUrl}
+            alt="Profile"
+            className="profile-picture"
+          />
+          <input
+            type="file"
+            id="file-upload"
+            onChange={onFileChange}
+            style={{ display: 'none' }}
+            accept="image/*"
+          />
+          <label htmlFor="file-upload" className="upload-button">
+            Change Photo
+          </label>
         </div>
 
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label htmlFor="username">Username</label>
-            <input type="text" id="username" name="username" value={formData.username} onChange={onChange} required />
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={onChange}
+              required
+            />
           </div>
           <div className="form-group">
             <label htmlFor="email">Email</label>
-            <input type="email" id="email" name="email" value={formData.email} onChange={onChange} required />
+            <input type="email" id="email" name="email" value={formData.email} readOnly />
           </div>
           <div className="form-group">
-             <label>Password</label>
-             <button type="button" className="change-password-button">Change Password</button>
+            <span className="form-label">Password</span>
+            <button
+              type="button"
+              className="change-password-button"
+              onClick={requestPasswordChange}
+            >
+              Change Password
+            </button>
           </div>
-          
-          <button type="submit" className="save-button">Save Changes</button>
+
+          <button type="submit" className="save-button">
+            Save Changes
+          </button>
         </form>
 
-        {statusMessage && <p className="status-message">{statusMessage}</p>}
+        {statusMessage && (
+          <p className="status-message" role="status">
+            {statusMessage}
+          </p>
+        )}
       </div>
     </div>
   );

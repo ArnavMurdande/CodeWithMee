@@ -1,147 +1,189 @@
-import React, { useState, useContext, Component } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useContext, useState } from 'react';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
+import AppErrorBoundary from './components/AppErrorBoundary';
+import AppShell from './components/AppShell';
+import { AsyncState } from './components/ui/AsyncState';
 import { AuthContext } from './context/AuthContext';
 import { ThemeContext } from './context/ThemeContext';
-// Import Components
-import AnimatedBackground from './components/AnimatedBackground';
-import CustomCursor from './components/CustomCursor';
-import ScrollProgress from './components/ScrollProgress';
-import Header from './components/Header';
-import NotesWidget from './components/NotesWidget';
+import './styles/route-styles.css';
+import './styles/responsive.css';
 
-// Import Pages
-import HomePage from './pages/HomePage';
-import Auth from './pages/Auth';
-import Sandbox from './pages/Sandbox';
-import Pathways from './pages/Pathways';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import Challenges from './pages/Challenges';
-import CreateChallenge from './pages/CreateChallenge';
-import ChallengeSolver from './pages/ChallengeSolver';
-import Settings from './pages/Settings';
-
-// Import Styles
-import './App.css';
-
-// --- FIX FOR RESIZE OBSERVER ERROR ---
-// This component catches specific, non-critical errors and prevents the app from crashing.
-class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error) {
-    // Check if it's the specific ResizeObserver error
-    if (error.message && error.message.includes('ResizeObserver loop completed with undelivered notifications')) {
-      // It's the error we want to ignore, so we don't update state to show a fallback UI
-      console.warn('Ignored ResizeObserver loop error.');
-      return { hasError: false };
-    }
-    // For other errors, trigger the fallback UI
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    // Log other errors, but not the ResizeObserver one
-    if (!error.message.includes('ResizeObserver loop completed with undelivered notifications')) {
-      console.error("Uncaught error:", error, errorInfo);
-    }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <h1>Something went wrong. Please refresh the page.</h1>;
-    }
-    return this.props.children;
-  }
-}
-
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Challenges = lazy(() => import('./pages/Challenges'));
+const ChallengeSolver = lazy(() => import('./pages/ChallengeSolver'));
+const Courses = lazy(() => import('./pages/Courses'));
+const CreateChallenge = lazy(() => import('./pages/CreateChallenge'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const Pathways = lazy(() => import('./pages/Pathways'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Sandbox = lazy(() => import('./pages/Sandbox'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Space = lazy(() => import('./pages/Space'));
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'white' }}>
-        <h2>Loading...</h2>
-      </div>
+      <AsyncState
+        description="Restoring your secure session."
+        label="Restoring session"
+        title="Opening your workspace…"
+        type="loading"
+      />
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/auth" />;
+  return isAuthenticated ? children : <Navigate replace to="/auth" />;
 };
+
+const NotFoundRoute = () => (
+  <AsyncState
+    action={
+      <Link className="cwm-button cwm-button--primary" to="/">
+        Return home
+      </Link>
+    }
+    description="The link may be outdated, or the page has moved to a versioned workspace."
+    label="Page not found"
+    title="This page is not available"
+    type="empty"
+  />
+);
+
+const RouteLoadingState = () => (
+  <AsyncState
+    description="Loading only the code needed for this page."
+    label="Loading page"
+    title="Opening this page…"
+    type="loading"
+  />
+);
 
 function App() {
   const location = useLocation();
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const { theme } = useContext(ThemeContext);
-
   const [viewRoadmapsHandler, setViewRoadmapsHandler] = useState(null);
   const [pageTitle, setPageTitle] = useState('');
-
   const showHeader = location.pathname !== '/auth';
 
   return (
-    <div className="app-container">
-      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
-        <defs>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-        </defs>
-      </svg>
-
-      <CustomCursor />
-      <ScrollProgress />
-      <AnimatedBackground color1={theme.color1} color2={theme.color2} color3={theme.color3} />
-
-      {showHeader && <Header onViewRoadmapsClick={viewRoadmapsHandler} pageTitle={pageTitle} />}
-
-      <main className={!showHeader ? 'no-header-padding' : ''}>
-        <Routes>
-            <Route path="/" element={<HomePage />} />
+    <AppErrorBoundary>
+      <AppShell
+        headerProps={{ onViewRoadmapsClick: viewRoadmapsHandler, pageTitle }}
+        isAuthenticated={isAuthenticated}
+        showHeader={showHeader}
+        theme={theme}
+      >
+        <Suspense fallback={<RouteLoadingState />}>
+          <Routes>
+            <Route element={<HomePage />} path="/" />
             <Route
+              element={isAuthenticated ? <Navigate replace to="/dashboard" /> : <Auth />}
               path="/auth"
-              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Auth />}
             />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route
-              path="/pathways"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+              path="/dashboard"
+            />
+            <Route
               element={
                 <ProtectedRoute>
                   <Pathways setViewRoadmapsHandler={setViewRoadmapsHandler} />
                 </ProtectedRoute>
               }
+              path="/pathways"
             />
             <Route
-              path="/sandbox"
               element={
                 <ProtectedRoute>
-                  <ErrorBoundary>
-                    <Sandbox setPageTitle={setPageTitle} />
-                  </ErrorBoundary>
+                  <Sandbox setPageTitle={setPageTitle} />
                 </ProtectedRoute>
               }
+              path="/sandbox"
             />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
-            <Route path="/challenges/new" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
-            <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeSolver /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+              path="/profile"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+              path="/settings"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Challenges />
+                </ProtectedRoute>
+              }
+              path="/challenges"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <CreateChallenge />
+                </ProtectedRoute>
+              }
+              path="/challenges/new"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <ChallengeSolver />
+                </ProtectedRoute>
+              }
+              path="/challenges/:id"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Courses />
+                </ProtectedRoute>
+              }
+              path="/courses"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Space />
+                </ProtectedRoute>
+              }
+              path="/space"
+            />
+            <Route element={<Navigate replace to="/dashboard" />} path="/company/dashboard" />
+            <Route
+              element={
+                <ProtectedRoute>
+                  {user?.platformRole === 'superadmin' ? (
+                    <AdminDashboard />
+                  ) : (
+                    <Navigate replace to="/dashboard" />
+                  )}
+                </ProtectedRoute>
+              }
+              path="/admin"
+            />
+            <Route element={<NotFoundRoute />} path="*" />
           </Routes>
-      </main>
-      
-      {/* Floating Notes Widget — global, visible only when logged in */}
-      {isAuthenticated && <NotesWidget />}
-
-      {/* Moved Cursor to bottom to ensure z-index stacking works best */}
-      <CustomCursor />
-    </div>
+        </Suspense>
+      </AppShell>
+    </AppErrorBoundary>
   );
 }
 

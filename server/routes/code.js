@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const authMiddleware = require("../middleware/authMiddleware");
+const { getRuntimeConfig } = require("../config/runtime");
+const { createLegacyLogger } = require("../utils/legacyLogger");
+
+const legacyLogger = createLegacyLogger("code");
 
 // --- Language Mapping: Frontend value → Piston language identifier ---
 const LANGUAGE_MAP = {
@@ -121,7 +125,7 @@ INSERT INTO enrollments VALUES (5, 2, 'Spring 2025');
 // @access  Private
 router.post("/run", authMiddleware, async (req, res) => {
   const { code, language } = req.body;
-  const PISTON_API_URL = "http://localhost:2000/api/v2/execute";
+  const { pistonApiUrl } = getRuntimeConfig();
 
   if (!code) {
     return res.status(400).json({ error: "No code provided." });
@@ -161,7 +165,7 @@ router.post("/run", authMiddleware, async (req, res) => {
       stdin: "",
     };
 
-    const { data: result } = await axios.post(PISTON_API_URL, payload);
+    const { data: result } = await axios.post(pistonApiUrl, payload);
 
     // Check for compilation errors (non-zero exit code)
     if (result.compile && result.compile.code !== 0) {
@@ -180,10 +184,7 @@ router.post("/run", authMiddleware, async (req, res) => {
     }
     res.json({ output });
   } catch (apiError) {
-    console.error(
-      "Piston API Error:",
-      apiError.response ? apiError.response.data : apiError.message,
-    );
+    legacyLogger.error("runner_request_failed", apiError);
     res.status(500).json({
       error:
         "Error executing code via API. The service may be temporarily down.",

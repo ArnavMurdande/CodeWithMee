@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "viewports": [
+    { "id": "phone-360", "width": 360, "height": 740 },
+    { "id": "phone-390", "width": 390, "height": 844 },
+    { "id": "tablet-768", "width": 768, "height": 1024 },
+    { "id": "desktop-1024", "width": 1024, "height": 768 },
+    { "id": "wide-1440", "width": 1440, "height": 900 }
+  ],
+  "routes": [
+    {
+      "id": "home",
+      "path": "/",
+      "fixture": "anonymous",
+      "viewportIds": ["phone-360", "phone-390", "tablet-768", "desktop-1024", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "named-interactions",
+        "no-external-assets",
+        "no-video"
+      ]
+    },
+    {
+      "id": "auth",
+      "path": "/auth",
+      "fixture": "anonymous",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "labeled-form",
+        "keyboard-mode-switch"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "path": "/dashboard",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": ["one-main", "one-h1", "no-page-horizontal-overflow", "loading-empty-error"]
+    },
+    {
+      "id": "pathways",
+      "path": "/pathways",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": ["one-main", "one-h1", "no-page-horizontal-overflow", "dialog-focus-return"]
+    },
+    {
+      "id": "sandbox",
+      "path": "/sandbox",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": ["one-main", "no-page-horizontal-overflow", "named-editor", "bounded-output"]
+    },
+    {
+      "id": "profile",
+      "path": "/profile",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": ["one-main", "one-h1", "no-page-horizontal-overflow", "labeled-form"]
+    },
+    {
+      "id": "settings",
+      "path": "/settings",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": ["one-main", "one-h1", "no-page-horizontal-overflow", "labeled-form"]
+    },
+    {
+      "id": "challenges",
+      "path": "/challenges",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "intentional-table-scroll"
+      ]
+    },
+    {
+      "id": "challenge-create",
+      "path": "/challenges/new",
+      "fixture": "verified-author",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "labeled-form",
+        "named-editor"
+      ]
+    },
+    {
+      "id": "challenge-detail",
+      "path": "/challenges/:id",
+      "fixture": "published-challenge",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "named-editor",
+        "intentional-output-scroll"
+      ]
+    },
+    {
+      "id": "courses",
+      "path": "/courses",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "accessible-media-disclosure"
+      ]
+    },
+    {
+      "id": "space",
+      "path": "/space",
+      "fixture": "verified-learner",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "accessible-media-disclosure",
+        "dialog-focus-return"
+      ]
+    },
+    {
+      "id": "provider-tombstone",
+      "path": "/company/dashboard",
+      "fixture": "anonymous",
+      "viewportIds": ["phone-360", "wide-1440"],
+      "assertions": ["redirect-dashboard-then-auth"]
+    },
+    {
+      "id": "admin",
+      "path": "/admin",
+      "fixture": "superadmin",
+      "viewportIds": ["phone-360", "tablet-768", "wide-1440"],
+      "assertions": [
+        "one-main",
+        "one-h1",
+        "no-page-horizontal-overflow",
+        "intentional-table-scroll"
+      ]
+    },
+    {
+      "id": "not-found",
+      "path": "*",
+      "fixture": "anonymous",
+      "viewportIds": ["phone-360", "wide-1440"],
+      "assertions": ["one-main", "semantic-empty-state", "return-home"]
+    }
+  ],
+  "preferenceScenarios": [
+    {
+      "id": "reduced-motion",
+      "media": "prefers-reduced-motion",
+      "value": "reduce",
+      "assertions": ["decorative-animation-stops", "content-remains"]
+    },
+    {
+      "id": "higher-contrast",
+      "media": "prefers-contrast",
+      "value": "more",
+      "assertions": ["focus-visible", "content-remains"]
+    }
+  ],
+  "keyboardScenarios": [
+    "skip-to-main",
+    "header-menu-open-close-focus-return",
+    "dropdown-arrows-home-end-escape-tab",
+    "dialog-tab-trap-escape-focus-return",
+    "auth-mode-and-submit",
+    "notes-open-edit-close"
+  ]
+}

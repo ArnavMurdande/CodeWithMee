@@ -1,31 +1,24 @@
-import React from 'react';
 import { TypeAnimation } from 'react-type-animation';
-import './HeroSection.css';
 
 const HeroSection = () => {
   return (
     <section className="hero-section">
-      {/* The title is now outside and above the box */}
-      <h1 className="hero-title">
+      <h1 aria-label="Code With Mee" className="hero-title">
         <TypeAnimation
-          sequence={[
-            '',
-            1000,
-            'Code With Mee', // Changed text to include spaces
-          ]}
+          aria-hidden="true"
+          sequence={['', 1000, 'Code With Mee']}
           wrapper="span"
           cursor={true}
-          speed={40} // Adjusted speed for a slightly slower, more deliberate effect
+          speed={40}
           repeat={0}
         />
       </h1>
 
-      {/* The hero-box now only contains the subtitle */}
       <div className="hero-box">
         <p className="hero-subtitle">
-            <span className="bracket">&lt;</span>
-            Your Interactive Coding Sandbox
-            <span className="bracket">&gt;</span>
+          <span className="bracket">&lt;</span>
+          Your Interactive Coding Sandbox
+          <span className="bracket">&gt;</span>
         </p>
       </div>
     </section>

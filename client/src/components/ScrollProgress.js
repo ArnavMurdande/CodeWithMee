@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './ScrollProgress.css';
@@ -6,42 +6,42 @@ import './ScrollProgress.css';
 gsap.registerPlugin(ScrollTrigger);
 
 const ScrollProgress = () => {
-    const trackRef = useRef(null);
-    const thumbRef = useRef(null);
+  const trackRef = useRef(null);
+  const thumbRef = useRef(null);
 
-    useEffect(() => {
-        const thumb = thumbRef.current;
-        
-        const ctx = gsap.context(() => {
-            gsap.to(thumb, {
-                scrollTrigger: {
-                    trigger: document.documentElement,
-                    start: 'top top',
-                    end: 'bottom bottom',
-                    scrub: 0.1, 
-                },
-                height: '100%',
-                ease: 'none',
-            });
-        });
+  useEffect(() => {
+    const thumb = thumbRef.current;
 
-        const resizeObserver = new ResizeObserver(() => {
-            ScrollTrigger.refresh();
-        });
-        
-        resizeObserver.observe(document.body);
+    const ctx = gsap.context(() => {
+      gsap.to(thumb, {
+        scrollTrigger: {
+          trigger: document.documentElement,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.1,
+        },
+        height: '100%',
+        ease: 'none',
+      });
+    });
 
-        return () => {
-             ctx.revert();
-             resizeObserver.disconnect();
-        };
-    }, []);
+    const resizeObserver = new ResizeObserver(() => {
+      ScrollTrigger.refresh();
+    });
 
-    return (
-        <div ref={trackRef} className="scroll-track">
-            <div ref={thumbRef} className="scroll-thumb"></div>
-        </div>
-    );
+    resizeObserver.observe(document.body);
+
+    return () => {
+      ctx.revert();
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div ref={trackRef} className="scroll-track">
+      <div ref={thumbRef} className="scroll-thumb"></div>
+    </div>
+  );
 };
 
 export default ScrollProgress;

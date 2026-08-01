@@ -1,0 +1,110 @@
+name: Database migration
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/database.yml'
+      - 'package.json'
+      - 'server/package.json'
+      - 'server/package-lock.json'
+      - 'server/prisma.config.ts'
+      - 'server/scripts/database-safety.js'
+      - 'server/scripts/run-database-command.js'
+      - 'server/scripts/seed-database.js'
+      - 'server/test/database-lifecycle.js'
+      - 'server/test/database-lifecycle.test.js'
+      - 'server/scripts/create-portable-backup.js'
+      - 'server/scripts/portable-backup-safety.js'
+      - 'server/scripts/restore-portable-backup.js'
+      - 'server/modules/persistence/portable-backup.js'
+      - 'server/modules/persistence/legacy-removal.js'
+      - 'server/modules/files/object-store.js'
+      - 'server/modules/files/postgres-repository.js'
+      - 'server/modules/files/reconciliation.js'
+      - 'server/test/database-integration.js'
+      - 'server/test/file-reconciliation.test.js'
+      - 'server/test/legacy-removal.test.js'
+      - 'server/test/portable-backup.test.js'
+      - 'server/test/portable-backup-integration.js'
+      - 'prisma/**'
+      - 'scripts/tests/database-contract.test.mjs'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/database.yml'
+      - 'server/package.json'
+      - 'server/package-lock.json'
+      - 'server/prisma.config.ts'
+      - 'server/scripts/database-safety.js'
+      - 'server/scripts/run-database-command.js'
+      - 'server/scripts/seed-database.js'
+      - 'server/test/database-lifecycle.js'
+      - 'server/test/database-lifecycle.test.js'
+      - 'server/scripts/create-portable-backup.js'
+      - 'server/scripts/portable-backup-safety.js'
+      - 'server/scripts/restore-portable-backup.js'
+      - 'server/modules/persistence/portable-backup.js'
+      - 'server/modules/persistence/legacy-removal.js'
+      - 'server/modules/files/object-store.js'
+      - 'server/modules/files/postgres-repository.js'
+      - 'server/modules/files/reconciliation.js'
+      - 'server/test/database-integration.js'
+      - 'server/test/file-reconciliation.test.js'
+      - 'server/test/legacy-removal.test.js'
+      - 'server/test/portable-backup.test.js'
+      - 'server/test/portable-backup-integration.js'
+      - 'prisma/**'
+      - 'scripts/tests/database-contract.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16.14-bookworm@sha256:92620daddcd947f8d5ab5ba66e848702fe443d87fed30c4cea8e389fd78dfc55
+        env:
+          POSTGRES_DB: codewithmee_ci
+          POSTGRES_PASSWORD: codewithmee_ci_password
+          POSTGRES_USER: codewithmee_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U codewithmee_ci -d codewithmee_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_ADMIN_URL: postgresql://codewithmee_ci:codewithmee_ci_password@127.0.0.1:5432/postgres
+      DATABASE_SAFETY_SCOPE: disposable
+      DATABASE_TEST_PREFIX: codewithmee_p0f
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install root tooling
+        run: npm ci
+      - name: Install server dependencies
+        run: npm --prefix server ci
+      - name: Validate Prisma schema
+        run: npm run db:validate
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Exercise server recovery contracts
+        run: npm run test:server
+      - name: Exercise isolated migrations, seed, constraints, adapters and recovery
+        run: npm run test:database:integration

@@ -5,14 +5,34 @@
 
 # Environment files with secret keys
 .env
+.env.*
+!.env.example
+!**/.env.example
 /client/.env
 /server/.env
 
 # Production build folders
 /build
 /client/build
+/client/dist
+/dist
+/coverage
+/test-results
+/playwright-report
+/blob-report
+/server/generated/prisma
+/migration-output
+/.migration-private
+*.cwmbackup
+*.reconciliation.json
+/quarantine/
+
+# Runtime upload bytes are private migration inputs, never source artifacts.
+/server/uploads/
+/server/uploads/**
 
 # Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+

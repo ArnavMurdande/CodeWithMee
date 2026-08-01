@@ -1,0 +1,49 @@
+/* =======================================
+   PERSISTENT ULTRA-THIN WHITE SCROLL ROW
+   ======================================= */
+
+.persistent-scroll-wrapper {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.persistent-scroll-content {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none !important; /* Hide native fading OS scrollbars */
+  padding-bottom: 0.65rem !important; /* Space for the persistent line */
+}
+
+.persistent-scroll-content:focus-visible {
+  border-radius: var(--cwm-radius-sm);
+}
+
+.persistent-scroll-content::-webkit-scrollbar {
+  display: none !important; /* Completely hide native auto-hiding webkit scrollbar */
+}
+
+/* 100% Persistent Track Line (Never Fades Away) */
+.persistent-track-line {
+  position: absolute;
+  bottom: 4px;
+  left: 10px;
+  right: 10px;
+  height: 1.5px; /* Ultra-thin 1.5px line */
+  background: rgba(255, 255, 255, 0.14); /* Soft baseline track */
+  border-radius: 9999px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 100% Persistent Active White Thumb Line */
+.persistent-thumb-line {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7); /* Pure soft white thumb line */
+  border-radius: 9999px; /* Rounded pill caps on both edges */
+  transition: left 0.05s linear;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}

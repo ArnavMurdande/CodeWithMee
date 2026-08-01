@@ -1,0 +1,1306 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../server/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE           @map("active")
+  SUSPENDED        @map("suspended")
+  BANNED           @map("banned")
+  DELETION_PENDING @map("deletion_pending")
+
+  @@map("user_status")
+}
+
+enum PlatformRole {
+  LEARNER    @map("learner")
+  MODERATOR  @map("moderator")
+  SUPPORT    @map("support")
+  SUPERADMIN @map("superadmin")
+
+  @@map("platform_role")
+}
+
+enum AuthorizationScope {
+  PLATFORM     @map("platform")
+  ORGANIZATION @map("organization")
+  COURSE       @map("course")
+
+  @@map("authorization_scope")
+}
+
+enum IdentityProvider {
+  LOCAL  @map("local")
+  GOOGLE @map("google")
+
+  @@map("identity_provider")
+}
+
+enum SessionClient {
+  WEB       @map("web")
+  EXTENSION @map("extension")
+
+  @@map("session_client")
+}
+
+enum RefreshTokenState {
+  CURRENT  @map("current")
+  CONSUMED @map("consumed")
+
+  @@map("refresh_token_state")
+}
+
+enum IdentityTokenKind {
+  EMAIL_VERIFICATION @map("email_verification")
+  PASSWORD_RESET     @map("password_reset")
+
+  @@map("identity_token_kind")
+}
+
+enum PkceMethod {
+  S256 @map("S256")
+
+  @@map("pkce_method")
+}
+
+enum OrganizationVerificationStatus {
+  DRAFT          @map("draft")
+  PENDING_REVIEW @map("pending_review")
+  APPROVED       @map("approved")
+  REJECTED       @map("rejected")
+  SUSPENDED      @map("suspended")
+
+  @@map("organization_verification_status")
+}
+
+enum OrganizationRole {
+  OWNER      @map("owner")
+  ADMIN      @map("admin")
+  INSTRUCTOR @map("instructor")
+  GRADER     @map("grader")
+  ANALYST    @map("analyst")
+
+  @@map("organization_role")
+}
+
+enum MembershipStatus {
+  ACTIVE    @map("active")
+  SUSPENDED @map("suspended")
+  REVOKED   @map("revoked")
+
+  @@map("membership_status")
+}
+
+enum InvitationStatus {
+  PENDING  @map("pending")
+  ACCEPTED @map("accepted")
+  REVOKED  @map("revoked")
+  EXPIRED  @map("expired")
+
+  @@map("invitation_status")
+}
+
+enum VerificationReviewStatus {
+  PENDING_REVIEW @map("pending_review")
+  APPROVED       @map("approved")
+  REJECTED       @map("rejected")
+
+  @@map("verification_review_status")
+}
+
+enum FileScanStatus {
+  PENDING     @map("pending")
+  CLEAN       @map("clean")
+  INFECTED    @map("infected")
+  UNSCANNABLE @map("unscannable")
+  FAILED      @map("failed")
+
+  @@map("file_scan_status")
+}
+
+enum FileVisibility {
+  PRIVATE      @map("private")
+  ORGANIZATION @map("organization")
+  ENROLLED     @map("enrolled")
+  PUBLIC       @map("public")
+
+  @@map("file_visibility")
+}
+
+enum FileState {
+  UPLOAD_PENDING @map("upload_pending")
+  QUARANTINED    @map("quarantined")
+  READY          @map("ready")
+  DELETED        @map("deleted")
+
+  @@map("file_state")
+}
+
+enum JobState {
+  PENDING   @map("pending")
+  RUNNING   @map("running")
+  SUCCEEDED @map("succeeded")
+  FAILED    @map("failed")
+  DEAD      @map("dead")
+
+  @@map("job_state")
+}
+
+enum ImportRunState {
+  INVENTORY  @map("inventory")
+  DRY_RUN    @map("dry_run")
+  IMPORTING  @map("importing")
+  RECONCILED @map("reconciled")
+  FAILED     @map("failed")
+
+  @@map("import_run_state")
+}
+
+enum ImportRecordState {
+  PLANNED     @map("planned")
+  IMPORTED    @map("imported")
+  QUARANTINED @map("quarantined")
+  SKIPPED     @map("skipped")
+
+  @@map("import_record_state")
+}
+
+enum ChallengeDifficulty {
+  EASY   @map("easy")
+  MEDIUM @map("medium")
+  HARD   @map("hard")
+
+  @@map("challenge_difficulty")
+}
+
+enum ChallengeTestVisibility {
+  VISIBLE @map("visible")
+  HIDDEN  @map("hidden")
+
+  @@map("challenge_test_visibility")
+}
+
+enum CourseVisibility {
+  PUBLIC  @map("public")
+  PRIVATE @map("private")
+
+  @@map("course_visibility")
+}
+
+enum CoursePricing {
+  FREE @map("free")
+  PAID @map("paid")
+
+  @@map("course_pricing")
+}
+
+enum EnrollmentStatus {
+  ENROLLED        @map("enrolled")
+  IN_PROGRESS     @map("in_progress")
+  COMPLETED       @map("completed")
+  PENDING_PAYMENT @map("pending_payment")
+
+  @@map("enrollment_status")
+}
+
+enum SocialRelationshipStatus {
+  REQUESTED @map("requested")
+  FOLLOWING @map("following")
+
+  @@map("social_relationship_status")
+}
+
+enum IdeaVisibility {
+  PRIVATE @map("private")
+  PUBLIC  @map("public")
+
+  @@map("idea_visibility")
+}
+
+model PermissionDefinition {
+  key         String             @id @db.VarChar(120)
+  scope       AuthorizationScope
+  description String             @db.VarChar(500)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  roles       RolePermission[]
+
+  @@map("permission_definitions")
+}
+
+model RoleDefinition {
+  key         String             @id @db.VarChar(120)
+  scope       AuthorizationScope
+  description String             @db.VarChar(500)
+  builtin     Boolean            @default(true)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  permissions RolePermission[]
+
+  @@map("role_definitions")
+}
+
+model RolePermission {
+  roleKey       String               @map("role_key") @db.VarChar(120)
+  permissionKey String               @map("permission_key") @db.VarChar(120)
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  role          RoleDefinition       @relation(fields: [roleKey], references: [key], onDelete: Cascade)
+  permission    PermissionDefinition @relation(fields: [permissionKey], references: [key], onDelete: Cascade)
+
+  @@id([roleKey, permissionKey])
+  @@index([permissionKey])
+  @@map("role_permissions")
+}
+
+model User {
+  id                              String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  emailNormalized                 String                       @unique(map: "users_email_normalized_key") @map("email_normalized") @db.VarChar(320)
+  emailDisplay                    String                       @map("email_display") @db.VarChar(320)
+  displayName                     String                       @map("display_name") @db.VarChar(120)
+  username                        String?                      @unique(map: "users_username_key") @db.VarChar(64)
+  status                          UserStatus                   @default(ACTIVE)
+  platformRole                    PlatformRole                 @default(LEARNER) @map("platform_role")
+  authorityRevision               Int                          @default(1) @map("authority_revision")
+  emailVerifiedAt                 DateTime?                    @map("email_verified_at") @db.Timestamptz(6)
+  avatarFileId                    String?                      @unique(map: "users_avatar_file_id_key") @map("avatar_file_id") @db.Uuid
+  deletionRequestedAt             DateTime?                    @map("deletion_requested_at") @db.Timestamptz(6)
+  deletedAt                       DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+  createdAt                       DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                       DateTime                     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  avatarFile                      FileObject?                  @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: Restrict)
+  authIdentities                  AuthIdentity[]
+  sessions                        Session[]
+  oneTimeTokens                   IdentityOneTimeToken[]
+  oauthAuthorizationCodes         OAuthAuthorizationCode[]
+  ownedOrganizations              Organization[]               @relation("OrganizationOwner")
+  organizationMemberships         OrganizationMembership[]
+  sentOrganizationInvitations     OrganizationInvitation[]     @relation("InvitationSender")
+  acceptedOrganizationInvitations OrganizationInvitation[]     @relation("InvitationAcceptor")
+  submittedVerificationReviews    ProviderVerificationReview[] @relation("VerificationSubmitter")
+  reviewedVerificationReviews     ProviderVerificationReview[] @relation("VerificationReviewer")
+  uploadedFiles                   FileObject[]                 @relation("FileUploader")
+  ownedFiles                      FileObject[]                 @relation("FileOwnerUser")
+  auditEvents                     AuditEvent[]                 @relation("AuditActor")
+  idempotencyKeys                 IdempotencyKey[]
+  featureFlagChanges              FeatureFlag[]                @relation("FeatureFlagUpdater")
+  importRuns                      ImportRun[]                  @relation("ImportRunOperator")
+  learningProfile                 LearningProfile?
+  learningRoadmaps                LearningRoadmap[]
+  learningConversations           LearningConversation[]
+  learningNotes                   LearningNote[]
+  videoProgressEntries            VideoProgress[]
+  jobSimulationProgress           JobSimulationProgress[]
+  socialProfile                   SocialProfile?
+  socialRelationshipsFrom         SocialRelationship[]         @relation("SocialRelationshipSource")
+  socialRelationshipsTo           SocialRelationship[]         @relation("SocialRelationshipTarget")
+  blocksCreated                   UserBlock[]                  @relation("UserBlockActor")
+  blocksReceived                  UserBlock[]                  @relation("UserBlockTarget")
+  createdChallenges               Challenge[]                  @relation("ChallengeCreator")
+  challengeComments               ChallengeComment[]
+  challengeReactions              ChallengeReaction[]
+  challengeCommentReactions       ChallengeCommentReaction[]
+  challengeBookmarks              ChallengeBookmark[]
+  challengeSolves                 ChallengeSolve[]
+  courseEnrollments               Enrollment[]
+  authoredPosts                   SocialPost[]                 @relation("PostUserAuthor")
+  authoredSocialComments          SocialComment[]              @relation("CommentUserAuthor")
+  socialPostReactions             SocialPostReaction[]
+  socialPostSaves                 SocialPostSave[]
+  socialCommentReactions          SocialCommentReaction[]
+  socialCommentSaves              SocialCommentSave[]
+  authoredIdeas                   Idea[]                       @relation("IdeaUserAuthor")
+  authoredIdeaUpdates             IdeaUpdate[]                 @relation("IdeaUpdateUserAuthor")
+  ideaReactions                   IdeaReaction[]
+
+  @@index([status, platformRole], map: "users_status_platform_role_idx")
+  @@index([createdAt], map: "users_created_at_idx")
+  @@map("users")
+}
+
+model AuthIdentity {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String           @map("user_id") @db.Uuid
+  provider        IdentityProvider
+  providerSubject String           @map("provider_subject") @db.VarChar(320)
+  passwordHash    String?          @map("password_hash") @db.VarChar(255)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubject], map: "auth_identities_provider_subject_key")
+  @@unique([userId, provider], map: "auth_identities_user_provider_key")
+  @@index([userId], map: "auth_identities_user_id_idx")
+  @@map("auth_identities")
+}
+
+model Session {
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String                @map("user_id") @db.Uuid
+  client            SessionClient
+  familyId          String                @unique(map: "sessions_family_id_key") @map("family_id") @db.Uuid
+  authenticatedAt   DateTime              @map("authenticated_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime              @map("absolute_expires_at") @db.Timestamptz(6)
+  idleExpiresAt     DateTime              @map("idle_expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime?             @map("revoked_at") @db.Timestamptz(6)
+  compromisedAt     DateTime?             @map("compromised_at") @db.Timestamptz(6)
+  lastUsedAt        DateTime              @map("last_used_at") @db.Timestamptz(6)
+  deviceLabel       String?               @map("device_label") @db.VarChar(120)
+  userAgentHash     String?               @map("user_agent_hash") @db.Char(64)
+  ipPrefix          String?               @map("ip_prefix") @db.VarChar(80)
+  csrfSecretHash    String                @map("csrf_secret_hash") @db.Char(64)
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens     SessionRefreshToken[]
+
+  @@index([userId, revokedAt, idleExpiresAt], map: "sessions_user_active_expiry_idx")
+  @@index([absoluteExpiresAt], map: "sessions_absolute_expiry_idx")
+  @@map("sessions")
+}
+
+model SessionRefreshToken {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId         String               @map("session_id") @db.Uuid
+  tokenHash         String               @unique(map: "session_refresh_tokens_hash_key") @map("token_hash") @db.Char(64)
+  state             RefreshTokenState    @default(CURRENT)
+  issuedAt          DateTime             @map("issued_at") @db.Timestamptz(6)
+  expiresAt         DateTime             @map("expires_at") @db.Timestamptz(6)
+  consumedAt        DateTime?            @map("consumed_at") @db.Timestamptz(6)
+  replacedByTokenId String?              @unique(map: "session_refresh_tokens_replaced_by_key") @map("replaced_by_token_id") @db.Uuid
+  session           Session              @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  replacedBy        SessionRefreshToken? @relation("RefreshRotation", fields: [replacedByTokenId], references: [id], onDelete: Restrict)
+  replaces          SessionRefreshToken? @relation("RefreshRotation")
+
+  @@index([sessionId, state, expiresAt], map: "session_refresh_tokens_session_state_expiry_idx")
+  @@map("session_refresh_tokens")
+}
+
+model IdentityOneTimeToken {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  kind       IdentityTokenKind
+  tokenHash  String            @unique(map: "identity_one_time_tokens_hash_key") @map("token_hash") @db.Char(64)
+  expiresAt  DateTime          @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime?         @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, expiresAt], map: "identity_one_time_tokens_user_kind_expiry_idx")
+  @@map("identity_one_time_tokens")
+}
+
+model OAuthClient {
+  id                 String                   @id @db.VarChar(128)
+  name               String                   @db.VarChar(120)
+  publicClient       Boolean                  @default(true) @map("public_client")
+  redirectUris       Json                     @map("redirect_uris") @db.JsonB
+  allowedScopes      Json                     @map("allowed_scopes") @db.JsonB
+  active             Boolean                  @default(true)
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  authorizationCodes OAuthAuthorizationCode[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthAuthorizationCode {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codeHash      String      @unique(map: "oauth_authorization_codes_hash_key") @map("code_hash") @db.Char(64)
+  clientId      String      @map("client_id") @db.VarChar(128)
+  userId        String      @map("user_id") @db.Uuid
+  redirectUri   String      @map("redirect_uri") @db.VarChar(2048)
+  scopes        Json        @db.JsonB
+  pkceChallenge String      @map("pkce_challenge") @db.VarChar(128)
+  pkceMethod    PkceMethod  @default(S256) @map("pkce_method")
+  expiresAt     DateTime    @map("expires_at") @db.Timestamptz(6)
+  consumedAt    DateTime?   @map("consumed_at") @db.Timestamptz(6)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  client        OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, expiresAt], map: "oauth_authorization_codes_client_expiry_idx")
+  @@index([userId, expiresAt], map: "oauth_authorization_codes_user_expiry_idx")
+  @@map("oauth_authorization_codes")
+}
+
+model Organization {
+  id                  String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug                String                         @unique(map: "organizations_slug_key") @db.VarChar(80)
+  name                String                         @db.VarChar(160)
+  description         String?                        @db.VarChar(2000)
+  industry            String?                        @db.VarChar(120)
+  ownerUserId         String                         @map("owner_user_id") @db.Uuid
+  logoFileId          String?                        @unique(map: "organizations_logo_file_id_key") @map("logo_file_id") @db.Uuid
+  verificationStatus  OrganizationVerificationStatus @default(DRAFT) @map("verification_status")
+  revision            Int                            @default(1)
+  deletedAt           DateTime?                      @map("deleted_at") @db.Timestamptz(6)
+  createdAt           DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner               User                           @relation("OrganizationOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  logoFile            FileObject?                    @relation("OrganizationLogo", fields: [logoFileId], references: [id], onDelete: Restrict)
+  memberships         OrganizationMembership[]
+  invitations         OrganizationInvitation[]
+  verificationReviews ProviderVerificationReview[]
+  ownedFiles          FileObject[]                   @relation("FileOwnerOrganization")
+  auditEvents         AuditEvent[]
+  courses             Course[]
+  authoredPosts       SocialPost[]                   @relation("PostOrganizationAuthor")
+  authoredComments    SocialComment[]                @relation("CommentOrganizationAuthor")
+  authoredIdeas       Idea[]                         @relation("IdeaOrganizationAuthor")
+  authoredIdeaUpdates IdeaUpdate[]                   @relation("IdeaUpdateOrganizationAuthor")
+
+  @@index([verificationStatus, createdAt], map: "organizations_verification_created_idx")
+  @@index([ownerUserId], map: "organizations_owner_user_id_idx")
+  @@map("organizations")
+}
+
+model OrganizationMembership {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  role           OrganizationRole
+  status         MembershipStatus @default(ACTIVE)
+  revision       Int              @default(1)
+  joinedAt       DateTime         @default(now()) @map("joined_at") @db.Timestamptz(6)
+  suspendedAt    DateTime?        @map("suspended_at") @db.Timestamptz(6)
+  revokedAt      DateTime?        @map("revoked_at") @db.Timestamptz(6)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, userId], map: "organization_memberships_org_user_key")
+  @@index([userId, status], map: "organization_memberships_user_status_idx")
+  @@index([organizationId, role, status], map: "organization_memberships_org_role_status_idx")
+  @@map("organization_memberships")
+}
+
+model OrganizationInvitation {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String           @map("organization_id") @db.Uuid
+  emailNormalized  String           @map("email_normalized") @db.VarChar(320)
+  role             OrganizationRole
+  status           InvitationStatus @default(PENDING)
+  tokenHash        String           @unique(map: "organization_invitations_hash_key") @map("token_hash") @db.Char(64)
+  invitedByUserId  String           @map("invited_by_user_id") @db.Uuid
+  acceptedByUserId String?          @map("accepted_by_user_id") @db.Uuid
+  expiresAt        DateTime         @map("expires_at") @db.Timestamptz(6)
+  acceptedAt       DateTime?        @map("accepted_at") @db.Timestamptz(6)
+  revokedAt        DateTime?        @map("revoked_at") @db.Timestamptz(6)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy        User             @relation("InvitationSender", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  acceptedBy       User?            @relation("InvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status, expiresAt], map: "organization_invitations_org_status_expiry_idx")
+  @@index([emailNormalized, status], map: "organization_invitations_email_status_idx")
+  @@map("organization_invitations")
+}
+
+model ProviderVerificationReview {
+  id                String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String                         @map("organization_id") @db.Uuid
+  submittedByUserId String                         @map("submitted_by_user_id") @db.Uuid
+  reviewerUserId    String?                        @map("reviewer_user_id") @db.Uuid
+  statement         String                         @db.VarChar(2000)
+  status            VerificationReviewStatus       @default(PENDING_REVIEW)
+  decisionReason    String?                        @map("decision_reason") @db.VarChar(2000)
+  submittedAt       DateTime                       @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?                      @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization                   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  submittedBy       User                           @relation("VerificationSubmitter", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  reviewer          User?                          @relation("VerificationReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  evidence          ProviderVerificationEvidence[]
+
+  @@index([status, submittedAt], map: "provider_verification_reviews_status_submitted_idx")
+  @@index([organizationId, createdAt], map: "provider_verification_reviews_org_created_idx")
+  @@map("provider_verification_reviews")
+}
+
+model ProviderVerificationEvidence {
+  reviewId  String                     @map("review_id") @db.Uuid
+  fileId    String                     @map("file_id") @db.Uuid
+  createdAt DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  review    ProviderVerificationReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  file      FileObject                 @relation(fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@id([reviewId, fileId])
+  @@index([fileId], map: "provider_verification_evidence_file_id_idx")
+  @@map("provider_verification_evidence")
+}
+
+model FileObject {
+  id                      String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId             String?                        @map("owner_user_id") @db.Uuid
+  ownerOrganizationId     String?                        @map("owner_organization_id") @db.Uuid
+  uploadedByUserId        String                         @map("uploaded_by_user_id") @db.Uuid
+  purpose                 String                         @db.VarChar(80)
+  storageProvider         String                         @default("s3") @map("storage_provider") @db.VarChar(32)
+  storageBucket           String                         @map("storage_bucket") @db.VarChar(255)
+  storageKey              String                         @unique(map: "files_storage_key_key") @map("storage_key") @db.VarChar(1024)
+  originalName            String                         @map("original_name") @db.VarChar(255)
+  declaredMime            String                         @map("declared_mime") @db.VarChar(255)
+  detectedMime            String?                        @map("detected_mime") @db.VarChar(255)
+  byteSize                BigInt                         @map("byte_size")
+  sha256                  String?                        @db.Char(64)
+  etag                    String?                        @db.VarChar(255)
+  state                   FileState                      @default(UPLOAD_PENDING)
+  scanStatus              FileScanStatus                 @default(PENDING) @map("scan_status")
+  visibility              FileVisibility                 @default(PRIVATE)
+  uploadedAt              DateTime?                      @map("uploaded_at") @db.Timestamptz(6)
+  scannedAt               DateTime?                      @map("scanned_at") @db.Timestamptz(6)
+  quarantineReason        String?                        @map("quarantine_reason") @db.VarChar(500)
+  deletedAt               DateTime?                      @map("deleted_at") @db.Timestamptz(6)
+  createdAt               DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ownerUser               User?                          @relation("FileOwnerUser", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  ownerOrganization       Organization?                  @relation("FileOwnerOrganization", fields: [ownerOrganizationId], references: [id], onDelete: Restrict)
+  uploadedBy              User                           @relation("FileUploader", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  avatarForUser           User?                          @relation("UserAvatar")
+  logoForOrganization     Organization?                  @relation("OrganizationLogo")
+  verificationEvidence    ProviderVerificationEvidence[]
+  learningNoteAttachments LearningNoteAttachment[]
+  socialPostMedia         SocialPostMedia[]
+
+  @@index([ownerUserId, purpose, scanStatus], map: "files_owner_user_purpose_scan_idx")
+  @@index([ownerOrganizationId, purpose, scanStatus], map: "files_owner_org_purpose_scan_idx")
+  @@index([sha256], map: "files_sha256_idx")
+  @@index([state, createdAt], map: "files_state_created_idx")
+  @@map("files")
+}
+
+model AuthorityControl {
+  key         String    @id @db.VarChar(120)
+  revision    BigInt    @default(0)
+  consumedAt  DateTime? @map("consumed_at") @db.Timestamptz(6)
+  operatorRef String?   @map("operator_ref") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("authority_controls")
+}
+
+model AuditEvent {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId    String?       @map("actor_user_id") @db.Uuid
+  actorSessionId String?       @map("actor_session_id") @db.Uuid
+  organizationId String?       @map("organization_id") @db.Uuid
+  action         String        @db.VarChar(160)
+  targetType     String        @map("target_type") @db.VarChar(80)
+  targetId       String        @map("target_id") @db.VarChar(255)
+  correlationId  String?       @map("correlation_id") @db.Uuid
+  requestId      String?       @map("request_id") @db.VarChar(100)
+  reason         String?       @db.VarChar(500)
+  source         String        @db.VarChar(80)
+  operatorRef    String?       @map("operator_ref") @db.VarChar(255)
+  beforeState    Json?         @map("before_state") @db.JsonB
+  afterState     Json?         @map("after_state") @db.JsonB
+  operationKey   String?       @unique(map: "audit_events_operation_key_key") @map("operation_key") @db.VarChar(160)
+  occurredAt     DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor          User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt], map: "audit_events_actor_created_idx")
+  @@index([organizationId, createdAt], map: "audit_events_org_created_idx")
+  @@index([action, createdAt], map: "audit_events_action_created_idx")
+  @@index([targetType, targetId, createdAt], map: "audit_events_target_created_idx")
+  @@index([occurredAt, id], map: "audit_events_occurred_id_idx")
+  @@map("audit_events")
+}
+
+model IdempotencyKey {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId    String    @map("actor_user_id") @db.Uuid
+  action         String    @db.VarChar(160)
+  key            String    @db.VarChar(160)
+  requestHash    String    @map("request_hash") @db.Char(64)
+  responseStatus Int?      @map("response_status")
+  responseBody   Json?     @map("response_body") @db.JsonB
+  leaseId        String?   @map("lease_id") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz(6)
+  resourceType   String?   @map("resource_type") @db.VarChar(80)
+  resourceId     String?   @map("resource_id") @db.VarChar(255)
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  actor          User      @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@unique([actorUserId, action, key], map: "idempotency_keys_actor_action_key")
+  @@index([expiresAt], map: "idempotency_keys_expires_at_idx")
+  @@index([leaseExpiresAt], map: "idempotency_keys_lease_expires_at_idx")
+  @@map("idempotency_keys")
+}
+
+model OutboxEvent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aggregateType String    @map("aggregate_type") @db.VarChar(80)
+  aggregateId   String    @map("aggregate_id") @db.VarChar(255)
+  eventType     String    @map("event_type") @db.VarChar(160)
+  eventVersion  Int       @default(1) @map("event_version")
+  payload       Json      @db.JsonB
+  availableAt   DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
+  attemptCount  Int       @default(0) @map("attempt_count")
+  lastErrorCode String?   @map("last_error_code") @db.VarChar(120)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  jobRuns       JobRun[]
+
+  @@index([processedAt, availableAt, createdAt], map: "outbox_events_pending_idx")
+  @@index([aggregateType, aggregateId, createdAt], map: "outbox_events_aggregate_idx")
+  @@map("outbox_events")
+}
+
+model JobRun {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outboxEventId String?      @map("outbox_event_id") @db.Uuid
+  jobType       String       @map("job_type") @db.VarChar(120)
+  sourceKey     String       @map("source_key") @db.VarChar(255)
+  state         JobState     @default(PENDING)
+  attempt       Int          @default(0)
+  leasedUntil   DateTime?    @map("leased_until") @db.Timestamptz(6)
+  workerId      String?      @map("worker_id") @db.VarChar(160)
+  errorCode     String?      @map("error_code") @db.VarChar(120)
+  errorSummary  String?      @map("error_summary") @db.VarChar(1000)
+  startedAt     DateTime?    @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime?    @map("finished_at") @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  outboxEvent   OutboxEvent? @relation(fields: [outboxEventId], references: [id], onDelete: SetNull)
+
+  @@unique([jobType, sourceKey, attempt], map: "job_runs_type_source_attempt_key")
+  @@index([state, leasedUntil, createdAt], map: "job_runs_state_lease_idx")
+  @@index([outboxEventId], map: "job_runs_outbox_event_id_idx")
+  @@map("job_runs")
+}
+
+model FeatureFlag {
+  key             String   @db.VarChar(160)
+  environment     String   @db.VarChar(40)
+  value           Json     @db.JsonB
+  rolloutRules    Json?    @map("rollout_rules") @db.JsonB
+  revision        Int      @default(1)
+  updatedByUserId String?  @map("updated_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedBy       User?    @relation("FeatureFlagUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@id([key, environment])
+  @@index([environment, updatedAt], map: "feature_flags_environment_updated_idx")
+  @@map("feature_flags")
+}
+
+model ImportRun {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceSystem      String            @map("source_system") @db.VarChar(80)
+  sourceSnapshot    String            @map("source_snapshot") @db.VarChar(1024)
+  sourceChecksum    String            @map("source_checksum") @db.Char(64)
+  configurationHash String            @map("configuration_hash") @db.Char(64)
+  state             ImportRunState    @default(INVENTORY)
+  dryRun            Boolean           @default(true) @map("dry_run")
+  startedByUserId   String?           @map("started_by_user_id") @db.Uuid
+  startedAt         DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt       DateTime?         @map("completed_at") @db.Timestamptz(6)
+  summary           Json?             @db.JsonB
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  operator          User?             @relation("ImportRunOperator", fields: [startedByUserId], references: [id], onDelete: SetNull)
+  records           ImportRecord[]
+  exceptions        ImportException[]
+
+  @@unique([sourceSystem, sourceChecksum, configurationHash, dryRun], map: "import_runs_source_config_mode_key")
+  @@index([state, startedAt], map: "import_runs_state_started_idx")
+  @@map("import_runs")
+}
+
+model ImportRecord {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importRunId    String            @map("import_run_id") @db.Uuid
+  sourceType     String            @map("source_type") @db.VarChar(80)
+  sourceId       String            @map("source_id") @db.VarChar(255)
+  sourceChecksum String            @map("source_checksum") @db.Char(64)
+  targetType     String?           @map("target_type") @db.VarChar(80)
+  targetId       String?           @map("target_id") @db.VarChar(255)
+  state          ImportRecordState @default(PLANNED)
+  details        Json?             @db.JsonB
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  importRun      ImportRun         @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+
+  @@unique([importRunId, sourceType, sourceId], map: "import_records_run_source_key")
+  @@index([state, sourceType], map: "import_records_state_source_type_idx")
+  @@map("import_records")
+}
+
+model ImportException {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importRunId String    @map("import_run_id") @db.Uuid
+  sourceType  String    @map("source_type") @db.VarChar(80)
+  sourceId    String?   @map("source_id") @db.VarChar(255)
+  code        String    @db.VarChar(120)
+  severity    String    @db.VarChar(20)
+  message     String    @db.VarChar(1000)
+  details     Json?     @db.JsonB
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolution  String?   @db.VarChar(1000)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  importRun   ImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+
+  @@index([importRunId, severity, createdAt], map: "import_exceptions_run_severity_idx")
+  @@map("import_exceptions")
+}
+
+model LearningProfile {
+  userId           String   @id @map("user_id") @db.Uuid
+  score            Int      @default(0)
+  points           Int      @default(0)
+  themePreferences Json?    @map("theme_preferences") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_profiles")
+}
+
+model LearningRoadmap {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String          @map("user_id") @db.Uuid
+  title     String          @db.VarChar(200)
+  position  Int             @default(0)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics    LearningTopic[]
+
+  @@unique([userId, position], map: "learning_roadmaps_user_position_key")
+  @@index([userId, updatedAt], map: "learning_roadmaps_user_updated_idx")
+  @@map("learning_roadmaps")
+}
+
+model LearningTopic {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roadmapId    String          @map("roadmap_id") @db.Uuid
+  title        String          @db.VarChar(200)
+  description  String?         @db.Text
+  youtubeQuery String?         @map("youtube_query") @db.VarChar(500)
+  completed    Boolean         @default(false)
+  position     Int             @default(0)
+  roadmap      LearningRoadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  @@unique([roadmapId, position], map: "learning_topics_roadmap_position_key")
+  @@map("learning_topics")
+}
+
+model LearningConversation {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  context        String   @db.VarChar(32)
+  pathway        String?  @db.VarChar(200)
+  chapter        String?  @db.VarChar(200)
+  prompt         String   @db.Text
+  response       String   @db.Text
+  responseFormat String   @default("restricted_markdown_v1") @map("response_format") @db.VarChar(32)
+  occurredAt     DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, occurredAt], map: "learning_conversations_user_occurred_idx")
+  @@map("learning_conversations")
+}
+
+model LearningNote {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String                   @map("user_id") @db.Uuid
+  title         String                   @db.VarChar(255)
+  content       String                   @default("") @db.Text
+  contentFormat String                   @default("plain_text_v1") @map("content_format") @db.VarChar(32)
+  formatting    Json?                    @db.JsonB
+  canvasData    String?                  @map("canvas_data") @db.Text
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments   LearningNoteAttachment[]
+
+  @@index([userId, updatedAt], map: "learning_notes_user_updated_idx")
+  @@map("learning_notes")
+}
+
+model LearningNoteAttachment {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  noteId       String       @map("note_id") @db.Uuid
+  fileId       String?      @map("file_id") @db.Uuid
+  kind         String       @db.VarChar(32)
+  legacyUrl    String?      @map("legacy_url") @db.VarChar(2048)
+  originalName String?      @map("original_name") @db.VarChar(255)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  note         LearningNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  file         FileObject?  @relation(fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@index([noteId], map: "learning_note_attachments_note_idx")
+  @@index([fileId], map: "learning_note_attachments_file_idx")
+  @@map("learning_note_attachments")
+}
+
+model VideoProgress {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  videoSourceKey  String   @map("video_source_key") @db.VarChar(500)
+  positionSeconds Int      @default(0) @map("position_seconds")
+  durationSeconds Int      @default(0) @map("duration_seconds")
+  topic           String?  @db.VarChar(200)
+  pathway         String?  @db.VarChar(200)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoSourceKey], map: "video_progress_user_source_key")
+  @@index([userId, updatedAt], map: "video_progress_user_updated_idx")
+  @@map("video_progress")
+}
+
+model JobSimulationProgress {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+  title    String @db.VarChar(200)
+  progress Int    @default(0)
+  position Int    @default(0)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, position], map: "job_simulation_progress_user_position_key")
+  @@map("job_simulation_progress")
+}
+
+model SocialProfile {
+  userId          String   @id @map("user_id") @db.Uuid
+  privacySettings Json     @default("{}") @map("privacy_settings") @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("social_profiles")
+}
+
+model SocialRelationship {
+  sourceUserId String                   @map("source_user_id") @db.Uuid
+  targetUserId String                   @map("target_user_id") @db.Uuid
+  status       SocialRelationshipStatus
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  source       User                     @relation("SocialRelationshipSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  target       User                     @relation("SocialRelationshipTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@id([sourceUserId, targetUserId])
+  @@index([targetUserId, status], map: "social_relationships_target_status_idx")
+  @@map("social_relationships")
+}
+
+model UserBlock {
+  blockerUserId String   @map("blocker_user_id") @db.Uuid
+  blockedUserId String   @map("blocked_user_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  blocker       User     @relation("UserBlockActor", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked       User     @relation("UserBlockTarget", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@id([blockerUserId, blockedUserId])
+  @@index([blockedUserId], map: "user_blocks_blocked_idx")
+  @@map("user_blocks")
+}
+
+model Challenge {
+  id                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                    String              @unique(map: "challenges_title_key") @db.VarChar(255)
+  difficulty               ChallengeDifficulty
+  tags                     Json                @default("[]") @db.JsonB
+  score                    Int
+  createdByUserId          String              @map("created_by_user_id") @db.Uuid
+  legacySuccessfulAttempts Int                 @default(0) @map("legacy_successful_attempts")
+  legacyTotalAttempts      Int                 @default(0) @map("legacy_total_attempts")
+  archivedAt               DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdAt                DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  creator                  User                @relation("ChallengeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  versions                 ChallengeVersion[]
+  comments                 ChallengeComment[]
+  reactions                ChallengeReaction[]
+  bookmarks                ChallengeBookmark[]
+  solves                   ChallengeSolve[]
+
+  @@index([difficulty, createdAt], map: "challenges_difficulty_created_idx")
+  @@index([createdByUserId], map: "challenges_creator_idx")
+  @@index([tags], map: "challenges_tags_gin_idx", type: Gin)
+  @@map("challenges")
+}
+
+model ChallengeVersion {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  challengeId       String              @map("challenge_id") @db.Uuid
+  version           Int                 @default(1)
+  statement         String              @db.Text
+  constraintsText   String?             @map("constraints_text") @db.Text
+  referenceSolution String              @map("reference_solution") @db.Text
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  challenge         Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  testCases         ChallengeTestCase[]
+
+  @@unique([challengeId, version], map: "challenge_versions_challenge_version_key")
+  @@map("challenge_versions")
+}
+
+model ChallengeTestCase {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  versionId      String                  @map("version_id") @db.Uuid
+  position       Int
+  input          String                  @db.Text
+  expectedOutput String                  @map("expected_output") @db.Text
+  visibility     ChallengeTestVisibility @default(VISIBLE)
+  version        ChallengeVersion        @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, position], map: "challenge_test_cases_version_position_key")
+  @@map("challenge_test_cases")
+}
+
+model ChallengeComment {
+  id           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  challengeId  String                     @map("challenge_id") @db.Uuid
+  parentId     String?                    @map("parent_id") @db.Uuid
+  authorUserId String                     @map("author_user_id") @db.Uuid
+  text         String                     @db.Text
+  createdAt    DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  challenge    Challenge                  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  parent       ChallengeComment?          @relation("ChallengeCommentTree", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      ChallengeComment[]         @relation("ChallengeCommentTree")
+  author       User                       @relation(fields: [authorUserId], references: [id], onDelete: Restrict)
+  reactions    ChallengeCommentReaction[]
+
+  @@index([challengeId, createdAt], map: "challenge_comments_challenge_created_idx")
+  @@index([parentId], map: "challenge_comments_parent_idx")
+  @@map("challenge_comments")
+}
+
+model ChallengeReaction {
+  challengeId String    @map("challenge_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  kind        String    @db.VarChar(32)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([challengeId, userId])
+  @@map("challenge_reactions")
+}
+
+model ChallengeCommentReaction {
+  commentId String           @map("comment_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  kind      String           @db.VarChar(32)
+  awardType String?          @map("award_type") @db.VarChar(32)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  comment   ChallengeComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId, kind])
+  @@map("challenge_comment_reactions")
+}
+
+model ChallengeBookmark {
+  userId      String    @map("user_id") @db.Uuid
+  challengeId String    @map("challenge_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, challengeId])
+  @@map("challenge_bookmarks")
+}
+
+model ChallengeSolve {
+  userId      String    @map("user_id") @db.Uuid
+  challengeId String    @map("challenge_id") @db.Uuid
+  solvedAt    DateTime  @default(now()) @map("solved_at") @db.Timestamptz(6)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, challengeId])
+  @@map("challenge_solves")
+}
+
+model Course {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String           @map("organization_id") @db.Uuid
+  title              String           @db.VarChar(255)
+  description        String?          @db.Text
+  thumbnailLegacyUrl String?          @map("thumbnail_legacy_url") @db.VarChar(2048)
+  visibility         CourseVisibility @default(PUBLIC)
+  pricing            CoursePricing    @default(FREE)
+  priceMinor         Int?             @map("price_minor")
+  currency           String?          @db.Char(3)
+  category           String?          @db.VarChar(120)
+  tags               Json             @default("[]") @db.JsonB
+  active             Boolean          @default(true)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  versions           CourseVersion[]
+  enrollments        Enrollment[]
+
+  @@index([organizationId, active], map: "courses_organization_active_idx")
+  @@index([visibility, createdAt], map: "courses_visibility_created_idx")
+  @@index([tags], map: "courses_tags_gin_idx", type: Gin)
+  @@map("courses")
+}
+
+model CourseVersion {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String         @map("course_id") @db.Uuid
+  version   Int            @default(1)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  modules   CourseModule[]
+
+  @@unique([courseId, version], map: "course_versions_course_version_key")
+  @@map("course_versions")
+}
+
+model CourseModule {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  versionId   String          @map("version_id") @db.Uuid
+  title       String          @db.VarChar(255)
+  description String?         @db.Text
+  position    Int             @default(0)
+  version     CourseVersion   @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  contents    CourseContent[]
+
+  @@unique([versionId, position], map: "course_modules_version_position_key")
+  @@map("course_modules")
+}
+
+model CourseContent {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId      String       @map("module_id") @db.Uuid
+  kind          String       @db.VarChar(32)
+  title         String       @db.VarChar(255)
+  legacyUrl     String?      @map("legacy_url") @db.VarChar(2048)
+  body          String?      @db.Text
+  allowDownload Boolean      @default(false) @map("allow_download")
+  position      Int          @default(0)
+  module        CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, position], map: "course_contents_module_position_key")
+  @@map("course_contents")
+}
+
+model Enrollment {
+  id             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String                        @map("user_id") @db.Uuid
+  courseId       String                        @map("course_id") @db.Uuid
+  status         EnrollmentStatus              @default(ENROLLED)
+  enrolledAt     DateTime                      @default(now()) @map("enrolled_at") @db.Timestamptz(6)
+  completedAt    DateTime?                     @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  course         Course                        @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  importSnapshot CourseProgressImportSnapshot?
+
+  @@unique([userId, courseId], map: "enrollments_user_course_key")
+  @@index([courseId, status], map: "enrollments_course_status_idx")
+  @@map("enrollments")
+}
+
+model CourseProgressImportSnapshot {
+  enrollmentId       String     @id @map("enrollment_id") @db.Uuid
+  progressPercent    Int        @map("progress_percent")
+  completedSourceIds Json       @map("completed_source_ids") @db.JsonB
+  authoritative      Boolean    @default(false)
+  importedAt         DateTime   @default(now()) @map("imported_at") @db.Timestamptz(6)
+  enrollment         Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("course_progress_import_snapshots")
+}
+
+model SocialPost {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorUserId         String?              @map("author_user_id") @db.Uuid
+  authorOrganizationId String?              @map("author_organization_id") @db.Uuid
+  content              String               @db.Text
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  authorUser           User?                @relation("PostUserAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  authorOrganization   Organization?        @relation("PostOrganizationAuthor", fields: [authorOrganizationId], references: [id], onDelete: Restrict)
+  media                SocialPostMedia[]
+  comments             SocialComment[]
+  reactions            SocialPostReaction[]
+  saves                SocialPostSave[]
+
+  @@index([createdAt, id], map: "social_posts_created_idx")
+  @@index([authorUserId, createdAt], map: "social_posts_user_created_idx")
+  @@index([authorOrganizationId, createdAt], map: "social_posts_org_created_idx")
+  @@map("social_posts")
+}
+
+model SocialPostMedia {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId    String      @map("post_id") @db.Uuid
+  fileId    String?     @map("file_id") @db.Uuid
+  kind      String      @db.VarChar(32)
+  legacyUrl String?     @map("legacy_url") @db.VarChar(2048)
+  position  Int         @default(0)
+  post      SocialPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  file      FileObject? @relation(fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@unique([postId, position], map: "social_post_media_post_position_key")
+  @@index([fileId], map: "social_post_media_file_idx")
+  @@map("social_post_media")
+}
+
+model SocialComment {
+  id                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId               String                  @map("post_id") @db.Uuid
+  parentId             String?                 @map("parent_id") @db.Uuid
+  authorUserId         String?                 @map("author_user_id") @db.Uuid
+  authorOrganizationId String?                 @map("author_organization_id") @db.Uuid
+  content              String                  @db.Text
+  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  post                 SocialPost              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent               SocialComment?          @relation("SocialCommentTree", fields: [parentId], references: [id], onDelete: Cascade)
+  replies              SocialComment[]         @relation("SocialCommentTree")
+  authorUser           User?                   @relation("CommentUserAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  authorOrganization   Organization?           @relation("CommentOrganizationAuthor", fields: [authorOrganizationId], references: [id], onDelete: Restrict)
+  reactions            SocialCommentReaction[]
+  saves                SocialCommentSave[]
+
+  @@index([postId, createdAt], map: "social_comments_post_created_idx")
+  @@index([parentId], map: "social_comments_parent_idx")
+  @@map("social_comments")
+}
+
+model SocialPostReaction {
+  postId    String     @map("post_id") @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  kind      String     @db.VarChar(32)
+  awardType String?    @map("award_type") @db.VarChar(32)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId, kind])
+  @@map("social_post_reactions")
+}
+
+model SocialPostSave {
+  postId    String     @map("post_id") @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@map("social_post_saves")
+}
+
+model SocialCommentReaction {
+  commentId String        @map("comment_id") @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  kind      String        @db.VarChar(32)
+  awardType String?       @map("award_type") @db.VarChar(32)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  comment   SocialComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId, kind])
+  @@map("social_comment_reactions")
+}
+
+model SocialCommentSave {
+  commentId String        @map("comment_id") @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  comment   SocialComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@map("social_comment_saves")
+}
+
+model Idea {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorUserId         String?         @map("author_user_id") @db.Uuid
+  authorOrganizationId String?         @map("author_organization_id") @db.Uuid
+  title                String          @db.VarChar(255)
+  description          String          @db.Text
+  techStack            Json            @default("[]") @map("tech_stack") @db.JsonB
+  visibility           IdeaVisibility  @default(PUBLIC)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  authorUser           User?           @relation("IdeaUserAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  authorOrganization   Organization?   @relation("IdeaOrganizationAuthor", fields: [authorOrganizationId], references: [id], onDelete: Restrict)
+  milestones           IdeaMilestone[]
+  updates              IdeaUpdate[]
+  reactions            IdeaReaction[]
+
+  @@index([visibility, createdAt], map: "ideas_visibility_created_idx")
+  @@index([authorUserId, createdAt], map: "ideas_user_created_idx")
+  @@index([authorOrganizationId, createdAt], map: "ideas_org_created_idx")
+  @@index([techStack], map: "ideas_tech_stack_gin_idx", type: Gin)
+  @@map("ideas")
+}
+
+model IdeaMilestone {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ideaId      String    @map("idea_id") @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  position    Int       @default(0)
+  idea        Idea      @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([ideaId, position], map: "idea_milestones_idea_position_key")
+  @@map("idea_milestones")
+}
+
+model IdeaUpdate {
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ideaId               String        @map("idea_id") @db.Uuid
+  authorUserId         String?       @map("author_user_id") @db.Uuid
+  authorOrganizationId String?       @map("author_organization_id") @db.Uuid
+  title                String        @db.VarChar(255)
+  body                 String        @db.Text
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  idea                 Idea          @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  authorUser           User?         @relation("IdeaUpdateUserAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  authorOrganization   Organization? @relation("IdeaUpdateOrganizationAuthor", fields: [authorOrganizationId], references: [id], onDelete: Restrict)
+
+  @@index([ideaId, createdAt], map: "idea_updates_idea_created_idx")
+  @@map("idea_updates")
+}
+
+model IdeaReaction {
+  ideaId    String   @map("idea_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  kind      String   @default("like") @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([ideaId, userId])
+  @@map("idea_reactions")
+}
+
+model IntegrationCache {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider  String   @db.VarChar(40)
+  keyHash   String   @map("key_hash") @db.Char(64)
+  value     Json     @db.JsonB
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([provider, keyHash], map: "integration_cache_provider_key_hash_key")
+  @@index([expiresAt], map: "integration_cache_expires_idx")
+  @@map("integration_cache")
+}

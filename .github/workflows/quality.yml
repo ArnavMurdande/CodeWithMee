@@ -1,0 +1,116 @@
+name: Quality and security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install exact dependencies
+        run: |
+          npm ci
+          npm --prefix client ci
+          npm --prefix server ci
+      - name: Verify runtime and formatting
+        run: |
+          npm run preflight
+          npm run format:check
+          npm run format:check:e2e
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run typecheck
+      - name: Test tooling, server and client
+        run: npm run test
+      - name: Build production artifacts
+        run: npm run build
+      - name: Verify OpenAPI artifact
+        run: npm run openapi:check
+      - name: Enforce dependency audit policy
+        run: npm run audit:check
+      - name: Enforce license policy
+        run: npm run license:check
+      - name: Scan repository for secrets
+        run: npm run secrets:check
+      - name: Enforce container policy
+        run: npm run container:check
+      - name: Enforce workflow policy
+        run: npm run workflow:check
+      - name: Enforce Phase 0 evidence gate
+        run: npm run phase0:gate
+
+  browser:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install browser-test dependencies
+        run: |
+          npm ci
+          npm --prefix client ci
+      - name: Install exact Chromium build and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run protected browser smoke suite
+        run: npm run test:e2e
+      - name: Retain redacted failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: playwright-failure-${{ github.run_id }}
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@f52b05f4acaaa234e44466e66d29050e135ea9ef # v4.36.0
+        with:
+          languages: javascript-typescript
+          build-mode: none
+      - name: Analyze JavaScript and TypeScript
+        uses: github/codeql-action/analyze@f52b05f4acaaa234e44466e66d29050e135ea9ef # v4.36.0
+        with:
+          category: /language:javascript-typescript

@@ -1,25 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-
-// Styles are embedded directly to prevent import errors.
-const LanguageNetworkStyles = () => (
-  <style>
-    {`
-      .language-network-canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-      }
-    `}
-  </style>
-);
-
+import { useEffect, useRef } from 'react';
 
 const LanguageNetwork = () => {
   const canvasRef = useRef(null);
-  let animationFrameId;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -27,10 +9,28 @@ const LanguageNetwork = () => {
     const ctx = canvas.getContext('2d');
     let nodes = [];
     let links = [];
+    let animationFrameId;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const languages = [
-      'Python', 'Java', 'C++', 'SQL', 'Go', 'C#', 'Ruby', 'PHP', 'R', 'Swift',
-      'Kotlin', 'TS', 'Rust', 'Scala', 'Perl', 'MATLAB', 'Dart', 'Assembly'
+      'Python',
+      'Java',
+      'C++',
+      'SQL',
+      'Go',
+      'C#',
+      'Ruby',
+      'PHP',
+      'R',
+      'Swift',
+      'Kotlin',
+      'TS',
+      'Rust',
+      'Scala',
+      'Perl',
+      'MATLAB',
+      'Dart',
+      'Assembly',
     ];
 
     let width, height;
@@ -65,15 +65,16 @@ const LanguageNetwork = () => {
       // MODIFIED: Decreased the chance of a link forming to reduce connectivity.
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          if (Math.random() > 0.95) { // Was 0.9, now creates fewer links
+          if (Math.random() > 0.95) {
+            // Was 0.9, now creates fewer links
             links.push({ source: nodes[i], target: nodes[j] });
           }
         }
       }
 
       // Ensure every node has at least one connection.
-      nodes.forEach(node => {
-        const isConnected = links.some(link => link.source === node || link.target === node);
+      nodes.forEach((node) => {
+        const isConnected = links.some((link) => link.source === node || link.target === node);
         if (!isConnected && nodes.length > 1) {
           let otherNode;
           do {
@@ -83,18 +84,18 @@ const LanguageNetwork = () => {
         }
       });
     };
-    
+
     const createShakeRipple = (clickedNode) => {
-        if (clickedNode.shake > 0) return;
-        clickedNode.shake = 30;
-        links.forEach(link => {
-            if (link.source === clickedNode && link.target.shake <= 0) {
-                link.target.shake = 20;
-            }
-            if (link.target === clickedNode && link.source.shake <= 0) {
-                link.source.shake = 20;
-            }
-        });
+      if (clickedNode.shake > 0) return;
+      clickedNode.shake = 30;
+      links.forEach((link) => {
+        if (link.source === clickedNode && link.target.shake <= 0) {
+          link.target.shake = 20;
+        }
+        if (link.target === clickedNode && link.source.shake <= 0) {
+          link.source.shake = 20;
+        }
+      });
     };
 
     const handleClick = (event) => {
@@ -102,7 +103,7 @@ const LanguageNetwork = () => {
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
 
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
         if (dist < node.radius) {
           createShakeRipple(node);
@@ -116,14 +117,14 @@ const LanguageNetwork = () => {
       ctx.strokeStyle = 'rgba(200, 200, 255, 0.4)';
       // MODIFIED: Increased line thickness for better visibility.
       ctx.lineWidth = 2;
-      links.forEach(link => {
+      links.forEach((link) => {
         ctx.beginPath();
         ctx.moveTo(link.source.x, link.source.y);
         ctx.lineTo(link.target.x, link.target.y);
         ctx.stroke();
       });
 
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
         ctx.fillStyle = '#FFFFFF';
@@ -159,7 +160,9 @@ const LanguageNetwork = () => {
             nodeB.x += overlap * nx;
             nodeB.y += overlap * ny;
 
-            const p = 2 * (nodeA.vx * nx + nodeA.vy * ny - nodeB.vx * nx - nodeB.vy * ny) / (nodeA.mass + nodeB.mass);
+            const p =
+              (2 * (nodeA.vx * nx + nodeA.vy * ny - nodeB.vx * nx - nodeB.vy * ny)) /
+              (nodeA.mass + nodeB.mass);
             nodeA.vx -= p * nodeB.mass * nx;
             nodeA.vy -= p * nodeB.mass * ny;
             nodeB.vx += p * nodeA.mass * nx;
@@ -168,32 +171,32 @@ const LanguageNetwork = () => {
         }
       }
 
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         if (node.shake > 0) {
-            node.shake -= 1;
-            const shakeFrequency = 0.8;
-            const shakeAmplitude = 0.2;
-            node.vx += Math.sin(node.shake * shakeFrequency) * shakeAmplitude;
-            node.vy += Math.cos(node.shake * shakeFrequency) * shakeAmplitude;
+          node.shake -= 1;
+          const shakeFrequency = 0.8;
+          const shakeAmplitude = 0.2;
+          node.vx += Math.sin(node.shake * shakeFrequency) * shakeAmplitude;
+          node.vy += Math.cos(node.shake * shakeFrequency) * shakeAmplitude;
         }
-        
+
         node.x += node.vx;
         node.y += node.vy;
 
         if (node.x - node.radius < 0) {
-            node.x = node.radius;
-            node.vx *= -1;
+          node.x = node.radius;
+          node.vx *= -1;
         } else if (node.x + node.radius > width) {
-            node.x = width - node.radius;
-            node.vx *= -1;
+          node.x = width - node.radius;
+          node.vx *= -1;
         }
 
         if (node.y - node.radius < 0) {
-            node.y = node.radius;
-            node.vy *= -1;
+          node.y = node.radius;
+          node.vy *= -1;
         } else if (node.y + node.radius > height) {
-            node.y = height - node.radius;
-            node.vy *= -1;
+          node.y = height - node.radius;
+          node.vy *= -1;
         }
       });
     };
@@ -205,25 +208,24 @@ const LanguageNetwork = () => {
     };
 
     init();
-    animate();
+    if (prefersReducedMotion) draw();
+    else animate();
 
-    const resizeObserver = new ResizeObserver(init);
+    const resizeObserver = new ResizeObserver(() => {
+      init();
+      if (prefersReducedMotion) draw();
+    });
     resizeObserver.observe(canvas.parentElement);
-    canvas.addEventListener('click', handleClick);
+    if (!prefersReducedMotion) canvas.addEventListener('click', handleClick);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
-      canvas.removeEventListener('click', handleClick);
+      if (!prefersReducedMotion) canvas.removeEventListener('click', handleClick);
     };
   }, []);
 
-  return (
-    <>
-      <LanguageNetworkStyles />
-      <canvas ref={canvasRef} className="language-network-canvas"></canvas>
-    </>
-  );
+  return <canvas aria-hidden="true" className="language-network-canvas" ref={canvasRef}></canvas>;
 };
 
 export default LanguageNetwork;

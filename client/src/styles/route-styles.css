@@ -1,0 +1,24 @@
+/*
+ * Lazy route JavaScript must not make route CSS override the final responsive
+ * compatibility layer. Import route-owned styles eagerly here, in dependency
+ * order, and keep responsive.css as the final App-level style import.
+ */
+@import '../components/AppDropdown.css';
+@import '../components/HeroSection.css';
+@import '../components/LanguageNetwork.css';
+@import '../components/PomodoroTimer.css';
+@import '../components/ScrollTrackRow.css';
+@import '../components/ui/AccessibleMedia.css';
+@import '../pages/admin/AdminDashboard.css';
+@import '../pages/Auth.css';
+@import '../pages/Challenges.css';
+@import '../pages/ChallengeSolver.css';
+@import '../pages/Courses.css';
+@import '../pages/CreateChallenge.css';
+@import '../pages/Dashboard.css';
+@import '../pages/HomePage.css';
+@import '../pages/Pathways.css';
+@import '../pages/Profile.css';
+@import '../pages/Sandbox.css';
+@import '../pages/Settings.css';
+@import '../pages/Space.css';

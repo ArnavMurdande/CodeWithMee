@@ -1,0 +1,118 @@
+.cwm-async-state {
+  position: relative;
+  z-index: var(--cwm-z-content);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--cwm-space-4);
+  align-items: center;
+  width: min(calc(100% - 2rem), var(--cwm-content-readable));
+  min-height: 12rem;
+  margin: var(--cwm-space-8) auto;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  color: var(--cwm-color-text);
+  background: var(--cwm-color-surface);
+  border: 1px solid var(--cwm-color-border);
+  border-radius: var(--cwm-radius-lg);
+  box-shadow: var(--cwm-shadow-surface);
+  backdrop-filter: blur(1rem);
+}
+
+.cwm-async-state--compact {
+  min-height: auto;
+  margin-block: var(--cwm-space-4);
+  padding: var(--cwm-space-4);
+}
+
+.cwm-async-state__spinner,
+.cwm-async-state__mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--cwm-color-info);
+  border: 0.16rem solid currentColor;
+  border-radius: 50%;
+  font-family: var(--cwm-font-mono);
+  font-weight: 800;
+}
+
+.cwm-async-state__spinner {
+  border-right-color: transparent;
+  animation: cwm-spin 800ms linear infinite;
+}
+
+.cwm-async-state--error .cwm-async-state__mark {
+  color: var(--cwm-color-danger);
+}
+
+.cwm-async-state--empty .cwm-async-state__mark {
+  color: var(--cwm-color-text-muted);
+}
+
+.cwm-async-state__copy h2,
+.cwm-async-state__copy p {
+  margin: 0;
+}
+
+.cwm-async-state__copy h2 {
+  color: var(--cwm-color-text);
+  font: 750 clamp(1.05rem, 2vw, 1.35rem) / 1.25 var(--cwm-font-sans);
+}
+
+.cwm-async-state__copy p {
+  margin-top: var(--cwm-space-2);
+  color: var(--cwm-color-text-muted);
+  font: 500 0.95rem / 1.6 var(--cwm-font-sans);
+}
+
+.cwm-async-state__action {
+  grid-column: 2;
+}
+
+.cwm-inline-status {
+  margin: var(--cwm-space-3) 0;
+  padding: var(--cwm-space-3) var(--cwm-space-4);
+  color: var(--cwm-color-text-muted);
+  background: var(--cwm-color-surface);
+  border: 1px solid var(--cwm-color-border);
+  border-radius: var(--cwm-radius-md);
+}
+
+.cwm-inline-status--danger {
+  color: var(--cwm-color-danger);
+}
+
+.cwm-inline-status--info {
+  color: var(--cwm-color-info);
+}
+
+.cwm-inline-status--success {
+  color: var(--cwm-color-accent-strong);
+}
+
+.cwm-inline-status--warning {
+  color: var(--cwm-color-warning);
+}
+
+@keyframes cwm-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (max-width: 30rem) {
+  .cwm-async-state {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .cwm-async-state__action {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cwm-async-state__spinner {
+    animation-duration: 1.8s;
+  }
+}

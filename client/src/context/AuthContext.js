@@ -1,69 +1,197 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
-export const AuthContext = createContext();
+import apiClient, { refreshAuthentication } from '../lib/api';
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+  subscribeToAccessToken,
+} from '../lib/auth-session';
+
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setTokenState] = useState(getAccessToken());
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const channelRef = useRef(null);
 
-  const fetchUser = useCallback(async (currentToken) => {
-    if (currentToken) {
-      localStorage.setItem('token', currentToken);
-      try {
-        const res = await axios.get('http://localhost:5001/api/user/me', {
-          headers: { 'x-auth-token': currentToken },
-        });
-        setUser(res.data);
-      } catch (err) {
-        console.error('Token validation failed. Logging out.');
-        localStorage.removeItem('token');
-        setToken(null);
+  const establishSession = useCallback((result) => {
+    setAccessToken(result.accessToken);
+    setUser(result.user);
+    return result.user;
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    const result = await refreshAuthentication();
+    establishSession(result);
+    return result;
+  }, [establishSession]);
+
+  useEffect(
+    () =>
+      subscribeToAccessToken((nextToken) => {
+        setTokenState(nextToken);
+        if (!nextToken) setUser(null);
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return undefined;
+    const channel = new BroadcastChannel('codewithmee-auth');
+    channelRef.current = channel;
+    channel.onmessage = async (event) => {
+      if (event.data?.type === 'signed_out') {
+        clearAccessToken();
         setUser(null);
-        navigate('/auth');
       }
+      if (event.data?.type === 'session_available') {
+        try {
+          await refreshSession();
+        } catch {
+          clearAccessToken();
+        }
+      }
+    };
+    return () => {
+      channelRef.current = null;
+      channel.close();
+    };
+  }, [refreshSession]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const result = await refreshAuthentication();
+        if (active) establishSession(result);
+      } catch {
+        if (active) {
+          clearAccessToken();
+          setUser(null);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [establishSession]);
+
+  const signIn = useCallback(
+    async ({ email, password }) => {
+      const response = await apiClient.post('/api/v1/auth/login', { email, password });
+      const signedInUser = establishSession(response.data);
+      channelRef.current?.postMessage({ type: 'session_available' });
+      return signedInUser;
+    },
+    [establishSession],
+  );
+
+  const register = useCallback(
+    async ({ displayName, email, password }) => {
+      const response = await apiClient.post('/api/v1/auth/register', {
+        displayName,
+        email,
+        password,
+      });
+      const registeredUser = establishSession(response.data);
+      channelRef.current?.postMessage({ type: 'session_available' });
+      return registeredUser;
+    },
+    [establishSession],
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.post('/api/v1/auth/logout');
+    } finally {
+      clearAccessToken();
+      setUser(null);
+      channelRef.current?.postMessage({ type: 'signed_out' });
+      navigate('/auth', { replace: true });
     }
   }, [navigate]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    navigate('/auth');
+  const logoutAll = useCallback(async () => {
+    try {
+      await apiClient.post('/api/v1/auth/logout-all');
+    } finally {
+      clearAccessToken();
+      setUser(null);
+      channelRef.current?.postMessage({ type: 'signed_out' });
+      navigate('/auth', { replace: true });
+    }
   }, [navigate]);
 
-  useEffect(() => {
-    const initialAuthCheck = async () => {
-      if (token) {
-        await fetchUser(token);
-      }
-      setLoading(false);
-    };
-    initialAuthCheck();
-  }, [token, fetchUser]);
-
-  const login = async (newToken) => {
-    setToken(newToken);
-    await fetchUser(newToken); // Immediately fetch user data after getting the token
-    navigate('/dashboard');
-  };
-
-  const authContextValue = {
-    token,
-    user,
-    setUser,
-    login,
-    logout,
-    isAuthenticated: !!token,
-    loading,
-  };
-
-  return (
-    <AuthContext.Provider value={authContextValue}>
-      {!loading && children}
-    </AuthContext.Provider>
+  const requestEmailVerification = useCallback(
+    () => apiClient.post('/api/v1/auth/email/verify/request'),
+    [],
   );
+  const confirmEmailVerification = useCallback(async (verificationToken) => {
+    const response = await apiClient.post('/api/v1/auth/email/verify/confirm', {
+      token: verificationToken,
+    });
+    setUser(response.data.user);
+    return response.data.user;
+  }, []);
+  const requestPasswordReset = useCallback(
+    (email) => apiClient.post('/api/v1/auth/password/forgot', { email }),
+    [],
+  );
+  const resetPassword = useCallback(async ({ password, resetToken }) => {
+    await apiClient.post('/api/v1/auth/password/reset', { password, token: resetToken });
+    clearAccessToken();
+    setUser(null);
+  }, []);
+  const listSessions = useCallback(async () => {
+    const response = await apiClient.get('/api/v1/me/sessions');
+    return response.data.sessions;
+  }, []);
+  const revokeSession = useCallback(async (sessionId) => {
+    await apiClient.delete(`/api/v1/me/sessions/${encodeURIComponent(sessionId)}`);
+  }, []);
+
+  const authContextValue = useMemo(
+    () => ({
+      confirmEmailVerification,
+      isAuthenticated: Boolean(token && user),
+      listSessions,
+      loading,
+      logout,
+      logoutAll,
+      refreshSession,
+      register,
+      requestEmailVerification,
+      requestPasswordReset,
+      resetPassword,
+      revokeSession,
+      setUser,
+      signIn,
+      token,
+      user,
+    }),
+    [
+      confirmEmailVerification,
+      listSessions,
+      loading,
+      logout,
+      logoutAll,
+      refreshSession,
+      register,
+      requestEmailVerification,
+      requestPasswordReset,
+      resetPassword,
+      revokeSession,
+      signIn,
+      token,
+      user,
+    ],
+  );
+
+  return <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>;
 };

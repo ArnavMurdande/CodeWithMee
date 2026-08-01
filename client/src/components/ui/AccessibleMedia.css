@@ -1,0 +1,34 @@
+.cwm-accessible-media {
+  display: grid;
+  gap: var(--cwm-space-2);
+  width: 100%;
+  margin: 0;
+}
+
+.cwm-accessible-media > video,
+.cwm-accessible-media > audio {
+  width: 100%;
+  max-width: 100%;
+}
+
+.cwm-accessible-media figcaption {
+  display: grid;
+  gap: var(--cwm-space-1);
+  color: var(--cwm-color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.cwm-accessible-media figcaption > span:first-child {
+  color: var(--cwm-color-text);
+  font-weight: 650;
+}
+
+.cwm-accessible-media__notice {
+  color: var(--cwm-color-warning);
+}
+
+.cwm-accessible-media details p {
+  max-width: var(--cwm-content-readable);
+  white-space: pre-wrap;
+}

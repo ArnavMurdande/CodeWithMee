@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
-import './PomodoroTimer.css';
+import { AccessibleDialog } from './ui/AccessibleDialog';
 
 const PomodoroTimer = () => {
   const [workTime, setWorkTime] = useState(30);
@@ -16,7 +16,6 @@ const PomodoroTimer = () => {
   const audioRef = useRef(new Audio('/notification.mp3'));
   const containerRef = useRef(null);
 
-  // Close dropdown when clicking outside
   const handleClickOutside = useCallback((event) => {
     if (containerRef.current && !containerRef.current.contains(event.target)) {
       setDropdownOpen(false);
@@ -35,14 +34,24 @@ const PomodoroTimer = () => {
   }, [isDropdownOpen, handleClickOutside]);
 
   useEffect(() => {
+    if (!isDropdownOpen) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setDropdownOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
     if (isActive) {
       timerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
+        setTimeLeft((previous) => {
+          if (previous <= 1) {
             clearInterval(timerRef.current);
             return 0;
           }
-          return prev - 1;
+          return previous - 1;
         });
       }, 1000);
     } else {
@@ -53,23 +62,20 @@ const PomodoroTimer = () => {
 
   useEffect(() => {
     if (timeLeft === 0 && isActive) {
-      // Timer just hit zero (and was validly running)
       setIsActive(false);
-      setIsFinished(true); // Triggers the overlay states
-      
-      // Safe audio play
+      setIsFinished(true);
+
       try {
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.log("Audio play failed:", error);
+          playPromise.catch((error) => {
+            console.log('Audio play failed:', error);
           });
         }
-      } catch (e) {
-        console.log("Audio playback error:", e);
+      } catch (error) {
+        console.log('Audio playback error:', error);
       }
-      
-      // Always ensure overlay is visible when timer finishes
+
       setShowBreakOverlay(true);
     }
   }, [timeLeft, isActive]);
@@ -77,8 +83,7 @@ const PomodoroTimer = () => {
   useEffect(() => {
     if (!isActive && !isFinished) {
       const timeValue = isBreak ? breakTime : workTime;
-      // Only update if it's a valid number greater than 0
-      if (timeValue && !isNaN(timeValue) && parseInt(timeValue) > 0) {
+      if (timeValue && !Number.isNaN(Number(timeValue)) && Number.parseInt(timeValue, 10) > 0) {
         setTimeLeft(timeValue * 60);
       }
     }
@@ -87,10 +92,9 @@ const PomodoroTimer = () => {
   const toggleTimer = () => {
     if (isFinished) {
       setIsFinished(false);
-      setIsBreak(prev => !prev);
-      // Don't close overlay here, manage it in handlers
+      setIsBreak((previous) => !previous);
     } else {
-      setIsActive(prev => !prev);
+      setIsActive((previous) => !previous);
     }
   };
 
@@ -98,189 +102,200 @@ const PomodoroTimer = () => {
     setIsActive(false);
     setIsBreak(false);
     setIsFinished(false);
-    // valid check before resetting
     const resetValue = isBreak ? breakTime : workTime;
-    setTimeLeft((resetValue && !isNaN(resetValue) ? resetValue : 25) * 60);
+    setTimeLeft((resetValue && !Number.isNaN(Number(resetValue)) ? resetValue : 25) * 60);
     setShowBreakOverlay(false);
     clearInterval(timerRef.current);
   };
 
   const formatTime = (seconds) => {
-    if (seconds < 0) seconds = 0; // Prevent negative display
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const buttonClass = () => {
-    if (isFinished) return 'finished';
-    return isActive ? 'active' : '';
+    const safeSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+    return `${minutes < 10 ? '0' : ''}${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
   const getButtonText = () => {
-    if (isFinished) {
-        return isBreak ? "Start Work" : "Start Break";
-    }
+    if (isFinished) return isBreak ? 'Start Work' : 'Start Break';
     return formatTime(timeLeft);
   };
 
   const handleStartBreak = () => {
-    // Explicitly set all state to avoid race conditions
     setIsFinished(false);
     setIsBreak(true);
-    // Force time update immediately
-    const validBreakTime = (breakTime && !isNaN(breakTime) && parseInt(breakTime) > 0) ? breakTime : 5;
+    const validBreakTime =
+      breakTime && !Number.isNaN(Number(breakTime)) && Number.parseInt(breakTime, 10) > 0
+        ? breakTime
+        : 5;
     setTimeLeft(validBreakTime * 60);
     setIsActive(true);
     setShowBreakOverlay(true);
   };
 
   const handleStartWork = () => {
-    // Explicitly set all state
     setIsFinished(false);
     setIsBreak(false);
-    // Force time update immediately
-    const validWorkTime = (workTime && !isNaN(workTime) && parseInt(workTime) > 0) ? workTime : 25;
+    const validWorkTime =
+      workTime && !Number.isNaN(Number(workTime)) && Number.parseInt(workTime, 10) > 0
+        ? workTime
+        : 25;
     setTimeLeft(validWorkTime * 60);
     setIsActive(true);
     setShowBreakOverlay(false);
   };
 
-  const dismissOverlay = () => {
-    setShowBreakOverlay(false);
-  };
+  const dismissOverlay = () => setShowBreakOverlay(false);
 
-  const handleTimeChange = (setter) => (e) => {
-    const val = e.target.value;
-    // Allow empty string or numbers
-    if (val === '' || (!isNaN(val) && parseInt(val) >= 0)) {
-       setter(val);
+  const handleTimeChange = (setter) => (event) => {
+    const value = event.target.value;
+    if (value === '' || (!Number.isNaN(Number(value)) && Number.parseInt(value, 10) >= 0)) {
+      setter(value);
     }
   };
 
-  // Render logic for overlay content
   const renderOverlayContent = () => {
-    // Case 1: Work just finished (Ready to start break)
     if (isFinished && !isBreak) {
-        return (
-            <div className="break-overlay-content">
-                <div className="break-icon">☕</div>
-                <h2 className="break-title">Time for a Break!</h2>
-                <p className="break-message">
-                  Great work! You've completed your focus session.<br />
-                  Take a {breakTime} minute break to recharge.
-                </p>
-                <div className="break-actions">
-                  <button className="break-start-btn" onClick={handleStartBreak}>
-                    Start Break Timer
-                  </button>
-                  <button className="break-dismiss-btn" onClick={dismissOverlay}>
-                    Dismiss
-                  </button>
-                </div>
-            </div>
-        );
+      return (
+        <>
+          <div aria-hidden="true" className="break-icon">
+            ☕
+          </div>
+          <h2 className="break-title">Time for a Break!</h2>
+          <p className="break-message">
+            Great work! You've completed your focus session.
+            <br />
+            Take a {breakTime} minute break to recharge.
+          </p>
+          <div className="break-actions">
+            <button className="break-start-btn" onClick={handleStartBreak} type="button">
+              Start Break Timer
+            </button>
+            <button className="break-dismiss-btn" onClick={dismissOverlay} type="button">
+              Dismiss
+            </button>
+          </div>
+        </>
+      );
     }
 
-    // Case 2: In Break (Timer Running or Paused during break)
     if (isBreak && !isFinished) {
-        return (
-            <div className="break-overlay-content">
-                <div className="break-icon">🧘</div>
-                <h2 className="break-title">Resting...</h2>
-                <div className="break-timer-display">
-                    {formatTime(timeLeft)}
-                </div>
-                <p className="break-message">
-                  Relax and reset. We'll notify you when it's time to work.
-                </p>
-                <div className="break-actions">
-                  <button className="break-dismiss-btn" onClick={dismissOverlay}>
-                    Hide Overlay
-                  </button>
-                </div>
-            </div>
-        );
+      return (
+        <>
+          <div aria-hidden="true" className="break-icon">
+            🧘
+          </div>
+          <h2 className="break-title">Resting...</h2>
+          <div className="break-timer-display">{formatTime(timeLeft)}</div>
+          <p className="break-message">Relax and reset. We'll notify you when it's time to work.</p>
+          <div className="break-actions">
+            <button className="break-dismiss-btn" onClick={dismissOverlay} type="button">
+              Hide Overlay
+            </button>
+          </div>
+        </>
+      );
     }
 
-    // Case 3: Break finished (Ready to start work)
     if (isFinished && isBreak) {
-        return (
-            <div className="break-overlay-content">
-                <div className="break-icon">🚀</div>
-                <h2 className="break-title">Break Over!</h2>
-                <p className="break-message">
-                  Hope you're refreshed. Let's get back to it!
-                </p>
-                <div className="break-actions">
-                  <button className="break-start-btn" onClick={handleStartWork}>
-                    Start Work Timer
-                  </button>
-                  <button className="break-dismiss-btn" onClick={dismissOverlay}>
-                    Dismiss
-                  </button>
-                </div>
-            </div>
-        );
+      return (
+        <>
+          <div aria-hidden="true" className="break-icon">
+            🚀
+          </div>
+          <h2 className="break-title">Break Over!</h2>
+          <p className="break-message">Hope you're refreshed. Let's get back to it!</p>
+          <div className="break-actions">
+            <button className="break-start-btn" onClick={handleStartWork} type="button">
+              Start Work Timer
+            </button>
+            <button className="break-dismiss-btn" onClick={dismissOverlay} type="button">
+              Dismiss
+            </button>
+          </div>
+        </>
+      );
     }
 
     return null;
   };
 
+  const buttonClass = isFinished ? 'finished' : isActive ? 'active' : '';
+
   return (
     <>
       <div className="pomodoro-container" ref={containerRef}>
         <button
-          className={`pomodoro-button ${buttonClass()}`}
+          aria-controls="pomodoro-settings"
+          aria-expanded={isDropdownOpen}
+          aria-haspopup="true"
+          aria-label={`${isBreak ? 'Break' : 'Focus'} timer: ${getButtonText()}`}
+          className={`pomodoro-button ${buttonClass}`}
           onClick={() => {
-              if(isFinished) {
-                  if (isBreak) handleStartWork();
-                  else handleStartBreak();
-              } else {
-                  setDropdownOpen(prev => !prev)
-              }
+            if (isFinished) {
+              if (isBreak) handleStartWork();
+              else handleStartBreak();
+            } else {
+              setDropdownOpen((previous) => !previous);
+            }
           }}
+          type="button"
         >
           {getButtonText()}
         </button>
 
         {isDropdownOpen && (
-          <div className="pomodoro-dropdown">
+          <div
+            aria-label="Focus timer settings"
+            className="pomodoro-dropdown"
+            id="pomodoro-settings"
+            role="region"
+          >
             <div className="dropdown-section">
-              <label>Work</label>
+              <label htmlFor="pomodoro-work-time">Work</label>
               <input
+                id="pomodoro-work-time"
+                min="1"
+                onChange={handleTimeChange(setWorkTime)}
                 type="number"
                 value={workTime}
-                onChange={handleTimeChange(setWorkTime)}
-                min="1"
               />
               <span>mins</span>
             </div>
             <div className="dropdown-section">
-              <label>Break</label>
+              <label htmlFor="pomodoro-break-time">Break</label>
               <input
+                id="pomodoro-break-time"
+                min="1"
+                onChange={handleTimeChange(setBreakTime)}
                 type="number"
                 value={breakTime}
-                onChange={handleTimeChange(setBreakTime)}
-                min="1"
               />
               <span>mins</span>
             </div>
             <div className="pomodoro-actions">
-              <button onClick={toggleTimer}>{isActive ? 'Pause' : 'Start'}</button>
-              <button onClick={resetTimer}>Reset</button>
+              <button onClick={toggleTimer} type="button">
+                {isActive ? 'Pause' : 'Start'}
+              </button>
+              <button onClick={resetTimer} type="button">
+                Reset
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Break Overlay - Rendered in Portal to escape Header stacking context */}
-      {showBreakOverlay && ReactDOM.createPortal(
-        <div className="break-overlay">
-          {renderOverlayContent()}
-        </div>,
-        document.body
-      )}
+      {showBreakOverlay &&
+        ReactDOM.createPortal(
+          <AccessibleDialog
+            label="Focus timer notification"
+            onClose={dismissOverlay}
+            overlayClassName="break-overlay"
+            surfaceClassName="break-overlay-content"
+          >
+            {renderOverlayContent()}
+          </AccessibleDialog>,
+          document.body,
+        )}
     </>
   );
 };

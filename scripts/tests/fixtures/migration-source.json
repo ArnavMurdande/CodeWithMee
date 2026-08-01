@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "databaseLabel": "codewithmee-fixture",
+  "indexes": {
+    "users": [
+      {
+        "key": { "email": 1 },
+        "name": "email_1",
+        "partialFilterExpression": { "email": "private-index@example.test" },
+        "unique": true
+      }
+    ]
+  },
+  "collections": {
+    "users": [
+      {
+        "_id": "u1",
+        "authMethod": "local",
+        "email": "Owner@Example.test",
+        "password": "$2b$12$fixturefixturefixturefixturefixturefixturefixturefixture",
+        "displayName": "Duplicate Owner",
+        "resetPasswordToken": "raw-reset-secret",
+        "roadmaps": [{ "title": "JS", "topics": [] }],
+        "notes": [{ "title": "private-note", "content": "private-content" }]
+      },
+      {
+        "_id": "u2",
+        "authMethod": "local",
+        "email": "owner@example.test",
+        "password": "$argon2id$v=19$m=65536,t=3,p=1$fixture$fixture",
+        "displayName": "Duplicate Owner Two"
+      },
+      {
+        "_id": "u3",
+        "authMethod": "google",
+        "email": "google@example.test",
+        "displayName": "Google User",
+        "videoProgress": [{ "videoId": "video-1", "timestamp": 12, "duration": 90 }]
+      },
+      {
+        "_id": "u4",
+        "authMethod": "local",
+        "email": "not-an-email",
+        "password": "plaintext-password"
+      },
+      {
+        "_id": "u5",
+        "authMethod": "local",
+        "email": "learner@example.test",
+        "password": "$2b$12$learnerfixturefixturefixturefixturefixturefixturefixture",
+        "displayName": "Fixture Learner",
+        "roadmaps": [
+          {
+            "title": "Web Foundations",
+            "topics": [
+              {
+                "topic": "HTTP",
+                "description": "Learn request and response semantics",
+                "youtube_query": "http basics",
+                "completed": true
+              }
+            ]
+          }
+        ],
+        "notes": [
+          {
+            "title": "HTTP notes",
+            "content": "Private learner note",
+            "attachments": [
+              {
+                "fileType": "image",
+                "url": "/uploads/legacy-note.png",
+                "name": "diagram.png"
+              }
+            ]
+          }
+        ],
+        "following": ["u3"],
+        "savedChallenges": ["challenge-1"],
+        "solvedChallenges": [{ "challenge": "challenge-1", "solvedAt": "2026-07-01T00:00:00.000Z" }]
+      }
+    ],
+    "authidentities": [
+      {
+        "_id": "identity-1",
+        "user": "u1",
+        "provider": "local",
+        "providerSubject": "Owner@Example.test",
+        "passwordHash": "$2b$12$anotherfixturefixturefixturefixturefixturefixturefixture"
+      }
+    ],
+    "authsessions": [
+      {
+        "_id": "session-1",
+        "user": "u3",
+        "sessionId": "session-public-id",
+        "currentTokenHash": "token-secret-hash",
+        "csrfTokenHash": "csrf-secret-hash"
+      }
+    ],
+    "identityonetimetokens": [
+      {
+        "_id": "token-1",
+        "user": "u3",
+        "purpose": "email_verification",
+        "tokenHash": "one-time-secret-hash"
+      }
+    ],
+    "organizations": [
+      {
+        "_id": "org1",
+        "organizationId": "public-org-1",
+        "owner": "u3",
+        "slug": "fixture-org",
+        "name": "Fixture Org"
+      }
+    ],
+    "organizationmemberships": [
+      {
+        "_id": "membership-1",
+        "organization": "org1",
+        "user": "u3",
+        "role": "owner",
+        "status": "active"
+      }
+    ],
+    "organizationinvitations": [
+      {
+        "_id": "invitation-1",
+        "organization": "org1",
+        "invitedBy": "u3",
+        "email": "invitee@example.test",
+        "role": "instructor",
+        "tokenHash": "invitation-secret-hash"
+      }
+    ],
+    "providerverificationreviews": [
+      {
+        "_id": "review-1",
+        "organization": "org1",
+        "submittedBy": "u3",
+        "statement": "private verification statement",
+        "status": "pending_review"
+      }
+    ],
+    "authority_controls": [
+      { "_id": "control-1", "controlKey": "platform_authority", "revision": 1 }
+    ],
+    "authority_audit_events": [
+      {
+        "_id": "audit-1",
+        "eventId": "event-1",
+        "targetUserId": "u3",
+        "action": "platform_role_change",
+        "reason": "private operator reason"
+      }
+    ],
+    "challenges": [
+      {
+        "_id": "challenge-1",
+        "author": "u3",
+        "title": "Fixture Challenge",
+        "description": "Do not leak this statement",
+        "difficulty": "Easy",
+        "score": 5,
+        "solution": "hidden-reference-solution",
+        "testCases": [
+          { "input": "visible-input", "output": "hidden-answer", "isExample": false },
+          { "input": "example-input", "output": "example-answer", "isExample": true }
+        ]
+      }
+    ],
+    "companies": [
+      {
+        "_id": "company-1",
+        "companyId": "fixture-company",
+        "companyName": "Claimable Company",
+        "adminEmail": "google@example.test",
+        "password": "$2b$12$companyfixturefixturefixturefixturefixturefixturefixture"
+      },
+      {
+        "_id": "company-2",
+        "companyId": "unclaimed-company",
+        "companyName": "Unclaimed Company",
+        "adminEmail": "missing@example.test",
+        "password": "$2b$12$companyfixturefixturefixturefixturefixturefixturefixture"
+      }
+    ],
+    "companyemployees": [
+      {
+        "_id": "employee-1",
+        "company": "company-1",
+        "user": "u3",
+        "employeeId": "secret-employee-id",
+        "role": "admin"
+      }
+    ],
+    "courses": [
+      {
+        "_id": "course-1",
+        "company": "company-1",
+        "title": "Paid Fixture Course",
+        "pricing": "paid",
+        "price": 199,
+        "modules": []
+      },
+      {
+        "_id": "course-2",
+        "company": "company-1",
+        "title": "Free Fixture Course",
+        "pricing": "free",
+        "visibility": "private",
+        "modules": [
+          {
+            "title": "Foundation Module",
+            "contents": [
+              {
+                "type": "note",
+                "title": "Introduction",
+                "content": "Private course material",
+                "allowDownload": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "enrollments": [
+      {
+        "_id": "enrollment-1",
+        "user": "u3",
+        "course": "course-1",
+        "company": "company-1",
+        "progressPercent": 80,
+        "completedContents": ["unverifiable-content-id"]
+      },
+      {
+        "_id": "enrollment-2",
+        "user": "missing-user",
+        "course": "course-1",
+        "company": "company-1",
+        "progressPercent": 10
+      },
+      {
+        "_id": "enrollment-3",
+        "user": "u5",
+        "course": "course-2",
+        "company": "company-1",
+        "status": "in_progress",
+        "progressPercent": 40,
+        "completedContents": ["legacy-content-1"]
+      }
+    ],
+    "posts": [
+      {
+        "_id": "post-1",
+        "authorType": "User",
+        "author": "u3",
+        "content": "private post body",
+        "likes": ["u5"],
+        "comments": [
+          {
+            "authorType": "User",
+            "author": "u5",
+            "content": "private comment body",
+            "likes": ["u3"],
+            "saves": ["u3"],
+            "replies": []
+          }
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "_id": "project-1",
+        "authorType": "User",
+        "author": "missing-user",
+        "title": "Private Prototype",
+        "description": "private prototype body",
+        "visibility": "private"
+      },
+      {
+        "_id": "project-2",
+        "authorType": "User",
+        "author": "u5",
+        "title": "Public Fixture Idea",
+        "description": "A fixture idea body",
+        "visibility": "public",
+        "techStack": ["JavaScript"],
+        "milestones": [
+          {
+            "title": "Prototype",
+            "description": "Build the first prototype",
+            "completed": true,
+            "completedAt": "2026-07-02T00:00:00.000Z"
+          }
+        ],
+        "likes": ["u3"]
+      }
+    ],
+    "youtubecaches": [{ "_id": "cache-1", "query": "private search query", "videoId": "video-1" }]
+  }
+}

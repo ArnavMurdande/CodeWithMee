@@ -1,94 +1,96 @@
 /* General container */
 .challenges-container {
-    padding: 3rem 4rem;
-    color: white;
-    max-width: 1600px;
-    margin: 0 auto;
+  padding: 3rem 4rem;
+  color: white;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* Header section */
 .challenges-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .challenges-header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0;
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .header-actions {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 1rem;
 }
 
-.create-challenge-btn, .icon-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: bold;
-    color: white;
-    background: linear-gradient(90deg, #a900ff, #00f8f1);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
+.create-challenge-btn,
+.icon-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(90deg, #a900ff, #00f8f1);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .icon-btn {
-    background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.create-challenge-btn:hover, .icon-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
+.create-challenge-btn:hover,
+.icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
 }
-
 
 /* Filters and Search Bar */
 .filters-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.250);
-    border-radius: 8px;
-    flex-wrap: wrap;
-    gap: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .filter-group {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.filter-group input[type="search"] {
-    background-color: rgba(10, 10, 15, 0.85);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: white;
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-    min-width: 250px;
+.filter-group input[type='search'] {
+  background-color: rgba(10, 10, 15, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  min-width: 250px;
 }
 
-.filter-group input[type="search"]::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+.filter-group input[type='search']::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.filter-group input[type="search"]:focus {
-    border-color: #00f8f1;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 248, 241, 0.15);
+.filter-group input[type='search']:focus {
+  border-color: #00f8f1;
+  box-shadow: 0 0 0 2px rgba(0, 248, 241, 0.15);
 }
 
 /* Custom Dropdown Styles */
@@ -146,217 +148,305 @@
 
 /* Tabs */
 .tabs {
-    display: flex;
-    gap: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem;
 }
 
 .tab {
-    background: none;
-    border: none;
-    color: #888;
-    padding: 1rem 0;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 600;
-    position: relative;
-    transition: color 0.2s;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45); /* Fix unreadable tab colors on background */
+  padding: 1rem 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  position: relative;
+  transition: color 0.2s;
 }
 
 .tab:hover {
-    color: white;
+  color: white;
 }
 
 .tab.active {
-    color: white;
+  color: white;
 }
 
 .tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: #00f8f1;
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #00f8f1;
 }
 
 /* Table styles */
 .list-container {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    overflow-x: auto;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow-x: auto;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
-th, td {
-    padding: 1rem 1.5rem;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap; 
-    overflow: hidden;
-    text-overflow: ellipsis;
+th,
+td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Column width adjustments */
-.status-col { width: 10%; }
-.title-col { min-width: 200px; } 
-.author-col { width: 15%; }
-.difficulty-col { width: 10%; }
-.score-col { width: 8%; }
-.actions-col { width: 240px; text-align: right;} 
-
-
+.status-col {
+  width: 10%;
+}
+.title-col {
+  min-width: 200px;
+}
+.author-col {
+  width: 15%;
+}
+.difficulty-col {
+  width: 10%;
+}
+.score-col {
+  width: 8%;
+}
+/* .actions-col is defined later */
 thead {
-    background: rgba(0, 0, 0, 0.50);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 tbody tr {
-    background-color: rgba(12, 12, 12, 0.5);
-    border-bottom: 1px solid rgba(4, 4, 4, 0.05);
-    transition: background-color 0.2s;
+  background-color: rgba(12, 12, 12, 0.5);
+  border-bottom: 1px solid rgba(4, 4, 4, 0.05);
+  transition: background-color 0.2s;
 }
 
 .challenge-title-cell {
-    cursor: pointer;
-    font-weight: 500;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 .challenge-title-cell:hover {
-    color: #00f8f1;
+  color: #00f8f1;
+}
+
+.challenge-title-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
 }
 
 tbody tr:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 tbody tr:hover {
-    background-color: rgba(12, 12, 12, 0.25);
+  background-color: rgba(12, 12, 12, 0.25);
 }
 
-.text-green-400 { color: #4ade80; }
-.text-yellow-400 { color: #facc15; }
-.text-red-400 { color: #f87171; }
+.text-green-400 {
+  color: #4ade80;
+}
+.text-yellow-400 {
+  color: #facc15;
+}
+.text-red-400 {
+  color: #f87171;
+}
 
 .solved .solved-check {
-    color: #4ade80;
-    font-weight: bold;
+  color: #4ade80;
+  font-weight: bold;
 }
 
 .unsolved-status {
-    color: #f87171;
-    font-style: normal;
-    font-weight: bold;
+  color: #f87171;
+  font-style: normal;
+  font-weight: bold;
 }
 
 .unsolved-status::before {
-    content: '✗ ';
-    margin-right: 0.25em;
+  content: '✗ ';
+  margin-right: 0.25em;
 }
 
 .current-user-rank {
-    background-color: rgba(0, 248, 241, 0.1);
-    font-weight: bold;
+  background-color: rgba(0, 248, 241, 0.1);
+  font-weight: bold;
+}
+
+.actions-col {
+  width: 240px;
+  text-align: right;
+  padding-right: 2rem;
 }
 
 .actions-cell {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Align items to the start */
-    gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align perfectly with Actions header */
+  gap: 0.25rem; /* Reduced gap to bring Save and Delete closer */
 }
 
 .action-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: rgba(255, 255, 255, 0.05); /* Premium generic background for all icons */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .save-btn .save-icon {
-    width: 20px;
-    height: 20px;
-    stroke: #60a5fa;
-    transition: fill 0.2s, stroke 0.2s;
+  width: 20px;
+  height: 20px;
+  stroke: #60a5fa;
+  transition:
+    fill 0.2s,
+    stroke 0.2s;
 }
 .save-btn.saved .save-icon {
-    fill: #3b82f6;
-    stroke: #3b82f6;
+  fill: #3b82f6;
+  stroke: #3b82f6;
 }
 
-.like-btn, .dislike-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 9999px;
-    font-size: 0.9rem;
-    color: #a0a0a0;
-    background-color: rgba(255, 255, 255, 0.05);
-    transition: all 0.2s ease;
+.save-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
 }
 
-.like-btn span:first-child, .dislike-btn span:first-child {
-    font-size: 1.1em;
-    line-height: 1;
+.like-btn,
+.dislike-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.95rem; /* Larger count text */
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95); /* Maximized text visibility */
+  /* Background/border is handled by .action-btn */
 }
 
-
-.like-btn:hover, .dislike-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.like-btn span:first-child,
+.dislike-btn span:first-child {
+  font-size: 1.25em;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.2)); /* Brightens and pops emojis */
 }
 
-.like-btn.active {
-    color: #4ade80;
-    font-weight: bold;
-    background-color: rgba(74, 222, 128, 0.1);
+/* Consolidated Vote Pill styles */
+.vote-group-pill {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45); /* Darker and black opaque but translucent */
+  border: 1px solid rgba(0, 0, 0, 0.6); /* Darker border */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); /* Deep inset shadow for pop */
+  border-radius: 9999px;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-right: 0.35rem; /* More spacing between pill and save button */
 }
 
-.dislike-btn.active {
-    color: #f87171;
-    font-weight: bold;
-    background-color: rgba(248, 113, 113, 0.1);
+.vote-group-pill:hover {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Override inner .action-btn inside the pill */
+.vote-group-pill .action-btn {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none !important;
+  transform: none !important; /* parent handles float */
+}
+
+.vote-group-pill .action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pill-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.vote-group-pill .like-btn.active {
+  color: #4ade80;
+  font-weight: bold;
+  background-color: rgba(74, 222, 128, 0.15);
+}
+
+.vote-group-pill .dislike-btn.active {
+  color: #f87171;
+  font-weight: bold;
+  background-color: rgba(248, 113, 113, 0.15);
 }
 
 .delete-btn {
-    background: rgba(248, 113, 113, 0.1);
-    border-radius: 9999px;
-    transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
 .delete-btn .delete-icon {
-    width: 20px;
-    height: 20px;
-    fill: #f87171;
-    transition: fill 0.2s ease;
+  width: 20px;
+  height: 20px;
+  fill: #f87171;
+  transition: fill 0.2s ease;
 }
 
 .delete-btn:hover:not(:disabled) {
-    background: rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.2);
 }
 
 .delete-btn:hover:not(:disabled) .delete-icon {
-    fill: #ef4444;
+  fill: #ef4444;
 }
 
 /* --- NEW: Styles for the disabled delete button --- */
 .delete-btn:disabled {
-    background: rgba(255, 255, 255, 0.05);
-    cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
 }
 
 .delete-btn:disabled .delete-icon {
-    fill: #555; /* Greyed out color */
+  fill: #555; /* Greyed out color */
 }
 
 /* ===================================
@@ -364,229 +454,266 @@ tbody tr:hover {
    =================================== */
 
 @media (max-width: 1200px) {
-    .challenges-container {
-        padding: 2rem 2rem;
-    }
-    
-    .filter-group input[type="search"] {
-        min-width: 200px;
-    }
+  .challenges-container {
+    padding: 2rem 2rem;
+  }
+
+  .filter-group input[type='search'] {
+    min-width: 200px;
+  }
 }
 
 @media (max-width: 900px) {
-    .challenges-container {
-        padding: 2rem 1.5rem;
-    }
-    
-    .challenges-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .challenges-header h1 {
-        font-size: 2.5rem;
-    }
-    
-    .header-actions {
-        width: 100%;
-    }
-    
-    .create-challenge-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .filters-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filter-group {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-    
-    .filter-group input[type="search"] {
-        width: 100%;
-        min-width: unset;
-    }
-    
-    .custom-dropdown {
-        flex: 1;
-        min-width: 120px;
-    }
-    
-    /* Hide less important columns on tablet */
-    .author-col, .score-col {
-        display: none;
-    }
-    
-    th, td {
-        padding: 0.75rem 1rem;
-    }
+  .challenges-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .challenges-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .challenges-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .create-challenge-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filter-group input[type='search'] {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .custom-dropdown {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Hide less important columns on tablet */
+  .author-col,
+  .score-col {
+    display: none;
+  }
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+  }
 }
 
 @media (max-width: 768px) {
-    .challenges-container {
-        padding: 1.5rem 1rem;
-        width: 100%;
-        box-sizing: border-box;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    .challenges-header h1 {
-        font-size: 2.2rem;
-        text-align: left;
-    }
-    
-    /* === COMPACT FILTERS BAR === */
-    .filters-bar {
-        padding: 0.5rem;
-        gap: 0.5rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-    }
-    
-    .filter-group {
-        gap: 0.5rem;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    
-    /* Compact search input */
-    .filter-group input[type="search"] {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.85rem;
-        min-height: 36px;
-        border-radius: 6px;
-    }
-    
-    /* Compact dropdowns */
-    .custom-dropdown {
-        min-width: calc(50% - 0.25rem);
-        flex: 1 1 calc(50% - 0.25rem);
-    }
-    
-    .dropdown-button {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.8rem;
-        min-height: 36px;
-        border-radius: 6px;
-    }
-    
-    .dropdown-menu {
-        padding: 0.35rem;
-    }
-    
-    .dropdown-menu li {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.85rem;
-    }
-    
-    .tabs {
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .tab {
-        font-size: 0.95rem;
-        padding: 0.6rem 0;
-    }
-    
-    .list-container {
-        border-radius: 8px;
-    }
-    
-    /* Simplify table on mobile */
-    th, td {
-        padding: 0.6rem 0.75rem;
-        font-size: 0.9rem;
-    }
-    
-    /* Hide more columns on mobile */
-    .difficulty-col {
-        display: none;
-    }
-    
-    .actions-col {
-        width: auto;
-        min-width: 100px;
-    }
-    
-    .actions-cell {
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-    
-    .like-btn, .dislike-btn {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.8rem;
-    }
+  .challenges-container {
+    padding: 1.5rem 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .challenges-header h1 {
+    font-size: 2.2rem;
+    text-align: left;
+  }
+
+  /* === COMPACT FILTERS BAR === */
+  .filters-bar {
+    padding: 0.5rem;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+
+  .filter-group {
+    gap: 0.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  /* Compact search input */
+  .filter-group input[type='search'] {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    min-height: 36px;
+    border-radius: 6px;
+  }
+
+  /* Compact dropdowns */
+  .custom-dropdown {
+    min-width: calc(50% - 0.25rem);
+    flex: 1 1 calc(50% - 0.25rem);
+  }
+
+  .dropdown-button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    min-height: 36px;
+    border-radius: 6px;
+  }
+
+  .dropdown-menu {
+    padding: 0.35rem;
+  }
+
+  .dropdown-menu li {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .tabs {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .tab {
+    font-size: 0.95rem;
+    padding: 0.6rem 0;
+  }
+
+  .list-container {
+    border-radius: 8px;
+  }
+
+  /* Simplify table on mobile */
+  th,
+  td {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Hide more columns on mobile */
+  .difficulty-col {
+    display: none;
+  }
+
+  .actions-col {
+    width: auto;
+    min-width: unset;
+    text-align: right;
+  }
+
+  .actions-cell {
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+
+  .action-btn,
+  .delete-btn {
+    padding: 0.35rem;
+    border-radius: 9999px; /* Restored round pill aesthetic */
+  }
+
+  .like-btn,
+  .dislike-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+  }
+
+  .like-btn span,
+  .dislike-btn span {
+    font-size: 0.9em;
+  }
 }
 
 @media (max-width: 480px) {
-    .challenges-container {
-        padding: 1rem 0.5rem;
-    }
-    
-    .challenges-header h1 {
-        font-size: 1.8rem;
-    }
-    
-    .create-challenge-btn, .icon-btn {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.85rem;
-    }
-    
-    /* Ultra-compact filters for small screens */
-    .filters-bar {
-        padding: 0.4rem;
-        gap: 0.4rem;
-    }
-    
-    .filter-group {
-        gap: 0.4rem;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    
-    .filter-group input[type="search"] {
-        width: 100%;
-        padding: 0.35rem 0.5rem;
-        font-size: 0.8rem;
-        min-height: 32px;
-    }
-    
-    .custom-dropdown {
-        flex: 1 1 calc(33.33% - 0.25rem);
-        min-width: calc(33.33% - 0.25rem);
-    }
-    
-    .dropdown-button {
-        padding: 0.35rem 0.5rem;
-        font-size: 0.75rem;
-        min-height: 32px;
-    }
-    
-    .dropdown-menu li {
-        padding: 0.35rem 0.5rem;
-        font-size: 0.8rem;
-    }
-    
-    th, td {
-        padding: 0.5rem;
-        font-size: 0.85rem;
-    }
-    
-    /* Show only essential columns */
-    .status-col {
-        width: 30px;
-    }
-    
-    .title-col {
-        min-width: 150px;
-    }
-}
+  .challenges-container {
+    padding: 1rem 0.5rem;
+  }
 
+  .challenges-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .create-challenge-btn,
+  .icon-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* Ultra-compact filters for small screens */
+  .filters-bar {
+    padding: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .filter-group {
+    gap: 0.4rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .filter-group input[type='search'] {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    min-height: 32px;
+  }
+
+  .custom-dropdown {
+    flex: 1 1 calc(33.33% - 0.25rem);
+    min-width: calc(33.33% - 0.25rem);
+  }
+
+  .dropdown-button {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 32px;
+  }
+
+  .dropdown-menu li {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  /* Show only essential columns */
+  .status-col {
+    width: 30px;
+  }
+
+  .title-col {
+    min-width: 150px;
+  }
+
+  .actions-col {
+    padding-right: 0.25rem;
+  }
+
+  .actions-cell {
+    gap: 0.2rem;
+  }
+
+  .action-btn {
+    padding: 0.25rem 0.35rem;
+  }
+
+  .like-btn,
+  .dislike-btn {
+    padding: 0.25rem 0.35rem;
+    font-size: 0.7rem;
+  }
+}

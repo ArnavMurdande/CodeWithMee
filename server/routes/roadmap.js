@@ -3,6 +3,9 @@ const router = express.Router();
 const { generateContentWithRetry } = require('../utils/geminiHelper');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
+const { createLegacyLogger } = require('../utils/legacyLogger');
+
+const legacyLogger = createLegacyLogger('roadmap');
 
 // ---------------- GENERATE & SAVE A NEW ROADMAP ----------------
 router.post('/generate', authMiddleware, async (req, res) => {
@@ -55,7 +58,7 @@ Example structure:
     try {
       jsonResponse = JSON.parse(cleanJsonText);
     } catch (err) {
-      console.error('⚠️ Gemini returned invalid JSON:', cleanJsonText);
+      legacyLogger.warn('provider_invalid_json', err);
       return res
         .status(500)
         .json({ error: 'Failed to parse AI response. Please try again.' });
@@ -71,7 +74,7 @@ Example structure:
     const newRoadmap = user.roadmaps[user.roadmaps.length - 1];
     res.json(newRoadmap);
   } catch (error) {
-    console.error('--- ERROR Generating Roadmap (Gemini) ---', error);
+    legacyLogger.error('generation_failed', error);
     res.status(500).json({
       error: 'Failed to generate roadmap. Please check server logs.',
     });
@@ -87,7 +90,7 @@ router.get('/my-roadmaps', authMiddleware, async (req, res) => {
     }
     res.json(user.roadmaps || []);
   } catch (error) {
-    console.error('--- ERROR Fetching Roadmaps ---', error);
+    legacyLogger.error('list_failed', error);
     res.status(500).json({ error: 'Failed to fetch saved roadmaps.' });
   }
 });
@@ -117,7 +120,7 @@ router.put('/progress', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Progress updated successfully!' });
   } catch (error) {
-    console.error('--- ERROR Updating Progress ---', error);
+    legacyLogger.error('progress_update_failed', error);
     res.status(500).json({ error: 'Server error updating progress.' });
   }
 });
@@ -142,7 +145,7 @@ router.delete('/:roadmapId', authMiddleware, async (req, res) => {
 
     res.json({ message: 'Roadmap deleted successfully.' });
   } catch (error) {
-    console.error('--- ERROR Deleting Roadmap ---', error);
+    legacyLogger.error('delete_failed', error);
     res.status(500).json({ error: 'Failed to delete roadmap.' });
   }
 });

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "initialJavaScriptGzipBytes": 225280,
+  "initialCssGzipBytes": 40960,
+  "initialRequestCount": 8,
+  "homeRouteJavaScriptGzipBytes": 245760,
+  "authRouteJavaScriptGzipBytes": 235520,
+  "largestAssetBytes": 524288,
+  "totalBuildBytes": 2097152
+}

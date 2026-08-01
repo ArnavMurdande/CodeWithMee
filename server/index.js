@@ -1,57 +1,24 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
-const { getGeminiKeys, getYoutubeKeys } = require('./utils/keyManager');
+const { startServer } = require('./start');
+const { asStructuredLogger } = require('./modules/http/structured-logger');
 
-// --- Log Loaded Keys ---
-const geminiKeys = getGeminiKeys();
-const youtubeKeys = getYoutubeKeys();
-console.log(`🚀 Loaded ${geminiKeys.length} Gemini Keys`);
-console.log(`🚀 Loaded ${youtubeKeys.length} YouTube Keys`);
+let runtime;
+const logger = asStructuredLogger(console, { environment: process.env.NODE_ENV || 'development' });
 
-// Initialize the app
-const app = express();
-const PORT = process.env.PORT || 5001;
+async function shutdown(signal) {
+  if (!runtime) return;
+  logger.info('server_shutdown_requested', { signal });
+  await runtime.close();
+}
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-// Serve static files from the 'uploads' directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// --- Database Connection ---
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB connected successfully! Ready to code! 🚀');
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    // Exit process with failure
-    process.exit(1);
-  }
-};
-
-connectDB();
-
-// --- API Routes ---
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/code', require('./routes/code'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/youtube', require('./routes/youtube'));
-app.use('/api/roadmap', require('./routes/roadmap'));
-app.use('/api/user', require('./routes/user'));
-app.use('/api/challenges', require('./routes/challenges'));
-
-// A simple test route to check if the server is working
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Hello from the server! 👋' });
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}. Let the coding adventure begin! ✨`);
-});
+startServer()
+  .then((startedRuntime) => {
+    runtime = startedRuntime;
+    process.once('SIGINT', () => shutdown('SIGINT').finally(() => process.exit(0)));
+    process.once('SIGTERM', () => shutdown('SIGTERM').finally(() => process.exit(0)));
+  })
+  .catch((error) => {
+    logger.error('server_startup_failed', { errorCode: error.code || 'internal_error' });
+    process.exitCode = 1;
+  });

@@ -1,0 +1,3883 @@
+{
+  "components": {
+    "schemas": {
+      "AccessSession": {
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
+            "minLength": 20,
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/Session"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "accessToken",
+          "session",
+          "user"
+        ],
+        "type": "object"
+      },
+      "AuditState": {
+        "additionalProperties": false,
+        "properties": {
+          "authorityRevision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "organizationRole": {
+            "enum": [
+              "admin",
+              "analyst",
+              "grader",
+              "instructor",
+              "owner"
+            ],
+            "type": "string"
+          },
+          "ownerUserId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "platformRole": {
+            "enum": [
+              "learner",
+              "moderator",
+              "superadmin",
+              "support"
+            ],
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "banned",
+              "deletion_pending",
+              "suspended"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AuditEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "actorSessionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actorUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "afterState": {
+            "$ref": "#/components/schemas/AuditState"
+          },
+          "beforeState": {
+            "$ref": "#/components/schemas/AuditState"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "operatorReference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "requestId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "enum": [
+              "api",
+              "bootstrap_cli"
+            ],
+            "type": "string"
+          },
+          "targetUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "actorSessionId",
+          "actorUserId",
+          "afterState",
+          "beforeState",
+          "id",
+          "occurredAt",
+          "operatorReference",
+          "organizationId",
+          "reason",
+          "requestId",
+          "source",
+          "targetUserId"
+        ],
+        "type": "object"
+      },
+      "AuthorityUser": {
+        "additionalProperties": false,
+        "properties": {
+          "authorityRevision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "oneOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "displayName": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "platformRole": {
+            "enum": [
+              "learner",
+              "moderator",
+              "superadmin",
+              "support"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "banned",
+              "deletion_pending",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "authorityRevision",
+          "avatarUrl",
+          "createdAt",
+          "displayName",
+          "email",
+          "emailVerified",
+          "id",
+          "platformRole",
+          "status",
+          "username"
+        ],
+        "type": "object"
+      },
+      "DownloadGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "GET"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "method",
+          "url"
+        ],
+        "type": "object"
+      },
+      "File": {
+        "additionalProperties": false,
+        "properties": {
+          "byteSize": {
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "declaredMime": {
+            "maxLength": 255,
+            "minLength": 3,
+            "type": "string"
+          },
+          "detectedMime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "originalName": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "assignment_submission",
+              "course_resource",
+              "idea_artifact",
+              "note_attachment",
+              "organization_logo",
+              "profile_avatar",
+              "provider_evidence",
+              "social_image",
+              "workspace_archive"
+            ],
+            "type": "string"
+          },
+          "scanStatus": {
+            "enum": [
+              "clean",
+              "failed",
+              "infected",
+              "pending",
+              "unscannable"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "deleted",
+              "quarantined",
+              "ready",
+              "upload_pending"
+            ],
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "enum": [
+              "enrolled",
+              "organization",
+              "private",
+              "public"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "byteSize",
+          "createdAt",
+          "declaredMime",
+          "detectedMime",
+          "id",
+          "originalName",
+          "purpose",
+          "scanStatus",
+          "state",
+          "updatedAt",
+          "uploadedAt",
+          "visibility"
+        ],
+        "type": "object"
+      },
+      "Invitation": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveryQueued": {
+            "type": "boolean"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "analyst",
+              "grader",
+              "instructor",
+              "owner"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "acceptedAt",
+          "email",
+          "expiresAt",
+          "id",
+          "organizationId",
+          "revokedAt",
+          "role"
+        ],
+        "type": "object"
+      },
+      "Membership": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "analyst",
+              "grader",
+              "instructor",
+              "owner"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "revoked",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/MembershipUser"
+          }
+        },
+        "required": [
+          "id",
+          "joinedAt",
+          "organizationId",
+          "role",
+          "status",
+          "user"
+        ],
+        "type": "object"
+      },
+      "MembershipUser": {
+        "additionalProperties": false,
+        "properties": {
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayName": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "OwnershipMembership": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "analyst",
+              "grader",
+              "instructor",
+              "owner"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "revoked",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "joinedAt",
+          "organizationId",
+          "role",
+          "status",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "OwnershipOrganization": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ownerUserId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "ownerUserId",
+          "revision"
+        ],
+        "type": "object"
+      },
+      "Organization": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "industry": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "logoFile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "type": "string"
+          },
+          "ownerUserId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "slug": {
+            "pattern": "^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "verificationStatus": {
+            "enum": [
+              "approved",
+              "draft",
+              "pending_review",
+              "rejected",
+              "suspended"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "id",
+          "industry",
+          "logoFile",
+          "name",
+          "slug",
+          "verificationStatus"
+        ],
+        "type": "object"
+      },
+      "OpenApiDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "components": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "info": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "jsonSchemaDialect": {
+            "format": "uri",
+            "type": "string"
+          },
+          "openapi": {
+            "const": "3.1.1",
+            "type": "string"
+          },
+          "paths": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "servers": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "components",
+          "info",
+          "jsonSchemaDialect",
+          "openapi",
+          "paths",
+          "servers",
+          "tags"
+        ],
+        "type": "object"
+      },
+      "Problem": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "detail": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "maxItems": 20
+          },
+          "instance": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "meta": {
+            "additionalProperties": false,
+            "properties": {
+              "maxBytes": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "requestId": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "maximum": 599,
+            "minimum": 400,
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "status",
+          "title",
+          "type"
+        ],
+        "type": "object"
+      },
+      "Session": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "client": {
+            "enum": [
+              "extension",
+              "web"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "maxLength": 300,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "authenticatedAt",
+          "client",
+          "createdAt",
+          "current",
+          "expiresAt",
+          "id",
+          "lastUsedAt",
+          "revokedAt",
+          "userAgent"
+        ],
+        "type": "object"
+      },
+      "UploadGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requiredHeaders": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "method",
+          "requiredHeaders",
+          "url"
+        ],
+        "type": "object"
+      },
+      "User": {
+        "additionalProperties": false,
+        "properties": {
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayName": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "platformRole": {
+            "enum": [
+              "learner",
+              "moderator",
+              "superadmin",
+              "support"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "banned",
+              "deletion_pending",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "avatarUrl",
+          "displayName",
+          "email",
+          "emailVerified",
+          "id",
+          "platformRole",
+          "status",
+          "username"
+        ],
+        "type": "object"
+      },
+      "ValidationIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "additional_property",
+              "constant",
+              "enum",
+              "format",
+              "max_items",
+              "max_length",
+              "max_properties",
+              "min_items",
+              "min_length",
+              "min_properties",
+              "minimum",
+              "maximum",
+              "one_of",
+              "pattern",
+              "required",
+              "type"
+            ],
+            "type": "string"
+          },
+          "pointer": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "pointer"
+        ],
+        "type": "object"
+      },
+      "VerificationReview": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionReason": {
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/Organization"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewerUserId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statement": {
+            "maxLength": 2000,
+            "minLength": 20,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "approved",
+              "draft",
+              "pending_review",
+              "rejected",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "submittedByUserId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decisionReason",
+          "id",
+          "organizationId",
+          "reviewedAt",
+          "reviewerUserId",
+          "statement",
+          "status",
+          "submittedAt",
+          "submittedByUserId"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "csrfHeader": {
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "type": "apiKey"
+      },
+      "refreshCookie": {
+        "in": "cookie",
+        "name": "cwm_refresh",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Implemented CodeWithMee v1 operations. Unknown request fields are rejected. Future roadmap operations are intentionally omitted until deployed.",
+    "title": "CodeWithMee API",
+    "version": "1.0.0"
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "3.1.1",
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "operationId": "getOpenApiDocument",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiDocument"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Get the executable OpenAPI 3.1 contract",
+        "tags": [
+          "Operations"
+        ],
+        "x-codewithmee-contract": "getOpenApiDocument"
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "not_ready",
+                        "ok",
+                        "ready"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Report process liveness without dependency detail",
+        "tags": [
+          "Operations"
+        ],
+        "x-codewithmee-contract": "getLiveness"
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "not_ready",
+                        "ok",
+                        "ready"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "not_ready",
+                        "ok",
+                        "ready"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Report aggregate serving readiness",
+        "tags": [
+          "Operations"
+        ],
+        "x-codewithmee-contract": "getReadiness"
+      }
+    },
+    "/health/dependencies": {
+      "get": {
+        "operationId": "getDependencyReadiness",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "checks": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "maxLength": 100,
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "ok",
+                              "optional_unavailable",
+                              "unavailable"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "enum": [
+                        "not_ready",
+                        "ready"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "checks",
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "checks": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "maxLength": 100,
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "ok",
+                              "optional_unavailable",
+                              "unavailable"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "enum": [
+                        "not_ready",
+                        "ready"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "checks",
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Report redacted dependency states to a superadmin",
+        "tags": [
+          "Operations"
+        ],
+        "x-codewithmee-contract": "getDependencyReadiness"
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "register",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessSession"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Create a learner account and web session",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "displayName": {
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  },
+                  "password": {
+                    "maxLength": 128,
+                    "minLength": 12,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "email",
+                  "password"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "login",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessSession"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Create a web session with local credentials",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  },
+                  "password": {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "refreshSession",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessSession"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "csrfHeader": [],
+            "refreshCookie": []
+          }
+        ],
+        "summary": "Rotate the refresh token and issue an access token",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "refreshSession"
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "csrfHeader": [],
+            "refreshCookie": []
+          }
+        ],
+        "summary": "Revoke the current refresh session",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "logout"
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "operationId": "logoutAll",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Revoke every session for the authenticated user",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "logoutAll"
+      }
+    },
+    "/auth/email/verify/request": {
+      "post": {
+        "operationId": "requestEmailVerification",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Queue an email-verification token when needed",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "requestEmailVerification"
+      }
+    },
+    "/auth/email/verify/confirm": {
+      "post": {
+        "operationId": "confirmEmailVerification",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Consume an email-verification token",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "confirmEmailVerification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "token": {
+                    "maxLength": 512,
+                    "minLength": 20,
+                    "pattern": "^ev1\\.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/auth/password/forgot": {
+      "post": {
+        "operationId": "requestPasswordReset",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Queue a password-reset token without account disclosure",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "requestPasswordReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/auth/password/reset": {
+      "post": {
+        "operationId": "resetPassword",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Consume a password-reset token and revoke sessions",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "password": {
+                    "maxLength": 128,
+                    "minLength": 12,
+                    "type": "string"
+                  },
+                  "token": {
+                    "maxLength": 512,
+                    "minLength": 20,
+                    "pattern": "^pr1\\.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password",
+                  "token"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/auth/google/start": {
+      "get": {
+        "operationId": "startGoogleLogin",
+        "responses": {
+          "302": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Begin the Google authorization-code flow",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "startGoogleLogin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "returnTo",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "operationId": "completeGoogleLogin",
+        "responses": {
+          "302": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Complete the Google authorization-code flow",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "completeGoogleLogin",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get the authenticated user",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "getMe"
+      }
+    },
+    "/me/sessions": {
+      "get": {
+        "operationId": "listMySessions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "sessions": {
+                      "items": {
+                        "$ref": "#/components/schemas/Session"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "sessions"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List sessions for the authenticated user",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "listMySessions"
+      }
+    },
+    "/me/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "revokeMySession",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Revoke one owned session",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "revokeMySession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/organizations": {
+      "get": {
+        "operationId": "listMyOrganizations",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "organizations": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "membership": {
+                            "$ref": "#/components/schemas/Membership"
+                          },
+                          "organization": {
+                            "$ref": "#/components/schemas/Organization"
+                          }
+                        },
+                        "required": [
+                          "membership",
+                          "organization"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "organizations"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List active organization memberships",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "listMyOrganizations"
+      },
+      "post": {
+        "operationId": "createOrganization",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "membership": {
+                      "$ref": "#/components/schemas/Membership"
+                    },
+                    "organization": {
+                      "$ref": "#/components/schemas/Organization"
+                    }
+                  },
+                  "required": [
+                    "membership",
+                    "organization"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create an organization with an owner membership",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "createOrganization",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "maxLength": 2000,
+                    "type": "string"
+                  },
+                  "industry": {
+                    "maxLength": 100,
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 2,
+                    "type": "string"
+                  },
+                  "slug": {
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "slug"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/organization-invitations/{token}/accept": {
+      "post": {
+        "operationId": "acceptOrganizationInvitation",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "invitation": {
+                      "$ref": "#/components/schemas/Invitation"
+                    },
+                    "membership": {
+                      "$ref": "#/components/schemas/Membership"
+                    }
+                  },
+                  "required": [
+                    "invitation",
+                    "membership"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Accept an organization invitation",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "acceptOrganizationInvitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "maxLength": 512,
+              "minLength": 20,
+              "pattern": "^oi1\\.",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/provider-verifications": {
+      "get": {
+        "operationId": "listProviderVerificationReviews",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "reviews": {
+                      "items": {
+                        "$ref": "#/components/schemas/VerificationReview"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "reviews"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List provider verification reviews",
+        "tags": [
+          "Organizations",
+          "Administration"
+        ],
+        "x-codewithmee-contract": "listProviderVerificationReviews",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "",
+                "approved",
+                "pending_review",
+                "rejected"
+              ],
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/provider-verifications/{reviewId}/decision": {
+      "post": {
+        "operationId": "decideProviderVerification",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "organization": {
+                      "$ref": "#/components/schemas/Organization"
+                    },
+                    "review": {
+                      "$ref": "#/components/schemas/VerificationReview"
+                    }
+                  },
+                  "required": [
+                    "organization",
+                    "review"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Approve or reject a provider verification",
+        "tags": [
+          "Organizations",
+          "Administration"
+        ],
+        "x-codewithmee-contract": "decideProviderVerification",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reviewId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "maxLength": 2000,
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "approved",
+                      "rejected"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/organizations/{organizationId}": {
+      "get": {
+        "operationId": "getOrganization",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "organization": {
+                      "$ref": "#/components/schemas/Organization"
+                    }
+                  },
+                  "required": [
+                    "organization"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get a public or authorized private organization",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "getOrganization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateOrganization",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "organization": {
+                      "$ref": "#/components/schemas/Organization"
+                    }
+                  },
+                  "required": [
+                    "organization"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update organization fields with optimistic concurrency",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "updateOrganization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "maxLength": 2000,
+                    "type": "string"
+                  },
+                  "industry": {
+                    "maxLength": 100,
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 2,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "revision"
+                ],
+                "type": "object",
+                "minProperties": 2
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/organizations/{organizationId}/members": {
+      "get": {
+        "operationId": "listOrganizationMembers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "members": {
+                      "items": {
+                        "$ref": "#/components/schemas/Membership"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "members"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List authorized organization members",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "listOrganizationMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/organizations/{organizationId}/invitations": {
+      "post": {
+        "operationId": "inviteOrganizationMember",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "invitation": {
+                      "$ref": "#/components/schemas/Invitation"
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Invite a member into an organization role",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "inviteOrganizationMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  },
+                  "role": {
+                    "enum": [
+                      "admin",
+                      "analyst",
+                      "grader",
+                      "instructor"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "role"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/organizations/{organizationId}/members/{userId}": {
+      "patch": {
+        "operationId": "updateOrganizationMember",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "membership": {
+                      "$ref": "#/components/schemas/Membership"
+                    }
+                  },
+                  "required": [
+                    "membership"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update an organization membership",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "updateOrganizationMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "role": {
+                    "enum": [
+                      "admin",
+                      "analyst",
+                      "grader",
+                      "instructor"
+                    ],
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "active",
+                      "revoked",
+                      "suspended"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "minProperties": 1
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "delete": {
+        "operationId": "removeOrganizationMember",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Revoke an organization membership",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "removeOrganizationMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/organizations/{organizationId}/verification": {
+      "post": {
+        "operationId": "submitProviderVerification",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "organization": {
+                      "$ref": "#/components/schemas/Organization"
+                    },
+                    "review": {
+                      "$ref": "#/components/schemas/VerificationReview"
+                    }
+                  },
+                  "required": [
+                    "organization",
+                    "review"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit an organization for provider verification",
+        "tags": [
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "submitProviderVerification",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "statement": {
+                    "maxLength": 2000,
+                    "minLength": 20,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "statement"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/admin/audit-events": {
+      "get": {
+        "operationId": "listAuthorityAuditEvents",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "events": {
+                      "items": {
+                        "$ref": "#/components/schemas/AuditEvent"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List bounded authority audit events",
+        "tags": [
+          "Administration"
+        ],
+        "x-codewithmee-contract": "listAuthorityAuditEvents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "operationId": "listAuthorityUsers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "users": {
+                      "items": {
+                        "$ref": "#/components/schemas/AuthorityUser"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "users"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List bounded platform authority users",
+        "tags": [
+          "Administration"
+        ],
+        "x-codewithmee-contract": "listAuthorityUsers",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/users/{userId}/platform-role": {
+      "patch": {
+        "operationId": "changePlatformRole",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "auditEvent": {
+                      "$ref": "#/components/schemas/AuditEvent"
+                    },
+                    "revokedSessionCount": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/AuthorityUser"
+                    }
+                  },
+                  "required": [
+                    "auditEvent",
+                    "revokedSessionCount",
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Change a platform role with an audited revision check",
+        "tags": [
+          "Administration"
+        ],
+        "x-codewithmee-contract": "changePlatformRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "platformRole": {
+                    "enum": [
+                      "learner",
+                      "moderator",
+                      "superadmin",
+                      "support"
+                    ],
+                    "type": "string"
+                  },
+                  "reason": {
+                    "maxLength": 500,
+                    "minLength": 12,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "platformRole",
+                  "reason",
+                  "revision"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/admin/users/{userId}/status": {
+      "patch": {
+        "operationId": "changeAccountStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "auditEvent": {
+                      "$ref": "#/components/schemas/AuditEvent"
+                    },
+                    "revokedSessionCount": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/AuthorityUser"
+                    }
+                  },
+                  "required": [
+                    "auditEvent",
+                    "revokedSessionCount",
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Change account status with an audited revision check",
+        "tags": [
+          "Administration"
+        ],
+        "x-codewithmee-contract": "changeAccountStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "maxLength": 500,
+                    "minLength": 12,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "active",
+                      "banned",
+                      "deletion_pending",
+                      "suspended"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason",
+                  "revision",
+                  "status"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/organizations/{organizationId}/ownership-transfer": {
+      "post": {
+        "operationId": "transferOrganizationOwnership",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "actorMembership": {
+                      "$ref": "#/components/schemas/OwnershipMembership"
+                    },
+                    "auditEvent": {
+                      "$ref": "#/components/schemas/AuditEvent"
+                    },
+                    "organization": {
+                      "$ref": "#/components/schemas/OwnershipOrganization"
+                    },
+                    "targetMembership": {
+                      "$ref": "#/components/schemas/OwnershipMembership"
+                    }
+                  },
+                  "required": [
+                    "actorMembership",
+                    "auditEvent",
+                    "organization",
+                    "targetMembership"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Atomically transfer organization ownership",
+        "tags": [
+          "Administration",
+          "Organizations"
+        ],
+        "x-codewithmee-contract": "transferOrganizationOwnership",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "maxLength": 500,
+                    "minLength": 12,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "targetUserId": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason",
+                  "revision",
+                  "targetUserId"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/files/upload-intents": {
+      "post": {
+        "operationId": "createFileUploadIntent",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    },
+                    "upload": {
+                      "$ref": "#/components/schemas/UploadGrant"
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "upload"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a bounded direct-upload intent",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "createFileUploadIntent",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "byteSize": {
+                    "maximum": 104857600,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "declaredMime": {
+                    "maxLength": 255,
+                    "minLength": 3,
+                    "type": "string"
+                  },
+                  "originalName": {
+                    "maxLength": 255,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "ownerOrganizationId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "ownerType": {
+                    "enum": [
+                      "organization",
+                      "user"
+                    ],
+                    "type": "string"
+                  },
+                  "purpose": {
+                    "enum": [
+                      "assignment_submission",
+                      "course_resource",
+                      "idea_artifact",
+                      "note_attachment",
+                      "organization_logo",
+                      "profile_avatar",
+                      "provider_evidence",
+                      "social_image",
+                      "workspace_archive"
+                    ],
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "byteSize",
+                  "declaredMime",
+                  "originalName",
+                  "purpose",
+                  "sha256"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/files/{fileId}": {
+      "get": {
+        "operationId": "getFileMetadata",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get authorized file metadata",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "getFileMetadata",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteFile",
+        "responses": {
+          "204": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Revoke access and request object deletion",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "deleteFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/files/{fileId}/complete": {
+      "post": {
+        "operationId": "completeFileUpload",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Verify uploaded object metadata before scan",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "completeFileUpload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/files/{fileId}/download": {
+      "post": {
+        "operationId": "createFileDownload",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "download": {
+                      "$ref": "#/components/schemas/DownloadGrant"
+                    }
+                  },
+                  "required": [
+                    "download"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a short-lived authorized download grant",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "createFileDownload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/files/{fileId}/visibility": {
+      "patch": {
+        "operationId": "setFileVisibility",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "$ref": "#/components/schemas/File"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Change file visibility within its purpose policy",
+        "tags": [
+          "Files"
+        ],
+        "x-codewithmee-contract": "setFileVisibility",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "visibility": {
+                    "enum": [
+                      "enrolled",
+                      "organization",
+                      "private",
+                      "public"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "visibility"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Identity"
+    },
+    {
+      "name": "Organizations"
+    },
+    {
+      "name": "Administration"
+    },
+    {
+      "name": "Files"
+    },
+    {
+      "name": "Operations"
+    }
+  ]
+}
