@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { generateContentWithRetry } = require('../utils/geminiHelper');
 const authMiddleware = require('../middleware/authMiddleware');
-const User = require('../models/User');
 const { createLegacyLogger } = require('../utils/legacyLogger');
 const {
   CONTENT_FORMAT,
@@ -11,6 +10,12 @@ const {
 } = require('../modules/content/restricted-content');
 
 const legacyLogger = createLegacyLogger('ai');
+
+const { getPgPool } = require('../db/postgres');
+
+function isUuid(str) {
+  return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
 
 // ---------------- SANDBOX CHAT ROUTE (per pathway/chapter) ----------------
 router.post('/chat', authMiddleware, async (req, res) => {
@@ -38,15 +43,13 @@ router.post('/chat', authMiddleware, async (req, res) => {
   });
 
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    // Get recent history for this specific pathway+chapter
-    const chapterHistory = (user.sandboxConversations || [])
-      .filter((c) => c.pathway === pathwayKey && c.chapter === chapterKey)
-      .slice(-5)
+    const pool = getPgPool();
+    if (!pool || !isUuid(req.user?.id)) return res.status(503).json({ error: { code: 'learning_database_unavailable' } });
+    const historyResult = await pool.query(
+      `SELECT prompt,response FROM learning_conversations WHERE user_id=$1 AND context='sandbox' AND pathway=$2 AND chapter=$3 ORDER BY occurred_at DESC LIMIT 5`,
+      [req.user.id, pathwayKey, chapterKey],
+    );
+    const chapterHistory = historyResult.rows.reverse()
       .map((conv) => `User asked: "${conv.prompt}"\nMee answered: "${conv.response}"`)
       .join('\n\n');
 
@@ -68,32 +71,21 @@ Provide a concise, helpful, and encouraging answer. Address the user directly.
 Keep answers relevant to the pathway and chapter context.
 `;
 
-    const result = await generateContentWithRetry('models/gemini-3-flash-preview', prompt);
+    const result = await generateContentWithRetry('gemini-1.5-flash', prompt);
     const answerDocument = createDocument(
       result.response.text() || 'Sorry, I could not generate a response.',
       { format: CONTENT_FORMAT.RESTRICTED_MARKDOWN, maximumLength: 50_000 },
     );
 
-    // Save to sandboxConversations (per pathway/chapter)
-    user.sandboxConversations.push({
-      pathway: pathwayKey,
-      chapter: chapterKey,
-      prompt: safeQuestion,
-      response: answerDocument.text,
-      responseFormat: answerDocument.format,
-    });
+    try {
+      await pool.query(
+            `INSERT INTO learning_conversations
+             (user_id, context, pathway, chapter, prompt, response, response_format, occurred_at)
+             VALUES ($1, 'sandbox', $2, $3, $4, $5, $6, NOW())`,
+            [req.user.id, pathwayKey, chapterKey, safeQuestion, answerDocument.text, answerDocument.format]
+          );
+    } catch (pgErr) { legacyLogger.warn('postgres_ai_chat_save_failed', pgErr); }
 
-    // Also save to legacy conversations for backward compatibility
-    user.conversations.push({
-      prompt: safeQuestion,
-      response: answerDocument.text,
-      responseFormat: answerDocument.format,
-    });
-    if (user.conversations.length > 20) {
-      user.conversations = user.conversations.slice(-20);
-    }
-
-    await user.save();
     res.json({ answer: answerDocument.text, answerDocument });
   } catch (error) {
     legacyLogger.error('chat_failed', error);
@@ -104,19 +96,34 @@ Keep answers relevant to the pathway and chapter context.
 // ---------------- SANDBOX CHAT HISTORY (per pathway/chapter) ----------------
 router.get('/sandbox-history', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('sandboxConversations roadmaps');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
+    const userId = req.user?.id;
+    const pool = getPgPool();
+    let pgConvos = [];
+
+    if (pool && isUuid(userId)) {
+      try {
+        const pgRes = await pool.query(
+          `SELECT pathway, chapter, prompt, response, occurred_at AS "timestamp"
+           FROM learning_conversations
+           WHERE user_id = $1 AND context = 'sandbox'
+           ORDER BY occurred_at ASC`,
+          [userId]
+        );
+        pgConvos = pgRes.rows || [];
+      } catch (pgErr) {
+        legacyLogger.warn('postgres_fetch_sandbox_history_failed', pgErr);
+      }
     }
 
-    // Build a structured response: { pathways: [{name, chapters: [{name, messages: [...]}]}] }
-    const convos = user.sandboxConversations || [];
+    const convos = pgConvos;
     const pathwayMap = {};
 
     convos.forEach((c) => {
-      if (!pathwayMap[c.pathway]) pathwayMap[c.pathway] = {};
-      if (!pathwayMap[c.pathway][c.chapter]) pathwayMap[c.pathway][c.chapter] = [];
-      pathwayMap[c.pathway][c.chapter].push({
+      const pw = c.pathway || 'General';
+      const ch = c.chapter || 'General';
+      if (!pathwayMap[pw]) pathwayMap[pw] = {};
+      if (!pathwayMap[pw][ch]) pathwayMap[pw][ch] = [];
+      pathwayMap[pw][ch].push({
         prompt: c.prompt,
         response: c.response,
         responseDocument: createDocument(c.response, {
@@ -127,12 +134,10 @@ router.get('/sandbox-history', authMiddleware, async (req, res) => {
       });
     });
 
-    // Also provide list of all pathways/chapters from roadmaps for the selector
-    const roadmapList = (user.roadmaps || []).map((r) => ({
-      id: r._id,
-      title: r.title,
-      chapters: (r.topics || []).map((t) => t.topic),
-    }));
+    const roadmaps = pool && isUuid(userId) ? await pool.query(
+      `SELECT r.id,r.title,COALESCE(jsonb_agg(t.title ORDER BY t.position) FILTER (WHERE t.id IS NOT NULL),'[]') AS chapters
+       FROM learning_roadmaps r LEFT JOIN learning_topics t ON t.roadmap_id=r.id WHERE r.user_id=$1 GROUP BY r.id ORDER BY r.position`, [userId]) : { rows: [] };
+    const roadmapList = roadmaps.rows;
 
     res.json({ chatsByPathway: pathwayMap, roadmaps: roadmapList });
   } catch (error) {
@@ -144,11 +149,10 @@ router.get('/sandbox-history', authMiddleware, async (req, res) => {
 // ---------------- LEGACY CHAT HISTORY (kept for backward compatibility) ----------------
 router.get('/chat-history', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('conversations');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-    res.json(user.conversations);
+    const pool = getPgPool();
+    if (!pool) return res.status(503).json({ error: { code: 'learning_database_unavailable' } });
+    const result = await pool.query('SELECT prompt,response,response_format,occurred_at FROM learning_conversations WHERE user_id=$1 ORDER BY occurred_at DESC LIMIT 20', [req.user.id]);
+    res.json(result.rows);
   } catch (error) {
     legacyLogger.error('chat_history_failed', error);
     res.status(500).json({ error: 'Failed to fetch chat history.' });
@@ -159,22 +163,13 @@ router.get('/chat-history', authMiddleware, async (req, res) => {
 router.delete('/sandbox-history', authMiddleware, async (req, res) => {
   const { pathway, chapter } = req.query;
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    if (pathway && chapter) {
-      // Clear chat for a specific chapter in a pathway
-      user.sandboxConversations = user.sandboxConversations.filter(
-        (c) => !(c.pathway === pathway && c.chapter === chapter),
-      );
-    } else if (pathway) {
-      // Clear all chats for a pathway
-      user.sandboxConversations = user.sandboxConversations.filter((c) => c.pathway !== pathway);
-    }
-
-    await user.save();
+    const pool = getPgPool();
+    if (!pool) return res.status(503).json({ error: { code: 'learning_database_unavailable' } });
+    await pool.query(
+      `DELETE FROM learning_conversations WHERE user_id=$1 AND context='sandbox'
+       AND ($2::text IS NULL OR pathway=$2) AND ($3::text IS NULL OR chapter=$3)`,
+      [req.user.id, pathway || null, chapter || null],
+    );
     res.json({ msg: 'Chat history cleared successfully.' });
   } catch (error) {
     legacyLogger.error('chat_clear_failed', error);
@@ -216,7 +211,7 @@ Your task:
 Return ONLY the corrected code with comments. Do not include markdown code fences or backticks. Just return raw code.
 `;
 
-    const result = await generateContentWithRetry('models/gemini-3-flash-preview', prompt);
+    const result = await generateContentWithRetry('gemini-1.5-flash', prompt);
     let answer = result.response.text() || '';
 
     // Robust extraction: strip markdown code fences or pull out the inner code block

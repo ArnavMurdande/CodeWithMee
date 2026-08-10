@@ -8,7 +8,7 @@ function userRecord(row) {
   if (!row) return null;
   return {
     authorityRevision: row.authority_revision,
-    avatarUrl: null,
+    avatarUrl: row.avatar_url || null,
     createdAt: row.created_at,
     displayName: row.display_name,
     email: row.email_display,
@@ -244,9 +244,71 @@ function createPostgresIdentityRepository(pool) {
       return userRecord(result.rows[0]);
     },
 
-    async updateGoogleProfile(userId) {
-      const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    async updateGoogleProfile(userId, { avatarUrl, displayName } = {}) {
+      const result = await pool.query(
+        `UPDATE users
+            SET avatar_url = CASE
+                  WHEN avatar_url LIKE '/uploads/%' THEN avatar_url
+                  ELSE COALESCE($2, avatar_url)
+                END,
+                display_name = COALESCE($3, display_name),
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+          RETURNING *`,
+        [userId, avatarUrl || null, displayName || null],
+      );
       return userRecord(result.rows[0]);
+    },
+
+    async updateUserProfile(userId, { avatarUrl, displayName, username } = {}) {
+      const result = await pool.query(
+        `UPDATE users
+            SET avatar_url = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE avatar_url END,
+                display_name = COALESCE($3, display_name),
+                username = COALESCE($4, username),
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+          RETURNING *`,
+        [userId, avatarUrl !== undefined ? avatarUrl : null, displayName || null, username || null],
+      );
+      return userRecord(result.rows[0]);
+    },
+
+    async getThemePreferences(userId) {
+      const result = await pool.query(
+        'SELECT theme_preferences FROM learning_profiles WHERE user_id = $1',
+        [userId],
+      );
+      return result.rows[0]?.theme_preferences || null;
+    },
+
+    async setThemePreferences(userId, theme) {
+      const result = await pool.query(
+        `INSERT INTO learning_profiles
+           (user_id, theme_preferences, created_at, updated_at)
+         VALUES ($1, $2::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT (user_id) DO UPDATE
+           SET theme_preferences = EXCLUDED.theme_preferences,
+               updated_at = CURRENT_TIMESTAMP
+         RETURNING theme_preferences`,
+        [userId, JSON.stringify(theme)],
+      );
+      return result.rows[0].theme_preferences;
+    },
+
+    async setPrivacySettings(userId, settings) {
+      const result = await pool.query(
+        `INSERT INTO social_profiles (user_id,privacy_settings,created_at,updated_at)
+         VALUES ($1,$2::jsonb,NOW(),NOW()) ON CONFLICT (user_id) DO UPDATE
+         SET privacy_settings=EXCLUDED.privacy_settings,updated_at=NOW() RETURNING privacy_settings`,
+        [userId, JSON.stringify(settings)],
+      );
+      return result.rows[0].privacy_settings;
+    },
+
+    async getPrivacySettings(userId) {
+      const result = await pool.query('SELECT privacy_settings FROM social_profiles WHERE user_id=$1', [userId]);
+      return result.rows[0]?.privacy_settings || null;
     },
 
     async createSession(session) {

@@ -108,17 +108,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .saved-roadmaps-overlay,
   .modal-overlay,
   .profile-modal-overlay {
     max-width: 100vw;
     max-height: 100dvh;
-  }
-
-  .saved-roadmaps-overlay {
-    inset: 0.75rem;
-    width: auto;
-    height: auto;
   }
 
   .sandbox-page-container {

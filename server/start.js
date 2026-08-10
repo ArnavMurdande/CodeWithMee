@@ -12,6 +12,23 @@ const {
   verifyPersistenceActivation,
 } = require('./modules/persistence/runtime');
 const { getGeminiKeys, getYoutubeKeys } = require('./utils/keyManager');
+const { createPostgresChallengeRepository } = require('./modules/challenges/postgres-repository');
+const { createChallengeService } = require('./modules/challenges/service');
+const { createChallengeRouter } = require('./modules/challenges/router');
+const { createPostgresCourseRepository } = require('./modules/courses/postgres-repository');
+const { createCourseService } = require('./modules/courses/service');
+const { createCourseRouter } = require('./modules/courses/router');
+const { createPostgresLmsRepository } = require('./modules/lms/postgres-repository');
+const { createLmsService } = require('./modules/lms/service');
+const { createLmsRouter } = require('./modules/lms/router');
+const { createLearningRouter } = require('./modules/learning/router');
+const { createPostgresSpaceRouter } = require('./modules/space/router');
+const { createExecutionGateway } = require('./modules/execution/runner-gateway');
+const { createExecutionJobQueue } = require('./modules/execution/job-queue');
+const { createPostgresExecutionJobRepository } = require('./modules/execution/postgres-job-repository');
+const { createExecutionRouter } = require('./modules/execution/router');
+const authMiddleware = require('./middleware/authMiddleware');
+const { createProviderRbac } = require('./modules/provider/rbac');
 
 function listen(app, { host, port }) {
   return new Promise((resolve, reject) => {
@@ -37,16 +54,12 @@ async function startServer({ environment = process.env, logger = console } = {})
   const fileNeedsPostgres = Boolean(environment.FILE_STORAGE_MODE?.trim());
   const database = await connectDatabase({
     logger: runtimeLogger,
-    mongoUri: config.mongoUri,
     postgresRequired: persistence.needsPostgres || fileNeedsPostgres,
     postgresUri: config.databaseUrl,
   });
   let identity = null;
   let server = null;
   try {
-    if (persistence.shadowDomains.length && !database.mongo.connected) {
-      throw new Error('MongoDB must be available while persistence shadow reads are enabled.');
-    }
     await verifyPersistenceActivation(database.postgres.pool, persistence);
     identity = createIdentityModule({
       allowedOrigins: config.corsAllowedOrigins,
@@ -76,9 +89,70 @@ async function startServer({ environment = process.env, logger = console } = {})
       enabled: operationRuntime.enabled,
       reasonCode: operationRuntime.reason,
     });
+    let challengeRouter = null;
+    let coursesRouter = null;
+    let lmsRouter = null;
+    let learningRouter = null;
+    let spaceRouter = null;
+    let runnerGateway = null;
+    let jobQueue = null;
+    let executionRouter = null;
+
+    if (database.postgres.pool) {
+      runnerGateway = createExecutionGateway({
+        hmacSecret: environment.RUNNER_HMAC_SECRET,
+        runnerUrl: environment.PISTON_RUNNER_URL || environment.PISTON_API_URL || null,
+        isProduction: config.nodeEnv === 'production',
+      });
+      jobQueue = createExecutionJobQueue({
+        maxConcurrency: 5,
+        maxQueueDepth: 20,
+        dbRepository: createPostgresExecutionJobRepository(database.postgres.pool),
+      });
+      executionRouter = createExecutionRouter({ jobQueue, runnerGateway });
+
+      const courseRepo = createPostgresCourseRepository(database.postgres.pool);
+      const courseService = createCourseService({ repository: courseRepo });
+      const challengeRepo = createPostgresChallengeRepository(database.postgres.pool);
+      const challengeService = createChallengeService({
+        repository: challengeRepo,
+        executionGateway: runnerGateway,
+        jobQueue,
+        onChallengeSolved: courseService.onChallengeSolved,
+      });
+      challengeRouter = createChallengeRouter({
+        service: challengeService,
+        pool: database.postgres.pool,
+        authenticate: identity.authenticate,
+      });
+
+      const providerRbac = createProviderRbac({ pool: database.postgres.pool });
+      coursesRouter = createCourseRouter({
+        service: courseService,
+        authMiddleware,
+        providerRbac,
+      });
+      lmsRouter = createLmsRouter({
+        service: createLmsService(createPostgresLmsRepository(database.postgres.pool), { mailer: identity.mailer }),
+        providerRbac,
+      });
+      learningRouter = createLearningRouter(database.postgres.pool);
+      spaceRouter = createPostgresSpaceRouter({ pool: database.postgres.pool, fileService: identity.fileService });
+    }
+
+    const appAllowedOrigins = [
+      ...new Set([...(identity?.trustedOrigins || []), ...config.corsAllowedOrigins]),
+    ];
     const app = createApp({
-      allowedOrigins: config.corsAllowedOrigins,
+      allowedOrigins: appAllowedOrigins,
+      challengeRouter,
+      coursesRouter,
+      lmsRouter,
+      learningRouter,
+      spaceRouter,
+      executionRouter,
       fileRouter: identity.fileRouter,
+      fileObjectRouter: identity.fileObjectRouter,
       identityAuthenticate: identity.authenticate,
       identityRouter: identity.router,
       legacyApiEnabled: persistence.legacyApiEnabled,
@@ -88,11 +162,6 @@ async function startServer({ environment = process.env, logger = console } = {})
       operationRuntime,
       readinessProbe: createReadinessProbe({
         checks: [
-          {
-            name: 'mongo',
-            probe: () => database.mongo.ping(),
-            required: persistence.needsMongo,
-          },
           {
             name: 'postgres',
             probe: () => database.postgres.ping(),
@@ -107,6 +176,11 @@ async function startServer({ environment = process.env, logger = console } = {})
             name: 'file_storage',
             probe: async () => identity.fileEnabled,
             required: fileNeedsPostgres,
+          },
+          {
+            name: 'runner',
+            probe: async () => !runnerGateway || !runnerGateway.isCircuitOpen(),
+            required: false,
           },
         ],
       }),
@@ -147,6 +221,9 @@ async function startServer({ environment = process.env, logger = console } = {})
             server.close((error) => (error ? reject(error) : resolve()));
           });
         } finally {
+          if (jobQueue && typeof jobQueue.destroy === 'function') {
+            jobQueue.destroy();
+          }
           await identity.close();
           await disconnectDatabase(database);
         }

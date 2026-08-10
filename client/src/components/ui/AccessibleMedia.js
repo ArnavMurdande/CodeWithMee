@@ -6,12 +6,16 @@ export function AccessibleMedia({
   src,
   title,
   transcript,
+  mediaRef,
+  onLoadedMetadata,
+  onTimeUpdate,
 }) {
   const media =
     kind === 'audio' ? (
       <audio aria-label={title} className={className} controls preload="metadata" src={src} />
     ) : (
       <video
+        ref={mediaRef}
         aria-label={title}
         className={className}
         controls
@@ -19,6 +23,8 @@ export function AccessibleMedia({
         poster={poster}
         preload="metadata"
         src={src}
+        onLoadedMetadata={onLoadedMetadata}
+        onTimeUpdate={onTimeUpdate}
       >
         {captionsSrc ? (
           <track default kind="captions" label="English captions" src={captionsSrc} srcLang="en" />

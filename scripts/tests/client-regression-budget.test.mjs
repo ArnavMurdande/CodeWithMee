@@ -83,7 +83,7 @@ test('regression matrix preserves motion, contrast, keyboard, role, and protecte
 test('all route modules are lazy and have an accessible Suspense fallback', async () => {
   const app = await readFile(new URL('../../client/src/App.js', import.meta.url), 'utf8');
 
-  assert.equal([...app.matchAll(/= lazy\(\(\) => import\(/g)].length, 13);
+  assert.equal([...app.matchAll(/= lazy\(\(\) => import\(/g)].length, 14);
   assert.match(app, /<Suspense fallback=\{<RouteLoadingState \/>\}>/);
   assert.match(app, /label="Loading page"/);
   assert.match(app, /type="loading"/);

@@ -5,6 +5,8 @@ const { createLegacyLogger } = require("./legacyLogger");
 const legacyLogger = createLegacyLogger("gemini");
 
 /**
+
+/**
  * Generates content using Google Gemini with automatic load balancing and failover.
  * 
  * @param {string} modelName - The model to use (e.g., 'gemini-pro').
@@ -18,47 +20,39 @@ const generateContentWithRetry = async (modelName, prompt) => {
         throw new Error("FATAL: No Gemini API keys found. Please configure GEMINI_API_KEY_1 in .env");
     }
 
-    // Shuffle keys for load balancing
-    const shuffledKeys = [...keys].sort(() => 0.5 - Math.random());
-    
+    const candidateModels = Array.isArray(modelName)
+        ? modelName
+        : [modelName, 'gemini-flash-latest', 'gemini-2.0-flash', 'gemini-1.5-pro-latest'].filter((m, idx, self) => m && self.indexOf(m) === idx);
+
     let lastError = null;
 
-    for (let i = 0; i < shuffledKeys.length; i++) {
-        const key = shuffledKeys[i];
+    for (const targetModel of candidateModels) {
+        // Shuffle keys for load balancing
+        const shuffledKeys = [...keys].sort(() => 0.5 - Math.random());
         
-        try {
-            // Re-instantiate client for each attempt as requested
-            const genAI = new GoogleGenerativeAI(key);
-            const model = genAI.getGenerativeModel({ model: modelName });
+        for (let i = 0; i < shuffledKeys.length; i++) {
+            const key = shuffledKeys[i];
             
-            legacyLogger.info("provider_attempt", { attempt: i + 1, total: shuffledKeys.length });
-            
-            const result = await model.generateContent(prompt);
-            return result; // Success!
-
-        } catch (error) {
-            lastError = error;
-            
-            // Check for retryable errors (429: Too Many Requests, 503: Service Unavailable)
-            // Note: GoogleGenerativeAIError might wrap the status. 
-            // We check status property or message content.
-            const status = error.status || error.response?.status;
-            const isRetryable = status === 429 || status === 503 || 
-                                (error.message && (error.message.includes('429') || error.message.includes('503')));
-
-            if (isRetryable) {
-                legacyLogger.warn("provider_retry", { code: status });
-                continue; // Try next key
-            } else {
-                // Non-retryable error (e.g., 400 Bad Request, blocked content)
-                legacyLogger.error("provider_non_retryable", error);
-                throw error;
+            try {
+                const genAI = new GoogleGenerativeAI(key);
+                const model = genAI.getGenerativeModel({ model: targetModel });
+                
+                legacyLogger.info("provider_attempt", { model: targetModel, attempt: i + 1, total: shuffledKeys.length });
+                
+                const result = await model.generateContent(prompt);
+                if (result && result.response) {
+                    return result; // Success!
+                }
+            } catch (error) {
+                lastError = error;
+                const status = error.status || error.response?.status;
+                legacyLogger.warn("provider_retry", { model: targetModel, code: status || error.message || 'non_200' });
             }
         }
     }
 
     legacyLogger.error("provider_keys_exhausted", lastError);
-    throw lastError;
+    throw lastError || new Error("All Gemini API keys and model candidates failed.");
 };
 
 module.exports = { generateContentWithRetry };

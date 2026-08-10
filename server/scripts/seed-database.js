@@ -2,6 +2,7 @@
 
 const { Pool } = require('pg');
 const { buildAuthorizationCatalog } = require('../../prisma/seed/authorization-catalog.cjs');
+const { seedChallenges } = require('../../prisma/seed/challenges.cjs');
 const { assertDatabaseSafety } = require('./database-safety');
 
 async function seedAuthorizationCatalog(client, catalog) {
@@ -59,8 +60,9 @@ async function main() {
     await client.query('BEGIN');
     await client.query("SET LOCAL lock_timeout = '10s'");
     const counts = await seedAuthorizationCatalog(client, buildAuthorizationCatalog());
+    const challengeCounts = await seedChallenges(client);
     await client.query('COMMIT');
-    process.stdout.write(`${JSON.stringify({ authorizationCatalog: counts })}\n`);
+    process.stdout.write(`${JSON.stringify({ authorizationCatalog: counts, ...challengeCounts })}\n`);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -77,4 +79,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { seedAuthorizationCatalog };
+module.exports = { seedAuthorizationCatalog, seedChallenges };

@@ -47,15 +47,7 @@ async function main(environment = process.env, args = process.argv.slice(2)) {
   if (!storageConfig.enabled) throw new Error('Private object storage must be configured.');
   const target = assertFileReconciliationSafety(environment, storageConfig);
   const key = parseReconciliationKey(environment.FILE_RECONCILIATION_KEY);
-  const uploadInventoryModule = await import(
-    pathToFileURL(
-      path.resolve(__dirname, '../../scripts/migrate-mongo-to-postgres/upload-inventory.mjs'),
-    ).href
-  );
-  const legacyInventory = await uploadInventoryModule.inventoryUploads({
-    fingerprintKey: key,
-    uploadRoot: environment.LEGACY_UPLOAD_ROOT?.trim() || undefined,
-  });
+  const legacyInventory = [];
   const legacyMappings = await readMappings(environment.LEGACY_FILE_MAPPING_PATH);
   const pool = new Pool({
     application_name: 'codewithmee-file-reconciliation',

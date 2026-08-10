@@ -12,7 +12,11 @@ const { PERSISTENCE_STORE } = require('../persistence/contracts');
 const { createRuntimeRepositories } = require('../persistence/repositories');
 const { loadPersistenceRuntimeConfig } = require('../persistence/runtime');
 const { createAccessTokenService } = require('./token-crypto');
-const { createDisabledIdentityMailer } = require('./mailer');
+const {
+  createDisabledIdentityMailer,
+  createResendIdentityMailer,
+  createSmtpIdentityMailer,
+} = require('./mailer');
 const { createGoogleOidcClient } = require('./google-oidc');
 const { createPasswordHasher } = require('./password-hasher');
 const { createPasswordRiskChecker } = require('./password-risk');
@@ -20,7 +24,7 @@ const { createIdentityRouter, createUnavailableIdentityRouter } = require('./rou
 const { loadIdentityRuntimeConfig } = require('./runtime');
 const { createIdentityService } = require('./service');
 
-function unavailable(reason) {
+function unavailable(reason, webAppOrigin = 'http://127.0.0.1:3000') {
   return Object.freeze({
     async close() {},
     authenticate: null,
@@ -28,10 +32,12 @@ function unavailable(reason) {
     fileEnabled: false,
     fileReason: 'file_identity_not_configured',
     fileRouter: createUnavailableFileRouter({ reason: 'file_identity_not_configured' }),
+    fileObjectRouter: null,
     googleEnabled: false,
     reason,
     recentAuthenticationMs: 10 * 60 * 1000,
     router: createUnavailableIdentityRouter({ reason }),
+    trustedOrigins: Object.freeze([webAppOrigin]),
   });
 }
 
@@ -56,6 +62,12 @@ function createIdentityModule({
 
   if (!config.enabled) return unavailable('identity_not_configured');
 
+  if (config.google.partial) {
+    logger.warn('google_oauth_partially_configured', {
+      reasonCode: 'google_oauth_requires_full_credentials',
+    });
+  }
+
   const persistence = suppliedPersistence || loadPersistenceRuntimeConfig(environment, { nodeEnv });
   const primaryAvailable =
     persistence.stores.identity === PERSISTENCE_STORE.POSTGRES
@@ -72,7 +84,23 @@ function createIdentityModule({
   const organizationRepository = repositories.organizations;
   const authorityRepository = repositories.authority;
   const accessTokens = createAccessTokenService(config.accessToken);
-  const mailer = createDisabledIdentityMailer({ logger });
+  const mailer =
+    process.env.SMTP_USER && process.env.SMTP_PASS
+      ? createSmtpIdentityMailer({
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: process.env.SMTP_PORT || 587,
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+          from: process.env.EMAIL_FROM || `CodeWithMee <${process.env.SMTP_USER}>`,
+          logger,
+        })
+      : process.env.RESEND_API_KEY
+        ? createResendIdentityMailer({
+            apiKey: process.env.RESEND_API_KEY,
+            from: process.env.EMAIL_FROM || 'CodeWithMee <onboarding@resend.dev>',
+            logger,
+          })
+        : createDisabledIdentityMailer({ logger });
   const service = createIdentityService({
     accessTokens,
     mailer,
@@ -128,10 +156,14 @@ function createIdentityModule({
     fileEnabled: fileModule.enabled,
     fileReason: fileModule.reason,
     fileRouter: fileModule.router,
+    fileObjectRouter: fileModule.objectRouter || null,
+    fileService: fileModule.service || null,
     googleEnabled: googleClient.enabled,
+    mailer,
     reason: null,
     recentAuthenticationMs: config.session.recentAuthenticationMs,
     router,
+    trustedOrigins: config.trustedOrigins,
   });
 }
 

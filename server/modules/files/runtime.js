@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('node:path');
+
 function integerSetting(name, value, fallback, minimum, maximum) {
   if (value === undefined || value === '') return fallback;
   const parsed = Number(value);
@@ -36,7 +38,36 @@ function optionalEndpoint(value, nodeEnv) {
 function loadFileStorageConfig(environment = process.env, { nodeEnv = 'development' } = {}) {
   const mode = environment.FILE_STORAGE_MODE?.trim() || '';
   if (!mode) return Object.freeze({ enabled: false, reason: 'file_storage_not_configured' });
-  if (mode !== 's3') throw new Error('FILE_STORAGE_MODE must be s3 when configured.');
+  if (!['local', 's3'].includes(mode)) {
+    throw new Error('FILE_STORAGE_MODE must be local or s3 when configured.');
+  }
+  if (mode === 'local') {
+    if (nodeEnv === 'production') {
+      throw new Error('FILE_STORAGE_MODE=local is forbidden in production.');
+    }
+    return Object.freeze({
+      bucket: 'local-development',
+      downloadTtlSeconds: integerSetting(
+        'FILE_DOWNLOAD_TTL_SECONDS',
+        environment.FILE_DOWNLOAD_TTL_SECONDS,
+        60,
+        15,
+        300,
+      ),
+      enabled: true,
+      localRoot: path.resolve(__dirname, '..', '..', 'data', 'file-storage'),
+      prefix: `codewithmee/${nodeEnv}`,
+      provider: 'local',
+      scannerMode: 'local',
+      uploadTtlSeconds: integerSetting(
+        'FILE_UPLOAD_TTL_SECONDS',
+        environment.FILE_UPLOAD_TTL_SECONDS,
+        300,
+        60,
+        900,
+      ),
+    });
+  }
 
   const bucket = environment.FILE_STORAGE_BUCKET?.trim() || '';
   const region = environment.FILE_STORAGE_REGION?.trim() || '';
@@ -75,7 +106,7 @@ function loadFileStorageConfig(environment = process.env, { nodeEnv = 'developme
 
   const scannerMode = environment.FILE_SCANNER_MODE?.trim() || 'disabled';
   if (!['disabled', 'external'].includes(scannerMode)) {
-    throw new Error('FILE_SCANNER_MODE must be disabled or external.');
+    throw new Error('FILE_SCANNER_MODE must be disabled or external for S3 storage.');
   }
   if (nodeEnv === 'production' && scannerMode !== 'external') {
     throw new Error('FILE_SCANNER_MODE must be external in production.');

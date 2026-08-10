@@ -1,6 +1,9 @@
 'use strict';
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 
 const { operationContract } = require('../api/middleware');
 const { IdentityError } = require('./errors');
@@ -81,7 +84,7 @@ function createIdentityRouter({ config, googleClient, logger = console, service 
   const csrfCookieOptions = Object.freeze({
     httpOnly: false,
     maxAge: config.session.absoluteTtlMs,
-    path: '/api/v1',
+    path: '/',
     sameSite: 'strict',
     secure: config.cookies.secure,
   });
@@ -325,6 +328,115 @@ function createIdentityRouter({ config, googleClient, logger = console, service 
   router.get('/me', authenticate, operationContract('getMe'), (request, response) => {
     response.json({ user: service.userDto(request.identityAuthentication.user) });
   });
+
+  router.get(
+    '/me/preferences/theme',
+    authenticate,
+    operationContract('getMyTheme'),
+    async (request, response, next) => {
+      try {
+        response.json({ theme: await service.getThemePreferences(request.identityAuthentication) });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  router.put(
+    '/me/preferences/theme',
+    requireTrustedOrigin,
+    authenticate,
+    operationContract('updateMyTheme'),
+    async (request, response, next) => {
+      try {
+        response.json({
+          theme: await service.setThemePreferences(
+            request.identityAuthentication,
+            request.body,
+          ),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  router.put('/me/privacy', requireTrustedOrigin, authenticate, async (request, response, next) => {
+    try {
+      const privacySettings = await service.setPrivacySettings(request.identityAuthentication, request.body);
+      response.json({ ...service.userDto(request.identityAuthentication.user), privacySettings });
+    } catch (error) { next(error); }
+  });
+  router.get('/me/privacy', authenticate, async (request, response, next) => {
+    try { response.json({ privacySettings: await service.getPrivacySettings(request.identityAuthentication) }); }
+    catch (error) { next(error); }
+  });
+
+  router.put('/me/profile', requireTrustedOrigin, authenticate, async (request, response, next) => {
+    try {
+      const updatedUser = await service.updateUserProfile(request.identityAuthentication, {
+        displayName: request.body?.displayName || request.body?.username,
+        username: request.body?.username,
+        avatarUrl: request.body?.avatarUrl,
+      });
+      response.json({ user: updatedUser });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const uploadsDir = path.join(__dirname, '../../uploads');
+  const avatarStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      fs.mkdir(uploadsDir, { recursive: true }, (err) => cb(err, uploadsDir));
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      const userId = req.identityAuthentication?.user?.id || 'user';
+      cb(null, `avatar-${userId}-${Date.now()}${ext}`);
+    },
+  });
+  const avatarUpload = multer({
+    storage: avatarStorage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const isAllowed =
+        file.mimetype.startsWith('image/') ||
+        ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg', '.bmp', '.heic', '.jfif'].includes(ext);
+      if (isAllowed) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files (JPG, PNG, WEBP, GIF, AVIF) are allowed.'));
+    },
+  }).any();
+
+  router.post(
+    '/me/avatar',
+    requireTrustedOrigin,
+    authenticate,
+    avatarUpload,
+    async (request, response, next) => {
+      const uploadedFile = request.file || (request.files && request.files[0]);
+      if (!uploadedFile) {
+        return response.status(400).json({ message: 'No image file selected.' });
+      }
+      try {
+        const avatarUrl = `/uploads/${uploadedFile.filename}`;
+        const updatedUser = await service.updateUserProfile(request.identityAuthentication, {
+          avatarUrl,
+        });
+        response.json({
+          message: 'Profile picture updated successfully!',
+          avatarUrl,
+          profilePictureUrl: avatarUrl,
+          user: updatedUser,
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
   router.get(
     '/me/sessions',

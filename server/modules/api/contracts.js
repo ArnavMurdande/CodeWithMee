@@ -43,6 +43,40 @@ function ref(name) {
 }
 
 const schemas = Object.freeze({
+  ThemePreferences: objectSchema(
+    {
+      preset: {
+        enum: ['ocean', 'midnight', 'aurora', 'sunset', 'nebula', 'forest', 'monochrome', 'ember', 'custom'],
+        type: 'string',
+      },
+      color1: { pattern: '^#[0-9A-Fa-f]{6}$', type: 'string' },
+      color2: { pattern: '^#[0-9A-Fa-f]{6}$', type: 'string' },
+      color3: { pattern: '^#[0-9A-Fa-f]{6}$', type: 'string' },
+      customColors: { type: 'boolean' },
+    },
+    ['preset', 'color1', 'color2', 'color3', 'customColors'],
+  ),
+  Challenge: objectSchema(
+    {
+      id: UUID,
+      title: { type: 'string' },
+    },
+    ['id', 'title'],
+  ),
+  ChallengeSubmission: objectSchema(
+    {
+      id: UUID,
+      status: { type: 'string' },
+    },
+    ['id', 'status'],
+  ),
+  Course: objectSchema(
+    {
+      id: UUID,
+      title: { type: 'string' },
+    },
+    ['id', 'title'],
+  ),
   AccessSession: objectSchema(
     {
       accessToken: { minLength: 20, type: 'string' },
@@ -379,6 +413,9 @@ const optionalIdempotencyHeader = objectSchema({
 const emptyQuery = empty;
 
 const requestSchemas = Object.freeze({
+  themePreferences: {
+    body: ref('ThemePreferences'),
+  },
   authorityAuditList: {
     query: objectSchema({
       before: DATE_TIME,
@@ -457,10 +494,16 @@ const requestSchemas = Object.freeze({
   googleCallback: {
     query: objectSchema(
       {
+        authuser: { maxLength: 255, type: 'string' },
         code: { maxLength: 4096, minLength: 1, type: 'string' },
+        hd: { maxLength: 255, type: 'string' },
+        iss: { maxLength: 2048, type: 'string' },
+        prompt: { maxLength: 255, type: 'string' },
+        scope: { maxLength: 4096, type: 'string' },
         state: { maxLength: 4096, minLength: 1, type: 'string' },
       },
       ['code', 'state'],
+      { additionalProperties: true },
     ),
   },
   googleStart: {
@@ -576,9 +619,101 @@ const requestSchemas = Object.freeze({
     params: identifierParams(['organizationId']),
   },
   sessionId: { body: empty, params: identifierParams(['sessionId']) },
+  challengeList: {
+    query: objectSchema({
+      cursor: { type: 'string' },
+      difficulty: { enum: ['', 'EASY', 'MEDIUM', 'HARD'], type: 'string' },
+      limit: { maximum: 100, minimum: 1, type: 'integer' },
+      tag: { type: 'string' },
+    }),
+  },
+  challengeId: { params: identifierParams(['challengeId']) },
+  challengeCreate: {
+    body: objectSchema(
+      {
+        category: { type: 'string' },
+        description: { type: 'string' },
+        difficulty: { enum: ['EASY', 'MEDIUM', 'HARD'], type: 'string' },
+        hiddenTestCases: arrayOf(objectSchema({ input: { type: 'string' }, output: { type: 'string' } })),
+        organizationId: UUID,
+        referenceSolution: objectSchema({ code: { type: 'string' }, language: { type: 'string' } }),
+        starterTemplates: objectSchema({}, [], { additionalProperties: { type: 'string' } }),
+        tags: arrayOf({ type: 'string' }),
+        title: { minLength: 1, type: 'string' },
+        visibleTestCases: arrayOf(objectSchema({ input: { type: 'string' }, output: { type: 'string' } })),
+      },
+      ['title'],
+    ),
+  },
+  challengeRun: {
+    body: objectSchema({
+      code: { minLength: 1, type: 'string' },
+      customInput: { type: 'string' },
+      language: { minLength: 1, type: 'string' },
+    }, ['code', 'language']),
+    params: identifierParams(['challengeId']),
+  },
+  challengeSubmit: {
+    body: objectSchema({
+      code: { minLength: 1, type: 'string' },
+      language: { minLength: 1, type: 'string' },
+    }, ['code', 'language']),
+    params: identifierParams(['challengeId']),
+  },
+  challengeSubmissionsList: {
+    params: identifierParams(['challengeId']),
+    query: objectSchema({
+      cursor: { type: 'string' },
+      limit: { maximum: 100, minimum: 1, type: 'integer' },
+    }),
+  },
+  challengeSubmissionId: {
+    params: identifierParams(['challengeId', 'submissionId']),
+  },
+  courseList: {
+    query: objectSchema({
+      category: { type: 'string' },
+      cursor: { type: 'string' },
+      limit: { maximum: 100, minimum: 1, type: 'integer' },
+    }),
+  },
+  courseId: { params: identifierParams(['courseId']) },
+  lessonProgress: {
+    params: identifierParams(['courseId', 'contentId']),
+  },
+  lessonProgressUpdate: {
+    body: objectSchema({
+      lastPositionSec: { minimum: 0, type: 'integer' },
+      markComplete: { type: 'boolean' },
+      watchedIntervals: arrayOf(objectSchema({ endSec: { type: 'number' }, startSec: { type: 'number' } })),
+    }),
+    params: identifierParams(['courseId', 'contentId']),
+  },
+  providerOrganization: { params: identifierParams(['organizationId']) },
+  providerCourse: { params: identifierParams(['organizationId', 'courseId']) },
+  providerCourseUser: { params: identifierParams(['organizationId', 'courseId', 'userId']) },
+  providerCourseEnrollment: { params: identifierParams(['organizationId', 'courseId', 'enrollmentId']) },
+  providerCourseAttempt: { params: identifierParams(['organizationId', 'courseId', 'attemptId']) },
+  providerCourseSubmission: { params: identifierParams(['organizationId', 'courseId', 'submissionId']) },
+  providerPaymentOrder: { params: identifierParams(['organizationId', 'orderId']) },
+  courseInvitationToken: { params: objectSchema({ token: { minLength: 16, type: 'string' } }, ['token']) },
+  courseQuiz: { params: identifierParams(['courseId', 'quizId']) },
+  courseAssignment: { params: identifierParams(['courseId', 'assignmentId']) },
+  paymentOrder: { params: identifierParams(['orderId']) },
+  providerBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId']) },
+  providerCourseBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'courseId']) },
+  providerCourseUserBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'courseId', 'userId']) },
+  providerCourseEnrollmentBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'courseId', 'enrollmentId']) },
+  providerCourseAttemptBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'courseId', 'attemptId']) },
+  providerCourseSubmissionBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'courseId', 'submissionId']) },
+  providerPaymentOrderBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['organizationId', 'orderId']) },
+  courseQuizBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['courseId', 'quizId']) },
+  courseAssignmentBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['courseId', 'assignmentId']) },
+  paymentOrderBody: { body: { additionalProperties: true, type: 'object' }, params: identifierParams(['orderId']) },
 });
 
 const responseSchemas = Object.freeze({
+  themePreferences: objectSchema({ theme: ref('ThemePreferences') }, ['theme']),
   accessSession: ref('AccessSession'),
   auditEvents: objectSchema({ events: arrayOf(ref('AuditEvent')) }, ['events']),
   authorityChange: objectSchema(
@@ -652,6 +787,17 @@ const responseSchemas = Object.freeze({
     { organization: ref('Organization'), review: ref('VerificationReview') },
     ['organization', 'review'],
   ),
+  challenge: objectSchema({ id: UUID, title: { type: 'string' } }),
+  challenges: objectSchema({ items: arrayOf(ref('Challenge')) }),
+  challengeRunResult: objectSchema({ status: { type: 'string' } }),
+  challengeSubmitResult: objectSchema({ status: { type: 'string' } }),
+  challengeSubmission: objectSchema({ id: UUID }),
+  challengeSubmissions: objectSchema({ items: arrayOf(ref('ChallengeSubmission')) }),
+  course: objectSchema({ id: UUID, title: { type: 'string' } }),
+  courses: objectSchema({ courses: arrayOf(ref('Course')) }),
+  enrollment: objectSchema({ id: UUID, status: { type: 'string' } }),
+  courseProgressOverview: objectSchema({ percent: { type: 'number' } }),
+  lessonProgress: objectSchema({ status: { type: 'string' } }),
 });
 
 module.exports = {

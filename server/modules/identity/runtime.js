@@ -52,8 +52,10 @@ function loadIdentityRuntimeConfig(
   if (nodeEnv === 'production' && new URL(webAppOrigin).protocol !== 'https:') {
     throw new Error('WEB_APP_ORIGIN must use HTTPS in production.');
   }
+  const defaultDevOrigins =
+    nodeEnv === 'development' ? ['http://127.0.0.1:3000', 'http://localhost:3000'] : [];
   const trustedOrigins = Object.freeze(
-    [...new Set([webAppOrigin, ...allowedOrigins])].filter(Boolean),
+    [...new Set([webAppOrigin, ...defaultDevOrigins, ...allowedOrigins])].filter(Boolean),
   );
 
   const googleClientId = environment.GOOGLE_OAUTH_CLIENT_ID?.trim() || '';
@@ -69,7 +71,14 @@ function loadIdentityRuntimeConfig(
     googleRedirectUri,
     oauthTransactionSecret,
   ];
-  const googleEnabled = googleParts.every(Boolean);
+  const googleFullyConfigured =
+    Boolean(googleClientId && googleClientSecret && googleRedirectUri && oauthTransactionSecret) &&
+    Buffer.byteLength(oauthTransactionSecret) >= 32 &&
+    (nodeEnv !== 'production' ||
+      new URL(googleRedirectUri || 'http://localhost').protocol === 'https:');
+  const googlePartial = googleParts.some(Boolean) && !googleFullyConfigured;
+  const googleEnabled = googleFullyConfigured;
+
   const passwordCompromiseMode =
     environment.PASSWORD_COMPROMISE_CHECK_MODE?.trim() ||
     (nodeEnv === 'production' ? 'required' : 'local');
@@ -77,11 +86,6 @@ function loadIdentityRuntimeConfig(
     throw new Error('PASSWORD_COMPROMISE_CHECK_MODE must be local, best_effort, or required.');
   }
 
-  if (googleParts.some(Boolean) && !googleEnabled) {
-    throw new Error(
-      'Google OAuth requires client ID, client secret, redirect URI, and OAUTH_TRANSACTION_SECRET.',
-    );
-  }
   if (googleEnabled) requireSecretLength('OAUTH_TRANSACTION_SECRET', oauthTransactionSecret);
   if (
     googleEnabled &&
@@ -109,6 +113,7 @@ function loadIdentityRuntimeConfig(
       clientId: googleClientId,
       clientSecret: googleClientSecret,
       enabled: googleEnabled,
+      partial: googlePartial,
       redirectUri: googleRedirectUri,
       transactionSecret: oauthTransactionSecret,
     }),

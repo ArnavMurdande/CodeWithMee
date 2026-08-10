@@ -30,6 +30,7 @@ body {
 #root {
   min-height: 100dvh;
   isolation: isolate;
+  background: transparent;
 }
 
 button,

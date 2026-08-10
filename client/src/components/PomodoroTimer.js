@@ -2,15 +2,98 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { AccessibleDialog } from './ui/AccessibleDialog';
 
+const TimeInput = ({ id, label, value, onChange, onBlur, setter, max = 999, min = 0, unit }) => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1 : -1;
+      setter((prev) => {
+        const curr = Number.parseInt(prev, 10) || 0;
+        return Math.max(min, Math.min(max, curr + delta));
+      });
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [setter, max, min]);
+
+  const increment = () => {
+    setter((prev) => {
+      const curr = Number.parseInt(prev, 10) || 0;
+      return Math.min(max, curr + 1);
+    });
+  };
+
+  const decrement = () => {
+    setter((prev) => {
+      const curr = Number.parseInt(prev, 10) || 0;
+      return Math.max(min, curr - 1);
+    });
+  };
+
+  return (
+    <div className="input-field" ref={containerRef}>
+      <input
+        id={id}
+        max={max}
+        min={min}
+        onBlur={onBlur}
+        onChange={onChange}
+        type="number"
+        value={value}
+      />
+      <span className="unit-tag">{unit}</span>
+      <div className="stepper-arrows">
+        <button
+          aria-label={`Increase ${label}`}
+          className="stepper-btn"
+          onClick={increment}
+          type="button"
+        >
+          ▲
+        </button>
+        <button
+          aria-label={`Decrease ${label}`}
+          className="stepper-btn"
+          onClick={decrement}
+          type="button"
+        >
+          ▼
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const PomodoroTimer = () => {
-  const [workTime, setWorkTime] = useState(30);
-  const [breakTime, setBreakTime] = useState(5);
+  const [workMins, setWorkMins] = useState(25);
+  const [workSecs, setWorkSecs] = useState(0);
+  const [breakMins, setBreakMins] = useState(5);
+  const [breakSecs, setBreakSecs] = useState(0);
+
   const [isActive, setIsActive] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(workTime * 60);
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [showBreakOverlay, setShowBreakOverlay] = useState(false);
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+
+  const getSessionDuration = useCallback(
+    (forBreak = isBreak) => {
+      const m = Math.max(0, Number.parseInt(forBreak ? breakMins : workMins, 10) || 0);
+      const s = Math.max(0, Number.parseInt(forBreak ? breakSecs : workSecs, 10) || 0);
+      const total = m * 60 + s;
+      return Math.max(5, total); // Minimum 5 seconds constraint
+    },
+    [breakMins, breakSecs, workMins, workSecs, isBreak],
+  );
+
+  const [totalDuration, setTotalDuration] = useState(() => getSessionDuration(false));
+  const [timeLeft, setTimeLeft] = useState(() => getSessionDuration(false));
 
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio('/notification.mp3'));
@@ -42,6 +125,14 @@ const PomodoroTimer = () => {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isDropdownOpen]);
+
+  useEffect(() => {
+    if (!isActive && !isFinished) {
+      const duration = getSessionDuration(isBreak);
+      setTotalDuration(duration);
+      setTimeLeft(duration);
+    }
+  }, [workMins, workSecs, breakMins, breakSecs, isBreak, isActive, isFinished, getSessionDuration]);
 
   useEffect(() => {
     if (isActive) {
@@ -80,32 +171,73 @@ const PomodoroTimer = () => {
     }
   }, [timeLeft, isActive]);
 
-  useEffect(() => {
-    if (!isActive && !isFinished) {
-      const timeValue = isBreak ? breakTime : workTime;
-      if (timeValue && !Number.isNaN(Number(timeValue)) && Number.parseInt(timeValue, 10) > 0) {
-        setTimeLeft(timeValue * 60);
-      }
-    }
-  }, [workTime, breakTime, isBreak, isActive, isFinished]);
-
   const toggleTimer = () => {
     if (isFinished) {
       setIsFinished(false);
-      setIsBreak((previous) => !previous);
+      if (isBreak) handleStartWork();
+      else handleStartBreak();
     } else {
+      if (!isActive) {
+        const duration = getSessionDuration(isBreak);
+        if (duration < 5) {
+          if (isBreak) setBreakSecs(5);
+          else setWorkSecs(5);
+        }
+      }
       setIsActive((previous) => !previous);
     }
   };
 
   const resetTimer = () => {
     setIsActive(false);
-    setIsBreak(false);
     setIsFinished(false);
-    const resetValue = isBreak ? breakTime : workTime;
-    setTimeLeft((resetValue && !Number.isNaN(Number(resetValue)) ? resetValue : 25) * 60);
     setShowBreakOverlay(false);
     clearInterval(timerRef.current);
+    const duration = getSessionDuration(isBreak);
+    setTotalDuration(duration);
+    setTimeLeft(duration);
+  };
+
+  const switchMode = () => {
+    setIsActive(false);
+    setIsFinished(false);
+    const nextIsBreak = !isBreak;
+    setIsBreak(nextIsBreak);
+    const duration = getSessionDuration(nextIsBreak);
+    setTotalDuration(duration);
+    setTimeLeft(duration);
+  };
+
+  const handleStartBreak = () => {
+    setIsFinished(false);
+    setIsBreak(true);
+    const duration = getSessionDuration(true);
+    setTotalDuration(duration);
+    setTimeLeft(duration);
+    setIsActive(true);
+    setShowBreakOverlay(true);
+  };
+
+  const handleStartWork = () => {
+    setIsFinished(false);
+    setIsBreak(false);
+    const duration = getSessionDuration(false);
+    setTotalDuration(duration);
+    setTimeLeft(duration);
+    setIsActive(true);
+    setShowBreakOverlay(false);
+  };
+
+  const applyPreset = (wM, wS, bM, bS) => {
+    setWorkMins(wM);
+    setWorkSecs(wS);
+    setBreakMins(bM);
+    setBreakSecs(bS);
+    setIsActive(false);
+    setIsFinished(false);
+    const duration = isBreak ? Math.max(5, bM * 60 + bS) : Math.max(5, wM * 60 + wS);
+    setTotalDuration(duration);
+    setTimeLeft(duration);
   };
 
   const formatTime = (seconds) => {
@@ -115,43 +247,50 @@ const PomodoroTimer = () => {
     return `${minutes < 10 ? '0' : ''}${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
-  const getButtonText = () => {
-    if (isFinished) return isBreak ? 'Start Work' : 'Start Break';
-    return formatTime(timeLeft);
-  };
-
-  const handleStartBreak = () => {
-    setIsFinished(false);
-    setIsBreak(true);
-    const validBreakTime =
-      breakTime && !Number.isNaN(Number(breakTime)) && Number.parseInt(breakTime, 10) > 0
-        ? breakTime
-        : 5;
-    setTimeLeft(validBreakTime * 60);
-    setIsActive(true);
-    setShowBreakOverlay(true);
-  };
-
-  const handleStartWork = () => {
-    setIsFinished(false);
-    setIsBreak(false);
-    const validWorkTime =
-      workTime && !Number.isNaN(Number(workTime)) && Number.parseInt(workTime, 10) > 0
-        ? workTime
-        : 25;
-    setTimeLeft(validWorkTime * 60);
-    setIsActive(true);
-    setShowBreakOverlay(false);
-  };
-
   const dismissOverlay = () => setShowBreakOverlay(false);
 
-  const handleTimeChange = (setter) => (event) => {
+  const handleNumberInput = (setter, max = 999) => (event) => {
     const value = event.target.value;
-    if (value === '' || (!Number.isNaN(Number(value)) && Number.parseInt(value, 10) >= 0)) {
-      setter(value);
+    if (value === '') {
+      setter('');
+      return;
+    }
+    const num = Number.parseInt(value, 10);
+    if (!Number.isNaN(num) && num >= 0) {
+      setter(Math.min(max, num));
     }
   };
+
+  const handleBlurWork = () => {
+    setWorkMins((prevM) => {
+      const m = prevM === '' || Number.isNaN(Number(prevM)) ? 0 : Math.max(0, Number.parseInt(prevM, 10));
+      setWorkSecs((prevS) => {
+        const s = prevS === '' || Number.isNaN(Number(prevS)) ? 0 : Math.max(0, Number.parseInt(prevS, 10));
+        if (m === 0 && s < 5) return 5;
+        return s;
+      });
+      return m;
+    });
+  };
+
+  const handleBlurBreak = () => {
+    setBreakMins((prevM) => {
+      const m = prevM === '' || Number.isNaN(Number(prevM)) ? 0 : Math.max(0, Number.parseInt(prevM, 10));
+      setBreakSecs((prevS) => {
+        const s = prevS === '' || Number.isNaN(Number(prevS)) ? 0 : Math.max(0, Number.parseInt(prevS, 10));
+        if (m === 0 && s < 5) return 5;
+        return s;
+      });
+      return m;
+    });
+  };
+
+  // Progress percentage calculation
+  const elapsedTime = Math.max(0, totalDuration - timeLeft);
+  const fillPercentage = totalDuration > 0 ? Math.min(100, (elapsedTime / totalDuration) * 100) : 0;
+
+  const buttonModeClass = isBreak ? 'break-mode' : 'work-mode';
+  const buttonStateClass = isFinished ? 'finished' : isActive ? 'active' : 'paused';
 
   const renderOverlayContent = () => {
     if (isFinished && !isBreak) {
@@ -164,7 +303,7 @@ const PomodoroTimer = () => {
           <p className="break-message">
             Great work! You've completed your focus session.
             <br />
-            Take a {breakTime} minute break to recharge.
+            Take a {breakMins}m {breakSecs ? `${breakSecs}s` : ''} break to recharge.
           </p>
           <div className="break-actions">
             <button className="break-start-btn" onClick={handleStartBreak} type="button">
@@ -219,8 +358,6 @@ const PomodoroTimer = () => {
     return null;
   };
 
-  const buttonClass = isFinished ? 'finished' : isActive ? 'active' : '';
-
   return (
     <>
       <div className="pomodoro-container" ref={containerRef}>
@@ -228,8 +365,10 @@ const PomodoroTimer = () => {
           aria-controls="pomodoro-settings"
           aria-expanded={isDropdownOpen}
           aria-haspopup="true"
-          aria-label={`${isBreak ? 'Break' : 'Focus'} timer: ${getButtonText()}`}
-          className={`pomodoro-button ${buttonClass}`}
+          aria-label={`${isBreak ? 'Break' : 'Focus'} timer: ${
+            isFinished ? (isBreak ? 'Start Work' : 'Start Break') : formatTime(timeLeft)
+          }`}
+          className={`pomodoro-button ${buttonModeClass} ${buttonStateClass}`}
           onClick={() => {
             if (isFinished) {
               if (isBreak) handleStartWork();
@@ -240,7 +379,14 @@ const PomodoroTimer = () => {
           }}
           type="button"
         >
-          {getButtonText()}
+          <div className="pomodoro-progress-fill" style={{ width: `${fillPercentage}%` }} />
+          <div className="pomodoro-button-content">
+            <span className={`status-dot ${isActive ? 'pulse' : ''}`} />
+            {!isFinished && <span className="mode-label">{isBreak ? 'Break' : 'Focus'}</span>}
+            <span className="time-display">
+              {isFinished ? (isBreak ? 'Start Work' : 'Start Break') : formatTime(timeLeft)}
+            </span>
+          </div>
         </button>
 
         {isDropdownOpen && (
@@ -250,33 +396,104 @@ const PomodoroTimer = () => {
             id="pomodoro-settings"
             role="region"
           >
-            <div className="dropdown-section">
-              <label htmlFor="pomodoro-work-time">Work</label>
-              <input
-                id="pomodoro-work-time"
-                min="1"
-                onChange={handleTimeChange(setWorkTime)}
-                type="number"
-                value={workTime}
-              />
-              <span>mins</span>
+            <div className="dropdown-header">
+              <div className="header-title">
+                <span className={`header-dot ${isBreak ? 'break' : 'work'}`} />
+                <span>{isBreak ? 'Break Settings' : 'Work Settings'}</span>
+              </div>
+              <button
+                className="mode-switch-btn"
+                onClick={switchMode}
+                title="Switch mode"
+                type="button"
+              >
+                {isBreak ? 'Switch to Work' : 'Switch to Break'}
+              </button>
             </div>
-            <div className="dropdown-section">
-              <label htmlFor="pomodoro-break-time">Break</label>
-              <input
-                id="pomodoro-break-time"
-                min="1"
-                onChange={handleTimeChange(setBreakTime)}
-                type="number"
-                value={breakTime}
-              />
-              <span>mins</span>
+
+            <div className="dropdown-section-group">
+              <label htmlFor="pomodoro-work-time" className="section-label">Work Duration</label>
+              <div className="time-inputs-row">
+                <TimeInput
+                  id="pomodoro-work-time"
+                  label="Work Minutes"
+                  max={999}
+                  min={0}
+                  onBlur={handleBlurWork}
+                  onChange={handleNumberInput(setWorkMins, 999)}
+                  setter={setWorkMins}
+                  unit="m"
+                  value={workMins}
+                />
+                <TimeInput
+                  id="pomodoro-work-secs"
+                  label="Work Seconds"
+                  max={59}
+                  min={0}
+                  onBlur={handleBlurWork}
+                  onChange={handleNumberInput(setWorkSecs, 59)}
+                  setter={setWorkSecs}
+                  unit="s"
+                  value={workSecs}
+                />
+              </div>
             </div>
+
+            <div className="dropdown-section-group">
+              <label htmlFor="pomodoro-break-time" className="section-label">Break Duration</label>
+              <div className="time-inputs-row">
+                <TimeInput
+                  id="pomodoro-break-time"
+                  label="Break Minutes"
+                  max={999}
+                  min={0}
+                  onBlur={handleBlurBreak}
+                  onChange={handleNumberInput(setBreakMins, 999)}
+                  setter={setBreakMins}
+                  unit="m"
+                  value={breakMins}
+                />
+                <TimeInput
+                  id="pomodoro-break-secs"
+                  label="Break Seconds"
+                  max={59}
+                  min={0}
+                  onBlur={handleBlurBreak}
+                  onChange={handleNumberInput(setBreakSecs, 59)}
+                  setter={setBreakSecs}
+                  unit="s"
+                  value={breakSecs}
+                />
+              </div>
+            </div>
+
+            <div className="presets-group">
+              <div className="presets-label">Quick Presets</div>
+              <div className="presets-buttons">
+                <button onClick={() => applyPreset(25, 0, 5, 0)} type="button">
+                  25m / 5m
+                </button>
+                <button onClick={() => applyPreset(50, 0, 10, 0)} type="button">
+                  50m / 10m
+                </button>
+                <button onClick={() => applyPreset(15, 0, 3, 0)} type="button">
+                  15m / 3m
+                </button>
+                <button onClick={() => applyPreset(0, 30, 0, 5)} type="button">
+                  30s / 5s
+                </button>
+              </div>
+            </div>
+
             <div className="pomodoro-actions">
-              <button onClick={toggleTimer} type="button">
+              <button
+                className={`action-btn start-btn ${isActive ? 'active' : ''}`}
+                onClick={toggleTimer}
+                type="button"
+              >
                 {isActive ? 'Pause' : 'Start'}
               </button>
-              <button onClick={resetTimer} type="button">
+              <button className="action-btn reset-btn" onClick={resetTimer} type="button">
                 Reset
               </button>
             </div>

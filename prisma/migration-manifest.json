@@ -46,9 +46,9 @@
   ],
   "prisma": "7.9.1",
   "schema": {
-    "bytes": 65479,
+    "bytes": 79879,
     "path": "prisma/schema.prisma",
-    "sha256": "ce1adc102a9f51e48e9bcf029c08fa0ddc0f8fa88582a526d50dd3b9c41d2861"
+    "sha256": "9103760028a612164202c209831ddba58483a8bddf654a48afe4539da47c8047"
   },
   "verification": "All six checksum-pinned migrations are required in order; fresh PostgreSQL apply, seed, runtime adapter, parity, activation, rollback and drift evidence is recorded in docs/TEST_RESULTS.md."
 }

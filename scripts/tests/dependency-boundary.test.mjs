@@ -42,6 +42,7 @@ test('unused and abandoned direct dependencies stay removed', async () => {
     'google-auth-library',
     'groq-sdk',
     'mongodb',
+    'mongoose',
     'piston-client',
     'python-shell',
     'react-player',

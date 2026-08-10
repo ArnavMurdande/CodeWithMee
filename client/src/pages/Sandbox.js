@@ -1,8 +1,9 @@
-import { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from '../lib/api';
 import Editor from '../components/CodeEditor';
 import { AuthContext } from '../context/AuthContext';
+import { getUserStorageKey } from '../lib/cache-isolation';
 import RestrictedMarkdown from '../components/RestrictedMarkdown';
 import AppDropdown from '../components/AppDropdown';
 
@@ -23,81 +24,32 @@ const CustomDropdown = ({ options, selected, onSelect, placeholder = 'Select' })
   );
 };
 
-const Sandbox = ({ setPageTitle }) => {
-  const { token } = useContext(AuthContext);
-  const [searchParams] = useSearchParams();
-  const topic = searchParams.get('topic');
-  const youtubeQuery = searchParams.get('q');
-  const pathwayParam = searchParams.get('pathway') || '';
+const languageOptions = [
+  { value: 'python', label: 'Python' },
+  { value: 'javascript', label: 'JavaScript' },
+  { value: 'java', label: 'Java' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'c', label: 'C' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'go', label: 'Go' },
+  { value: 'kotlin', label: 'Kotlin' },
+  { value: 'swift', label: 'Swift' },
+  { value: 'scala', label: 'Scala' },
+  { value: 'dart', label: 'Dart' },
+  { value: 'php', label: 'PHP' },
+  { value: 'perl', label: 'Perl' },
+  { value: 'r', label: 'R' },
+  { value: 'elixir', label: 'Elixir' },
+  { value: 'sqlite', label: 'SQLite' },
+  { value: 'bash', label: 'Bash' },
+  { value: 'powershell', label: 'PowerShell' },
+  { value: 'cobol', label: 'COBOL' },
+  { value: 'nasm', label: 'Assembly (NASM)' },
+];
 
-  // --- Layout State ---
-  const [verticalSplit, setVerticalSplit] = useState(50);
-  const [leftHorizontalSplit, setLeftHorizontalSplit] = useState(60);
-  const [rightHorizontalSplit, setRightHorizontalSplit] = useState(70);
-  const [isDragging, setIsDragging] = useState(null); // 'vertical', 'left', 'right'
-
-  // --- Component State ---
-  const [videoId, setVideoId] = useState('');
-  const [isVideoLoading, setIsVideoLoading] = useState(true);
-  const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState('');
-  const [output, setOutput] = useState('');
-  const [isCodeRunning, setIsCodeRunning] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isDebugging, setIsDebugging] = useState(false);
-  const chatHistoryRef = useRef(null);
-  const sandboxContainerRef = useRef(null);
-
-  // --- Active Recall Checkpoint State ---
-  const [savedProgress, setSavedProgress] = useState(null); // { timestamp, duration }
-  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
-  const ytPlayerRef = useRef(null);
-  const progressIntervalRef = useRef(null);
-  const ytPlayerContainerRef = useRef(null);
-
-  // Chat context selectors
-  const [selectedPathway, setSelectedPathway] = useState(pathwayParam || 'General');
-  const [selectedChapter, setSelectedChapter] = useState(topic || 'General');
-  const [availableRoadmaps, setAvailableRoadmaps] = useState([]);
-  const [allChats, setAllChats] = useState({});
-
-  // Monaco editor ref
-  const monacoEditorRef = useRef(null);
-  const editorContainerRef = useRef(null);
-  const layoutTimerRef = useRef(null);
-
-  // rAF throttling refs
-  const rafRef = useRef(null);
-  const pendingMoveRef = useRef(null);
-
-  const languageOptions = [
-    { value: 'python', label: 'Python' },
-    { value: 'javascript', label: 'JavaScript' },
-    { value: 'java', label: 'Java' },
-    { value: 'cpp', label: 'C++' },
-    { value: 'c', label: 'C' },
-    { value: 'rust', label: 'Rust' },
-    { value: 'ruby', label: 'Ruby' },
-    { value: 'go', label: 'Go' },
-    { value: 'kotlin', label: 'Kotlin' },
-    { value: 'swift', label: 'Swift' },
-    { value: 'scala', label: 'Scala' },
-    { value: 'dart', label: 'Dart' },
-    { value: 'php', label: 'PHP' },
-    { value: 'perl', label: 'Perl' },
-    { value: 'r', label: 'R' },
-    { value: 'elixir', label: 'Elixir' },
-    { value: 'sqlite', label: 'SQLite' },
-    { value: 'bash', label: 'Bash' },
-    { value: 'powershell', label: 'PowerShell' },
-    { value: 'cobol', label: 'COBOL' },
-    { value: 'nasm', label: 'Assembly (NASM)' },
-  ];
-
-  const boilerplate = {
-    python: `# Welcome to the Python sandbox!
+const boilerplate = {
+  python: `# Welcome to the Python sandbox!
 # Python is a versatile, beginner-friendly language.
 # Try: variables, loops, functions, and list comprehensions.
 
@@ -109,7 +61,7 @@ squares = [x**2 for x in range(1, 6)]
 print(greet("CodeWithMee"))
 print("Squares:", squares)`,
 
-    javascript: `// Welcome to the JavaScript sandbox!
+  javascript: `// Welcome to the JavaScript sandbox!
 // JS powers the web — both frontend and backend.
 // Try: arrow functions, template literals, and array methods.
 
@@ -122,7 +74,7 @@ const doubled = numbers.map(n => n * 2);
 console.log(greet("CodeWithMee"));
 console.log("Doubled:", doubled);`,
 
-    java: `// Welcome to the Java sandbox!
+  java: `// Welcome to the Java sandbox!
 // Java is a strongly-typed, object-oriented language.
 // The entry point is always the main method inside a class.
 
@@ -139,7 +91,7 @@ class Main {
     }
 }`,
 
-    cpp: `// Welcome to the C++ sandbox!
+  cpp: `// Welcome to the C++ sandbox!
 // C++ gives you low-level control with high-level abstractions.
 // Try: vectors, references, and the STL.
 
@@ -158,7 +110,7 @@ int main() {
     return 0;
 }`,
 
-    c: `// Welcome to the C sandbox!
+  c: `// Welcome to the C sandbox!
 // C is the foundation of modern computing.
 // Try: pointers, arrays, and structs.
 
@@ -176,7 +128,7 @@ int main() {
     return 0;
 }`,
 
-    rust: `// Welcome to the Rust sandbox!
+  rust: `// Welcome to the Rust sandbox!
 // Rust guarantees memory safety without garbage collection.
 // Try: ownership, pattern matching, and iterators.
 
@@ -193,7 +145,7 @@ fn main() {
     println!("Sum: {}", sum);
 }`,
 
-    ruby: `# Welcome to the Ruby sandbox!
+  ruby: `# Welcome to the Ruby sandbox!
 # Ruby is designed for developer happiness.
 # Try: blocks, symbols, and method chaining.
 
@@ -203,14 +155,14 @@ end
 
 puts greet("CodeWithMee")
 
-# Block and method example
+# Block example
 numbers = [1, 2, 3, 4, 5]
-squares = numbers.map { |n| n ** 2 }
-puts "Squares: #{squares.inspect}"`,
+sum = numbers.reduce(0) { |acc, n| acc + n }
+puts "Sum: #{sum}"`,
 
-    go: `// Welcome to the Go sandbox!
-// Go is built for simplicity, concurrency, and speed.
-// Try: goroutines, slices, and maps.
+  go: `// Welcome to the Go sandbox!
+// Go is simple, fast, and built for concurrency.
+// Try: goroutines, channels, and slices.
 
 package main
 
@@ -224,17 +176,17 @@ func main() {
     fmt.Println(greet("CodeWithMee"))
 
     // Slice example
-    nums := []int{1, 2, 3, 4, 5}
+    numbers := []int{1, 2, 3, 4, 5}
     sum := 0
-    for _, n := range nums {
+    for _, n := range numbers {
         sum += n
     }
     fmt.Println("Sum:", sum)
 }`,
 
-    kotlin: `// Welcome to the Kotlin sandbox!
-// Kotlin is a modern, concise JVM language (used for Android).
-// Try: data classes, null safety, and extension functions.
+  kotlin: `// Welcome to the Kotlin sandbox!
+// Kotlin is a modern, concise language for JVM & Android.
+// Try: null safety, data classes, and extension functions.
 
 fun greet(name: String) = "Hello, $name!"
 
@@ -243,11 +195,11 @@ fun main() {
 
     // Collection operations
     val numbers = listOf(1, 2, 3, 4, 5)
-    val even = numbers.filter { it % 2 == 0 }
-    println("Even numbers: $even")
+    val sum = numbers.sum()
+    println("Sum: $sum")
 }`,
 
-    swift: `// Welcome to the Swift sandbox!
+  swift: `// Welcome to the Swift sandbox!
 // Swift powers iOS, macOS, and beyond.
 // Try: optionals, closures, and enums.
 
@@ -262,7 +214,7 @@ let numbers = [1, 2, 3, 4, 5]
 let sum = numbers.reduce(0, +)
 print("Sum: \\(sum)")`,
 
-    scala: `// Welcome to the Scala sandbox!
+  scala: `// Welcome to the Scala sandbox!
 // Scala blends object-oriented and functional programming on the JVM.
 // Try: case classes, pattern matching, and immutability.
 
@@ -277,7 +229,7 @@ object Main extends App {
   println(s"Sum: $sum")
 }`,
 
-    dart: `// Welcome to the Dart sandbox!
+  dart: `// Welcome to the Dart sandbox!
 // Dart is the language behind Flutter (mobile/web apps).
 // Try: classes, async/await, and null safety.
 
@@ -292,7 +244,7 @@ void main() {
   print('Sum: $sum');
 }`,
 
-    php: `<?php
+  php: `<?php
 // Welcome to the PHP sandbox!
 // PHP powers most of the web's backend.
 // Try: arrays, string interpolation, and built-in functions.
@@ -309,7 +261,7 @@ $sum = array_sum($numbers);
 echo "Sum: $sum\\n";
 ?>`,
 
-    perl: `#!/usr/bin/perl
+  perl: `#!/usr/bin/perl
 # Welcome to the Perl sandbox!
 # Perl excels at text processing and regex.
 # Try: regular expressions, hashes, and file operations.
@@ -330,7 +282,7 @@ my $sum = 0;
 $sum += $_ for @numbers;
 print "Sum: $sum\\n";`,
 
-    r: `# Welcome to the R sandbox!
+  r: `# Welcome to the R sandbox!
 # R is the go-to language for statistics and data science.
 # Try: vectors, data frames, and built-in stats functions.
 
@@ -346,7 +298,7 @@ cat("Mean:", mean(numbers), "\\n")
 cat("Sum:", sum(numbers), "\\n")
 cat("Std Dev:", sd(numbers), "\\n")`,
 
-    elixir: `# Welcome to the Elixir sandbox!
+  elixir: `# Welcome to the Elixir sandbox!
 # Elixir is a functional language built for scalability.
 # Try: pattern matching, pipes, and recursion.
 
@@ -361,24 +313,21 @@ numbers = [1, 2, 3, 4, 5]
 sum = numbers |> Enum.sum()
 IO.puts "Sum: #{sum}"`,
 
-    sqlite: `-- Welcome to the SQLite sandbox!
--- A sample database is pre-loaded with tables:
---   students (id, name, age, grade, gpa)
---   courses  (id, name, credits, department)
+  sqlite: `-- Welcome to the SQLite sandbox!
+-- Pre-loaded sample database tables:
+--   students    (id, name, age, grade, gpa)
+--   courses     (id, name, credits, department)
 --   enrollments (student_id, course_id, semester)
+--   users       (id, name, email, role, created_at)
+--   products    (id, name, price, category, stock)
+--   orders      (id, user_id, product_id, quantity, total_price)
 --
 -- Try writing queries against these tables!
 
 -- Example: Find all students with a GPA above 3.5
-SELECT name, gpa FROM students WHERE gpa > 3.5 ORDER BY gpa DESC;
+SELECT name, gpa FROM students WHERE gpa > 3.5 ORDER BY gpa DESC;`,
 
--- Example: Join to see which courses each student is enrolled in
--- SELECT s.name, c.name AS course, e.semester
--- FROM students s
--- JOIN enrollments e ON s.id = e.student_id
--- JOIN courses c ON e.course_id = c.id;`,
-
-    bash: `#!/bin/bash
+  bash: `#!/bin/bash
 # Welcome to the Bash sandbox!
 # Bash is the standard Unix/Linux shell scripting language.
 # Note: Dangerous commands are blocked for security.
@@ -390,108 +339,253 @@ echo "Hello, $NAME!"
 # Loop example
 for i in {1..5}; do
     echo "Count: $i"
-done
+done`,
 
-# Conditional example
-if [ 10 -gt 5 ]; then
-    echo "10 is greater than 5"
-fi`,
-
-    powershell: `# Welcome to the PowerShell sandbox!
+  powershell: `# Welcome to the PowerShell sandbox!
 # PowerShell is a task automation framework by Microsoft.
 # Note: Dangerous commands are blocked for security.
 # Try: variables, pipelines, and cmdlets.
 
 $name = "CodeWithMee"
-Write-Output "Hello, $name!"
+Write-Output "Hello, $name!"`,
 
-# Array and pipeline example
-$numbers = 1..5
-$sum = ($numbers | Measure-Object -Sum).Sum
-Write-Output "Sum of 1-5: $sum"
-
-# String manipulation
-$greeting = "Hello World"
-Write-Output "Uppercase: $($greeting.ToUpper())"`,
-
-    cobol: `       IDENTIFICATION DIVISION.
+  cobol: `       IDENTIFICATION DIVISION.
        PROGRAM-ID. HELLO-WORLD.
-       DATA DIVISION.
-       WORKING-STORAGE SECTION.
-       01 WS-NAME PIC X(12) VALUE "CodeWithMee".
-       01 WS-SUM  PIC 9(4)  VALUE 0.
-       01 WS-I    PIC 9(2)  VALUE 0.
        PROCEDURE DIVISION.
-           DISPLAY "Hello, " WS-NAME "!".
-           PERFORM VARYING WS-I FROM 1 BY 1
-               UNTIL WS-I > 5
-               ADD WS-I TO WS-SUM
-           END-PERFORM.
-           DISPLAY "Sum of 1-5: " WS-SUM.
+           DISPLAY "Hello, CodeWithMee!".
            STOP RUN.`,
 
-    nasm: `; Welcome to the Assembly (NASM) sandbox!
-; x86 (32-bit) Linux Assembly
-; This is how computers REALLY work under the hood.
-
+  nasm: `; Welcome to the Assembly (NASM) sandbox!
 section .data
-    msg db "Hello, CodeWithMee!", 10  ; 10 = newline
+    msg db "Hello, CodeWithMee!", 10
     len equ $ - msg
 
 section .text
     global _start
 
 _start:
-    ; sys_write(stdout, msg, len)
-    mov eax, 4          ; syscall: write
-    mov ebx, 1          ; file descriptor: stdout
-    mov ecx, msg        ; pointer to message
-    mov edx, len        ; message length
-    int 0x80            ; call kernel
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, msg
+    mov edx, len
+    int 0x80
 
-    ; sys_exit(0)
-    mov eax, 1          ; syscall: exit
-    xor ebx, ebx        ; exit code: 0
-    int 0x80            ; call kernel`,
-  };
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80`,
+};
 
-  // Monaco editor uses different language identifiers
-  const monacoLanguageMap = {
-    python: 'python',
-    javascript: 'javascript',
-    java: 'java',
-    cpp: 'cpp',
-    c: 'c',
-    rust: 'rust',
-    ruby: 'ruby',
-    go: 'go',
-    kotlin: 'kotlin',
-    swift: 'swift',
-    scala: 'scala',
-    dart: 'dart',
-    php: 'php',
-    perl: 'perl',
-    r: 'r',
-    elixir: 'elixir',
-    sqlite: 'sql',
-    bash: 'shell',
-    powershell: 'powershell',
-    cobol: 'cobol',
-    nasm: 'plaintext',
-  };
+const monacoLanguageMap = {
+  python: 'python',
+  javascript: 'javascript',
+  java: 'java',
+  cpp: 'cpp',
+  c: 'c',
+  rust: 'rust',
+  ruby: 'ruby',
+  go: 'go',
+  kotlin: 'kotlin',
+  swift: 'swift',
+  scala: 'scala',
+  dart: 'dart',
+  php: 'php',
+  perl: 'perl',
+  r: 'r',
+  elixir: 'elixir',
+  sqlite: 'sql',
+  bash: 'shell',
+  powershell: 'powershell',
+  cobol: 'cobol',
+  nasm: 'plaintext',
+};
 
-  const getMonacoLanguage = (lang) => monacoLanguageMap[lang] || lang;
+const formatMonacoLanguage = (lang) => monacoLanguageMap[lang?.toLowerCase()] || lang || 'python';
 
-  // --- Smart Language Detection from Topic AND Pathway ---
+const Sandbox = ({ setPageTitle }) => {
+  const { token, user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const topic = searchParams.get('topic');
+  const youtubeQuery = searchParams.get('q');
+  const pathwayParam = searchParams.get('pathway') || '';
+
+  // --- Layout State ---
+  const [verticalSplit, setVerticalSplit] = useState(50);
+  const [leftHorizontalSplit, setLeftHorizontalSplit] = useState(60);
+  const [rightHorizontalSplit, setRightHorizontalSplit] = useState(70);
+  const [isDragging, setIsDragging] = useState(null); // 'vertical', 'left', 'right'
+
+  // --- Component State ---
+  const [videoId, setVideoId] = useState('');
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [showResumeOverlay, setShowResumeOverlay] = useState(false);
+  const [savedProgress, setSavedProgress] = useState(null);
+  const [language, setLanguage] = useState('python');
+  const [code, setCode] = useState(() => boilerplate.python);
+  const [output, setOutput] = useState('');
+  const [isCodeRunning, setIsCodeRunning] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isDebugging, setIsDebugging] = useState(false);
+  const chatHistoryRef = useRef(null);
+  const sandboxContainerRef = useRef(null);
+
+  // --- Active Recall Checkpoint State ---
+  const ytPlayerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+  const ytPlayerContainerRef = useRef(null);
+  const videoCacheRef = useRef(new Map());
+  const videoFetchRequestIdRef = useRef(0);
+
+  // User pathways and active selection state
+  const [userRoadmaps, setUserRoadmaps] = useState([]);
+  const [selectedPathway, setSelectedPathway] = useState(pathwayParam || 'General');
+  const [selectedChapter, setSelectedChapter] = useState(topic || 'General');
+  const [allChats, setAllChats] = useState({});
+
+  useEffect(() => {
+    if (pathwayParam) setSelectedPathway(pathwayParam);
+    if (topic) setSelectedChapter(topic);
+  }, [pathwayParam, topic]);
+
+  // Monaco editor ref
+  const monacoEditorRef = useRef(null);
+  const editorContainerRef = useRef(null);
+  const layoutTimerRef = useRef(null);
+  const rafRef = useRef(null);
+  const pendingMoveRef = useRef(null);
+
+  // Fetch user-created roadmaps (from backend + localStorage)
+  const fetchUserRoadmaps = useCallback(async () => {
+    let localRoadmaps = [];
+    try {
+      const storageKey = getUserStorageKey(user?.id, 'saved_roadmaps');
+      const raw = localStorage.getItem(storageKey);
+      if (raw) localRoadmaps = JSON.parse(raw);
+    } catch (err) {
+      console.warn('Error reading local roadmaps', err);
+    }
+
+    let serverRoadmaps = [];
+    if (token) {
+      try {
+        const res = await axios.get('/api/v1/roadmaps/my-roadmaps');
+        if (Array.isArray(res.data)) {
+          serverRoadmaps = res.data;
+        }
+      } catch (err) {
+        console.warn('Error fetching server roadmaps', err);
+      }
+    }
+
+    const map = new Map();
+    [...localRoadmaps, ...serverRoadmaps].forEach((r) => {
+      if (r && (r.title || r.name)) {
+        map.set(r.title || r.name, r);
+      }
+    });
+
+    const merged = Array.from(map.values());
+    setUserRoadmaps(merged);
+    return merged;
+  }, [token]);
+
+  useEffect(() => {
+    fetchUserRoadmaps();
+  }, [fetchUserRoadmaps]);
+
+  // Available user pathways for dropdown (strictly user-created + current URL pathway)
+  const availablePathways = useMemo(() => {
+    const list = userRoadmaps.map((r) => r.title || r.name).filter(Boolean);
+
+    if (pathwayParam && !list.includes(pathwayParam)) {
+      list.unshift(pathwayParam);
+    }
+    if (selectedPathway && selectedPathway !== 'General' && !list.includes(selectedPathway)) {
+      list.unshift(selectedPathway);
+    }
+
+    const unique = Array.from(new Set(list));
+    if (unique.length === 0) return ['General'];
+    return unique;
+  }, [userRoadmaps, pathwayParam, selectedPathway]);
+
+  // Chapters for the currently selected pathway
+  const availableChapters = useMemo(() => {
+    if (!selectedPathway || selectedPathway === 'General') {
+      return topic ? [topic] : ['General'];
+    }
+    const matchedRoadmap = userRoadmaps.find(
+      (r) => (r.title || r.name) === selectedPathway,
+    );
+    if (!matchedRoadmap) {
+      return topic ? [topic] : ['General'];
+    }
+
+    const topicsList = matchedRoadmap.topics || matchedRoadmap.chapters || [];
+    const chapterNames = topicsList
+      .map((t) => (typeof t === 'string' ? t : t.topic || t.title))
+      .filter(Boolean);
+
+    if (chapterNames.length === 0) return ['General'];
+    return Array.from(new Set(chapterNames));
+  }, [userRoadmaps, selectedPathway, topic]);
+
+  // Fetch video for active pathway + chapter context
+  const fetchVideoForContext = useCallback(
+    async (pathwayStr, chapterStr) => {
+      const currentRequestId = ++videoFetchRequestIdRef.current;
+      setIsVideoLoading(true);
+      setShowResumeOverlay(false);
+      setSavedProgress(null);
+
+      let query;
+      if (youtubeQuery && chapterStr === topic && pathwayStr === pathwayParam) {
+        if (pathwayStr && pathwayStr !== 'General' && !youtubeQuery.toLowerCase().includes(pathwayStr.toLowerCase())) {
+          query = `${pathwayStr} ${youtubeQuery}`;
+        } else {
+          query = youtubeQuery;
+        }
+      } else {
+        const parts = [];
+        if (pathwayStr && pathwayStr !== 'General') parts.push(pathwayStr);
+        if (chapterStr && chapterStr !== 'General') parts.push(chapterStr);
+        query = parts.join(' ').trim() || 'programming tutorial';
+      }
+
+      if (videoCacheRef.current.has(query)) {
+        if (currentRequestId === videoFetchRequestIdRef.current) {
+          setVideoId(videoCacheRef.current.get(query));
+          setIsVideoLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await axios.get(`/api/v1/videos/search?q=${encodeURIComponent(query)}`);
+        if (currentRequestId !== videoFetchRequestIdRef.current) return;
+        const vid = res.data?.videoId || 'rfscVS0vtbw';
+        videoCacheRef.current.set(query, vid);
+        setVideoId(vid);
+      } catch (err) {
+        if (currentRequestId !== videoFetchRequestIdRef.current) return;
+        console.error('Failed to fetch video for context', err);
+        setVideoId('rfscVS0vtbw');
+      } finally {
+        if (currentRequestId === videoFetchRequestIdRef.current) {
+          setIsVideoLoading(false);
+        }
+      }
+    },
+    [youtubeQuery, topic, pathwayParam],
+  );
+
+  // --- Smart Language Detection ---
   const detectLanguageFromContext = (pathwayStr, topicStr) => {
-    // Combine pathway + topic for maximum matching accuracy
     const combined = `${pathwayStr || ''} ${topicStr || ''}`.toLowerCase();
     if (!combined.trim()) return null;
-
-    // Direct pathway-level matches (most reliable)
     const pathwayLower = (pathwayStr || '').toLowerCase();
 
-    // Match "learn Java" or "Java programming" but NOT "JavaScript"
     if (/\bjava\b/i.test(pathwayLower) && !/javascript/i.test(pathwayLower)) return 'java';
     if (/\bpython\b/i.test(pathwayLower)) return 'python';
     if (/\bjavascript\b|\bjs\b|\breact\b|\bnode/i.test(pathwayLower)) return 'javascript';
@@ -505,87 +599,24 @@ _start:
     if (/\bswift\b/i.test(pathwayLower)) return 'swift';
     if (/\bscala\b/i.test(pathwayLower)) return 'scala';
     if (/\bdart\b|\bflutter\b/i.test(pathwayLower)) return 'dart';
-    if (/\br\b programming|\brstudio\b/i.test(pathwayLower)) return 'r';
-    if (/\belixir\b/i.test(pathwayLower)) return 'elixir';
     if (/\bbash\b|\bshell\b|\blinux\b/i.test(pathwayLower)) return 'bash';
-    if (/\bcobol\b/i.test(pathwayLower)) return 'cobol';
-    if (/\bassembly\b|\bnasm\b/i.test(pathwayLower)) return 'nasm';
-    if (/\bperl\b/i.test(pathwayLower)) return 'perl';
-    if (/\bpowershell\b/i.test(pathwayLower)) return 'powershell';
-    if (/\bc programming|\bc language/i.test(pathwayLower)) return 'c';
 
-    // Fall back to topic-level detection using the combined string
     const t = combined;
-    if (/\b(sql|sqlite|database|query|queries|relational|mysql|postgres|nosql)\b/.test(t))
-      return 'sqlite';
-    if (
-      /\b(javascript|js|node\.?js|react|vue|angular|express|next\.?js|dom|ajax|fetch|json|typescript|npm|webpack|babel)\b/.test(
-        t,
-      )
-    )
-      return 'javascript';
-    if (
-      /\b(python|django|flask|pandas|numpy|matplotlib|scipy|tensorflow|keras|pytorch|machine.?learning|data.?science|deep.?learning|jupyter|pip)\b/.test(
-        t,
-      )
-    )
-      return 'python';
-    if (
-      /\b(java|spring|hibernate|maven|gradle|jvm|servlet|jdbc|swing|javafx|jdk|jre|intellij)\b/i.test(
-        t,
-      ) &&
-      !/javascript/i.test(t)
-    )
-      return 'java';
-    if (
-      /\b(c\+\+|cpp|stl|cmake|template|pointer|oop|object.?oriented|data.?structure|algorithm|competitive.?programming)\b/.test(
-        t,
-      )
-    )
-      return 'cpp';
-    if (
-      /\b(c programming|c language|embedded|microcontroller|memory.?management|operating.?system)\b/.test(
-        t,
-      )
-    )
-      return 'c';
-    if (/\b(rust|cargo|ownership|borrowing|lifetimes|crate)\b/.test(t)) return 'rust';
-    if (/\b(golang|goroutine|concurrency)\b/.test(t)) return 'go';
-    if (/\b(ruby|rails|ruby.?on.?rails|sinatra|gem)\b/.test(t)) return 'ruby';
-    if (/\b(php|laravel|wordpress|symfony|composer)\b/.test(t)) return 'php';
-    if (/\b(kotlin|jetpack.?compose)\b/.test(t)) return 'kotlin';
-    if (/\b(swift|ios|swiftui|xcode|uikit|apple)\b/.test(t)) return 'swift';
-    if (/\b(scala|spark|akka|play.?framework)\b/.test(t)) return 'scala';
-    if (/\b(dart|flutter|widget)\b/.test(t)) return 'dart';
-    if (/\b(r programming|r language|rstudio|ggplot|tidyverse|statistics|statistical)\b/.test(t))
-      return 'r';
-    if (/\b(elixir|phoenix|erlang|otp)\b/.test(t)) return 'elixir';
-    if (/\b(perl|regex|regular.?expression|text.?processing)\b/.test(t)) return 'perl';
-    if (
-      /\b(bash|shell|linux|unix|command.?line|terminal|scripting|devops|docker|kubernetes|ci.?cd)\b/.test(
-        t,
-      )
-    )
-      return 'bash';
-    if (/\b(powershell|windows.?admin|active.?directory|azure)\b/.test(t)) return 'powershell';
-    if (/\b(assembly|nasm|x86|low.?level|registers|syscall)\b/.test(t)) return 'nasm';
-    if (/\b(cobol|mainframe|legacy|banking.?system)\b/.test(t)) return 'cobol';
-    if (/\b(html|css|web|frontend|front.?end|backend|back.?end|api|rest|graphql)\b/.test(t))
-      return 'javascript';
-
+    if (/\b(sql|sqlite|database|query|queries|relational)\b/.test(t)) return 'sqlite';
+    if (/\b(javascript|js|node\.?js|react|vue|express|dom|fetch)\b/.test(t)) return 'javascript';
+    if (/\b(python|django|flask|pandas|numpy|matplotlib|machine.?learning)\b/.test(t)) return 'python';
+    if (/\b(java|spring|hibernate|maven|gradle)\b/i.test(t) && !/javascript/i.test(t)) return 'java';
+    if (/\b(c\+\+|cpp|stl|vector|pointer)\b/.test(t)) return 'cpp';
+    if (/\b(rust|cargo)\b/.test(t)) return 'rust';
+    if (/\b(golang|goroutine)\b/.test(t)) return 'go';
     return null;
   };
 
   useEffect(() => {
     const title = topic || 'General Sandbox';
     setPageTitle(title);
-
-    // Auto-detect language from pathway+topic context
     const detected = detectLanguageFromContext(pathwayParam, topic);
-    if (detected) {
-      setLanguage(detected);
-    }
-
+    if (detected) setLanguage(detected);
     return () => setPageTitle('');
   }, [topic, pathwayParam, setPageTitle]);
 
@@ -599,61 +630,168 @@ _start:
     }
   }, [chatHistory]);
 
-  // --- Load YouTube IFrame API script ---
+  // Load YouTube IFrame API
   useEffect(() => {
-    if (window.YT && window.YT.Player) return; // Already loaded
+    if (window.YT && window.YT.Player) return;
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScript = document.getElementsByTagName('script')[0];
     firstScript.parentNode.insertBefore(tag, firstScript);
   }, []);
 
-  // --- Save video progress to backend ---
-  const saveVideoProgress = useCallback(
-    async (vid, time, dur) => {
-      if (!token || !vid || time === undefined) return;
+  // Auto-complete chapter when video is watched to completion
+  const autoCompleteChapter = useCallback(
+    async (topicTitle, pathwayTitle) => {
+      const activeTopic = topicTitle || selectedChapter || topic;
+      const activePathway = pathwayTitle || selectedPathway || pathwayParam;
+      if (!activeTopic || activeTopic === 'General') return;
+
       try {
-        await axios.put('/api/user/video-progress', {
-          videoId: vid,
-          timestamp: Math.floor(time),
-          duration: Math.floor(dur || 0),
-          topic: topic || '',
-          pathway: pathwayParam || '',
+        const storageKey = getUserStorageKey(user?.id, 'saved_roadmaps');
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        const roadmaps = JSON.parse(raw);
+        let targetRoadmapId = null;
+        let didUpdate = false;
+
+        const updatedRoadmaps = roadmaps.map((r) => {
+          const matchesPathway =
+            !activePathway ||
+            activePathway === 'General' ||
+            r.title?.toLowerCase() === activePathway.toLowerCase() ||
+            String(r._id || r.id) === String(activePathway);
+
+          const hasTopic = r.topics?.some(
+            (t) => t.topic?.toLowerCase() === activeTopic.toLowerCase(),
+          );
+
+          if ((matchesPathway || hasTopic) && r.topics) {
+            targetRoadmapId = r._id || r.id;
+            didUpdate = true;
+            return {
+              ...r,
+              topics: r.topics.map((t) =>
+                t.topic?.toLowerCase() === activeTopic.toLowerCase()
+                  ? { ...t, completed: true }
+                  : t,
+              ),
+            };
+          }
+          return r;
         });
+
+        if (didUpdate) {
+          localStorage.setItem(storageKey, JSON.stringify(updatedRoadmaps));
+          setUserRoadmaps(updatedRoadmaps);
+        }
+
+        if (token && targetRoadmapId) {
+          try {
+            await axios.put('/api/v1/roadmaps/progress', {
+              roadmapId: targetRoadmapId,
+              topic: activeTopic,
+              completed: true,
+            });
+          } catch (err) {
+            console.error('Failed to sync chapter completion to server', err);
+          }
+        }
       } catch (err) {
-        console.error('Failed to save video progress', err);
+        console.warn('Auto-complete chapter failed', err);
       }
     },
-    [token, topic, pathwayParam],
+    [token, selectedChapter, topic, selectedPathway, pathwayParam],
   );
 
-  // --- Fetch saved progress for a video ---
+  // Save video progress to backend + localStorage
+  const saveVideoProgress = useCallback(
+    async (vid, time, dur) => {
+      if (!vid || time === undefined) return;
+      const floorTime = Math.floor(time);
+      const floorDur = Math.floor(dur || 0);
+
+      try {
+        const vidStorageKey = getUserStorageKey(user?.id, `vid_progress_${vid}`);
+        localStorage.setItem(
+          vidStorageKey,
+          JSON.stringify({
+            timestamp: floorTime,
+            duration: floorDur,
+            topic: selectedChapter || topic || '',
+            pathway: selectedPathway || pathwayParam || '',
+            updatedAt: Date.now(),
+          }),
+        );
+      } catch (err) {
+        console.warn('LocalStorage video save failed', err);
+      }
+
+      if (floorDur > 0 && (floorTime >= floorDur - 10 || floorTime / floorDur >= 0.9)) {
+        autoCompleteChapter(selectedChapter || topic, selectedPathway || pathwayParam);
+      }
+
+      if (token) {
+        try {
+          await axios.put('/api/v1/learning/video-progress', {
+            videoId: vid,
+            timestamp: floorTime,
+            duration: floorDur,
+            topic: selectedChapter || topic || '',
+            pathway: selectedPathway || pathwayParam || '',
+          });
+        } catch (err) {
+          console.error('Failed to save video progress to server', err);
+        }
+      }
+    },
+    [token, user?.id, topic, pathwayParam, selectedChapter, selectedPathway, autoCompleteChapter],
+  );
+
+  // Fetch video progress from server or localStorage
   const fetchVideoProgress = useCallback(
     async (vid) => {
-      if (!token || !vid) return null;
-      try {
-        const res = await axios.get(`/api/user/video-progress/${vid}`);
-        return res.data;
-      } catch (err) {
-        console.error('Failed to fetch video progress', err);
-        return null;
+      if (!vid) return null;
+      let serverProgress = null;
+
+      if (token) {
+        try {
+          const res = await axios.get(`/api/v1/learning/video-progress/${vid}`);
+          if (res.data && res.data.timestamp) {
+            serverProgress = res.data;
+          }
+        } catch (err) {
+          console.warn('Failed to fetch server video progress', err);
+        }
       }
+
+      let localProgress = null;
+      try {
+        const vidStorageKey = getUserStorageKey(user?.id, `vid_progress_${vid}`);
+        const raw = localStorage.getItem(vidStorageKey);
+        if (raw) localProgress = JSON.parse(raw);
+      } catch (err) {
+        console.warn('Failed to read local video progress', err);
+      }
+
+      if (serverProgress && localProgress) {
+        return serverProgress.timestamp >= localProgress.timestamp ? serverProgress : localProgress;
+      }
+      return serverProgress || localProgress || null;
     },
     [token],
   );
 
-  // --- Initialize YouTube Player when videoId is available ---
+  // Initialize YouTube player & handle video progress resume
   useEffect(() => {
     if (!videoId || isVideoLoading) return;
 
     const initPlayer = async () => {
-      // Fetch saved progress first
       const progress = await fetchVideoProgress(videoId);
       const startSeconds = progress?.timestamp || 0;
       const totalDuration = progress?.duration || 0;
 
-      if (startSeconds > 5 && totalDuration > 0) {
-        // There's meaningful saved progress — show resume overlay
+      const isNearEnd = totalDuration > 0 && startSeconds >= totalDuration - 10;
+      if (startSeconds >= 3 && !isNearEnd) {
         setSavedProgress({ timestamp: startSeconds, duration: totalDuration });
         setShowResumeOverlay(true);
       } else {
@@ -661,7 +799,6 @@ _start:
         setShowResumeOverlay(false);
       }
 
-      // Wait for the YT API to load
       const waitForYT = () =>
         new Promise((resolve) => {
           if (window.YT && window.YT.Player) return resolve();
@@ -669,23 +806,18 @@ _start:
         });
       await waitForYT();
 
-      // Destroy existing player if any
       if (ytPlayerRef.current) {
         try {
           ytPlayerRef.current.destroy();
-        } catch {
-          // The embedded player may already be disposed.
-        }
+        } catch {}
         ytPlayerRef.current = null;
       }
 
-      // Clear any existing progress interval
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
 
-      // Create new player
       if (!ytPlayerContainerRef.current) return;
 
       ytPlayerRef.current = new window.YT.Player(ytPlayerContainerRef.current, {
@@ -701,16 +833,13 @@ _start:
           origin: window.location.origin,
           widget_referrer: window.location.origin,
           playsinline: 1,
-          start: 0, // Always start at 0, the resume overlay handles seeking
+          start: 0,
         },
         events: {
-          onReady: () => {
-            // Player is ready
-          },
+          onReady: () => {},
           onStateChange: (event) => {
             const player = event.target;
             if (event.data === window.YT.PlayerState.PLAYING) {
-              // Start progress tracking every 5 seconds
               if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
               progressIntervalRef.current = setInterval(() => {
                 try {
@@ -719,12 +848,9 @@ _start:
                   if (currentTime && duration) {
                     saveVideoProgress(videoId, currentTime, duration);
                   }
-                } catch {
-                  // The next interval retries transient player read failures.
-                }
+                } catch {}
               }, 5000);
             } else if (event.data === window.YT.PlayerState.PAUSED) {
-              // Save progress on pause
               if (progressIntervalRef.current) {
                 clearInterval(progressIntervalRef.current);
                 progressIntervalRef.current = null;
@@ -735,11 +861,8 @@ _start:
                 if (currentTime && duration) {
                   saveVideoProgress(videoId, currentTime, duration);
                 }
-              } catch {
-                // A later player event retries transient read failures.
-              }
+              } catch {}
             } else if (event.data === window.YT.PlayerState.ENDED) {
-              // Video ended - save as completed
               if (progressIntervalRef.current) {
                 clearInterval(progressIntervalRef.current);
                 progressIntervalRef.current = null;
@@ -747,9 +870,8 @@ _start:
               try {
                 const duration = player.getDuration();
                 saveVideoProgress(videoId, duration, duration);
-              } catch {
-                // Completion is best-effort when the provider is tearing down.
-              }
+                autoCompleteChapter(selectedChapter || topic, selectedPathway || pathwayParam);
+              } catch {}
             }
           },
         },
@@ -766,7 +888,7 @@ _start:
     };
   }, [videoId, isVideoLoading, fetchVideoProgress, saveVideoProgress]);
 
-  // --- Resume / Start Fresh handlers ---
+  // Resume & Start Fresh video handlers
   const handleResumeVideo = () => {
     setShowResumeOverlay(false);
     if (ytPlayerRef.current && savedProgress?.timestamp) {
@@ -783,7 +905,6 @@ _start:
     }
   };
 
-  // --- Format time for display ---
   const formatTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -792,34 +913,17 @@ _start:
     return `${mins}:${String(secs).padStart(2, '0')}`;
   };
 
+  // Initial data loading for video and AI chat history
   useEffect(() => {
     const fetchData = async () => {
+      fetchVideoForContext(selectedPathway, selectedChapter);
+
       if (!token) return;
-      if (youtubeQuery) {
-        setIsVideoLoading(true);
-        try {
-          const res = await axios.get(`/api/youtube/search?q=${encodeURIComponent(youtubeQuery)}`);
-          const vid = res.data?.videoId || '';
-          setVideoId(vid);
-        } catch (err) {
-          console.error('Failed to fetch video', err);
-          setVideoId('');
-        } finally {
-          setIsVideoLoading(false);
-        }
-      } else {
-        setIsVideoLoading(false);
-      }
-      // Fetch structured sandbox chat history
       try {
-        const res = await axios.get('/api/ai/sandbox-history');
+        const res = await axios.get('/api/v1/ai/sandbox-history');
         setAllChats(res.data.chatsByPathway || {});
-        setAvailableRoadmaps(res.data.roadmaps || []);
-        // Load chat for current pathway+chapter
-        const pw = pathwayParam || 'General';
-        const ch = topic || 'General';
-        setSelectedPathway(pw);
-        setSelectedChapter(ch);
+        const pw = selectedPathway;
+        const ch = selectedChapter;
         const chapterChats = res.data.chatsByPathway?.[pw]?.[ch] || [];
         const history = chapterChats.flatMap((conv) => [
           { sender: 'user', message: conv.prompt },
@@ -831,16 +935,21 @@ _start:
       }
     };
     fetchData();
-  }, [youtubeQuery, token, pathwayParam, topic]);
+  }, [token, fetchVideoForContext, selectedPathway, selectedChapter]);
 
   const handleRunCode = async () => {
     setIsCodeRunning(true);
     setOutput('Running code...');
     try {
-      const res = await axios.post('/api/code/run', { code, language });
+      const res = await axios.post('/api/v1/execution/run', { code, language });
       setOutput(res.data.output || 'Code executed with no output.');
     } catch (err) {
-      setOutput(err.response?.data?.error || 'Failed to run code.');
+      const apiError = err.response?.data?.error;
+      setOutput(
+        typeof apiError === 'string'
+          ? apiError
+          : apiError?.message || apiError?.code || 'Failed to run code.',
+      );
     }
     setIsCodeRunning(false);
   };
@@ -854,7 +963,7 @@ _start:
     setChatInput('');
     setIsAiLoading(true);
     try {
-      const res = await axios.post('/api/ai/chat', {
+      const res = await axios.post('/api/v1/ai/chat', {
         question: currentInput,
         code,
         pathway: selectedPathway,
@@ -862,7 +971,6 @@ _start:
       });
       setChatHistory([...newHistory, { sender: 'ai', message: res.data.answer }]);
 
-      // Update the local allChats cache so switching pathways/chapters works correctly
       setAllChats((prev) => {
         const updated = { ...prev };
         if (!updated[selectedPathway]) updated[selectedPathway] = {};
@@ -883,13 +991,20 @@ _start:
     setIsAiLoading(false);
   };
 
-  // --- Switch chat context (pathway/chapter selectors) ---
+  // Switch pathway context
   const handlePathwaySwitch = (pw) => {
     setSelectedPathway(pw);
-    // Auto-select first chapter of this pathway
-    const roadmap = availableRoadmaps.find((r) => r.title === pw);
-    const firstChapter = roadmap?.chapters?.[0] || 'General';
+    let matchedChapters = [];
+    const matchedRoadmap = userRoadmaps.find((r) => (r.title || r.name) === pw);
+    if (matchedRoadmap) {
+      const topicsList = matchedRoadmap.topics || matchedRoadmap.chapters || [];
+      matchedChapters = topicsList
+        .map((t) => (typeof t === 'string' ? t : t.topic || t.title))
+        .filter(Boolean);
+    }
+    const firstChapter = matchedChapters[0] || 'General';
     setSelectedChapter(firstChapter);
+
     const chapterChats = allChats?.[pw]?.[firstChapter] || [];
     const history = chapterChats.flatMap((conv) => [
       { sender: 'user', message: conv.prompt },
@@ -898,6 +1013,7 @@ _start:
     setChatHistory(history);
   };
 
+  // Switch chapter context
   const handleChapterSwitch = (ch) => {
     setSelectedChapter(ch);
     const chapterChats = allChats?.[selectedPathway]?.[ch] || [];
@@ -908,16 +1024,15 @@ _start:
     setChatHistory(history);
   };
 
-  // --- Clear chat history for current chapter ---
+  // Clear chat history for current chapter
   const handleClearChat = async () => {
     if (!window.confirm(`Clear all AI chat for "${selectedChapter}" in "${selectedPathway}"?`))
       return;
     try {
       await axios.delete(
-        `/api/ai/sandbox-history?pathway=${encodeURIComponent(selectedPathway)}&chapter=${encodeURIComponent(selectedChapter)}`,
+        `/api/v1/ai/sandbox-history?pathway=${encodeURIComponent(selectedPathway)}&chapter=${encodeURIComponent(selectedChapter)}`,
       );
       setChatHistory([]);
-      // Update local cache
       setAllChats((prev) => {
         const updated = { ...prev };
         if (updated[selectedPathway]) {
@@ -930,12 +1045,12 @@ _start:
     }
   };
 
-  // --- Debug button handler ---
+  // Debug button handler
   const handleDebug = async () => {
     if (isDebugging) return;
     setIsDebugging(true);
     try {
-      const res = await axios.post('/api/ai/debug', {
+      const res = await axios.post('/api/v1/ai/debug', {
         code,
         output,
         language,
@@ -953,12 +1068,13 @@ _start:
     setIsDebugging(false);
   };
 
-  // --- Resizing Logic with rAF throttling & Touch Support ---
+  // Resizing Logic with frame-by-frame Monaco layout update
   const isDraggingRef = useRef(null);
 
   const handleDragStart = (dividerType) => (e) => {
     if (e.cancelable) e.preventDefault();
     e.stopPropagation();
+    window.dispatchEvent(new CustomEvent('cwm:close-dropdowns'));
     isDraggingRef.current = dividerType;
     setIsDragging(dividerType);
     document.body.style.cursor = dividerType === 'vertical' ? 'col-resize' : 'row-resize';
@@ -977,14 +1093,11 @@ _start:
       pendingMoveRef.current = null;
     }
 
-    // Trigger Monaco layout after drag ends
     if (layoutTimerRef.current) clearTimeout(layoutTimerRef.current);
     layoutTimerRef.current = setTimeout(() => {
       try {
         monacoEditorRef.current?.layout();
-      } catch {
-        // The editor can unmount while a resize callback is queued.
-      }
+      } catch {}
     }, 50);
   }, []);
 
@@ -992,7 +1105,6 @@ _start:
     const dragType = isDraggingRef.current;
     if (!dragType) return;
 
-    // Support both mouse and touch events
     const touch = e.touches && e.touches.length > 0 ? e.touches[0] : null;
     const clientX = touch ? touch.clientX : e.clientX;
     const clientY = touch ? touch.clientY : e.clientY;
@@ -1012,6 +1124,9 @@ _start:
           const rect = container.getBoundingClientRect();
           const newSplit = ((move.clientX - rect.left) / rect.width) * 100;
           setVerticalSplit(Math.max(20, Math.min(80, newSplit)));
+          try {
+            monacoEditorRef.current?.layout();
+          } catch {}
         } else if (move.dragType === 'left') {
           const container = sandboxContainerRef.current?.querySelector('.left-pane');
           if (!container) return;
@@ -1024,13 +1139,15 @@ _start:
           const rect = container.getBoundingClientRect();
           const newSplit = ((move.clientY - rect.top) / rect.height) * 100;
           setRightHorizontalSplit(Math.max(15, Math.min(85, newSplit)));
+          try {
+            monacoEditorRef.current?.layout();
+          } catch {}
         }
       });
     }
   }, []);
 
   useEffect(() => {
-    // Attach mouse and touch listeners to document for reliable drag tracking
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
     document.addEventListener('touchmove', handleDragMove, { passive: false });
@@ -1050,28 +1167,21 @@ _start:
     };
   }, [handleDragMove, handleDragEnd]);
 
-  // Monaco onMount: capture editor instance and set up manual layout observer
   const handleEditorMount = (editor) => {
     monacoEditorRef.current = editor;
-    // Initial layout
     setTimeout(() => {
       try {
         editor.layout();
-      } catch {
-        // The editor can unmount before its initial layout callback.
-      }
+      } catch {}
     }, 100);
 
-    // Observe the editor container for size changes (replaces automaticLayout)
     if (editorContainerRef.current) {
       const ro = new ResizeObserver(() => {
         if (layoutTimerRef.current) clearTimeout(layoutTimerRef.current);
         layoutTimerRef.current = setTimeout(() => {
           try {
             editor.layout();
-          } catch {
-            // The editor can unmount while ResizeObserver work is queued.
-          }
+          } catch {}
         }, 50);
       });
       ro.observe(editorContainerRef.current);
@@ -1080,7 +1190,6 @@ _start:
 
   return (
     <div className="sandbox-page-container">
-      {/* Transparent overlay during drag to prevent iframes from stealing mouse events */}
       {isDragging && (
         <div
           className="drag-overlay"
@@ -1103,7 +1212,6 @@ _start:
             ) : videoId ? (
               <div className="youtube-embed-wrapper">
                 <div ref={ytPlayerContainerRef} style={{ width: '100%', height: '100%' }} />
-                {/* Resume Overlay */}
                 {showResumeOverlay && savedProgress && (
                   <div className="video-resume-overlay">
                     <div className="resume-overlay-content">
@@ -1161,21 +1269,13 @@ _start:
           >
             <div className="chat-context-bar">
               <CustomDropdown
-                options={[
-                  { label: 'General', value: 'General' },
-                  ...availableRoadmaps.map((r) => ({ label: r.title, value: r.title })),
-                ]}
+                options={availablePathways.map((p) => ({ label: p, value: p }))}
                 selected={selectedPathway}
                 onSelect={(opt) => handlePathwaySwitch(opt.value)}
                 placeholder="Select Pathway"
               />
               <CustomDropdown
-                options={[
-                  { label: 'General', value: 'General' },
-                  ...(
-                    availableRoadmaps.find((r) => r.title === selectedPathway)?.chapters || []
-                  ).map((ch) => ({ label: ch, value: ch })),
-                ]}
+                options={availableChapters.map((ch) => ({ label: ch, value: ch }))}
                 selected={selectedChapter}
                 onSelect={(opt) => handleChapterSwitch(opt.value)}
                 placeholder="Select Chapter"
@@ -1291,22 +1391,25 @@ _start:
                 {isCodeRunning ? 'Running...' : 'Run Code'}
               </button>
             </div>
-            <Editor
-              height="calc(100% - 40px)"
-              language={getMonacoLanguage(language)}
-              value={code}
-              theme="vs-dark"
-              onChange={(value) => setCode(value || '')}
-              onMount={handleEditorMount}
-              options={{
-                ariaLabel: 'Practice code editor',
-                fontSize: 16,
-                minimap: { enabled: false },
-                automaticLayout: false,
-                scrollBeyondLastLine: false,
-                wordWrap: 'on',
-              }}
-            />
+            <div className="editor-wrapper">
+              <Editor
+                height="100%"
+                width="100%"
+                language={formatMonacoLanguage(language)}
+                value={code}
+                theme="vs-dark"
+                onChange={(value) => setCode(value || '')}
+                onMount={handleEditorMount}
+                options={{
+                  ariaLabel: 'Practice code editor',
+                  fontSize: 16,
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                }}
+              />
+            </div>
           </div>
           <div
             className="resize-handle horizontal"

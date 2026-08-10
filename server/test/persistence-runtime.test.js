@@ -40,22 +40,22 @@ const DATASET = 'a'.repeat(64);
 const REPORT = 'b'.repeat(64);
 const SNAPSHOT = 'c'.repeat(64);
 const DATABASE_URL = 'postgresql://app:secret@127.0.0.1:5432/codewithmee_test';
-const DOMAINS = 'authority,identity,organizations';
+const DOMAINS = 'authority,challenges,courses,ideas,identity,integrations,learning,organizations,social';
 const FUTURE = '2035-01-01T00:00:00.000Z';
 
 function cutoverEnvironment(overrides = {}) {
   return {
     DATABASE_URL,
     PERSISTENCE_AUTHORITY_STORE: 'postgres',
-    PERSISTENCE_CHALLENGES_STORE: 'mongoose',
-    PERSISTENCE_COURSES_STORE: 'mongoose',
+    PERSISTENCE_CHALLENGES_STORE: 'postgres',
+    PERSISTENCE_COURSES_STORE: 'postgres',
     PERSISTENCE_CUTOVER_APPROVAL: `cutover:test:codewithmee_test:generation-001:${REPORT}:${DOMAINS}`,
     PERSISTENCE_CUTOVER_GENERATION: 'generation-001',
     PERSISTENCE_ENVIRONMENT: 'test',
-    PERSISTENCE_IDEAS_STORE: 'mongoose',
+    PERSISTENCE_IDEAS_STORE: 'postgres',
     PERSISTENCE_IDENTITY_STORE: 'postgres',
-    PERSISTENCE_INTEGRATIONS_STORE: 'mongoose',
-    PERSISTENCE_LEARNING_STORE: 'mongoose',
+    PERSISTENCE_INTEGRATIONS_STORE: 'postgres',
+    PERSISTENCE_LEARNING_STORE: 'postgres',
     PERSISTENCE_LEGACY_API_MODE: 'disabled',
     PERSISTENCE_MIGRATION_DATASET_SHA256: DATASET,
     PERSISTENCE_ORGANIZATIONS_STORE: 'postgres',
@@ -63,7 +63,7 @@ function cutoverEnvironment(overrides = {}) {
     PERSISTENCE_ROLLBACK_REHEARSED: 'true',
     PERSISTENCE_ROLLBACK_SNAPSHOT_SHA256: SNAPSHOT,
     PERSISTENCE_ROLLBACK_UNTIL: FUTURE,
-    PERSISTENCE_SOCIAL_STORE: 'mongoose',
+    PERSISTENCE_SOCIAL_STORE: 'postgres',
     PERSISTENCE_WRITE_FREEZE_CONFIRMED: 'true',
     ...overrides,
   };
@@ -83,37 +83,32 @@ test('PostgreSQL repositories implement every stable service repository operatio
   }
 });
 
-test('persistence defaults stay on Mongoose and reject partial or premature cutover', () => {
+test('persistence defaults to PostgreSQL', () => {
   const defaults = loadPersistenceRuntimeConfig({}, { nodeEnv: 'test' });
-  assert.deepEqual(defaults.postgresDomains, []);
   assert.equal(defaults.legacyApiEnabled, true);
-  assert.equal(defaults.needsPostgres, false);
+  assert.equal(defaults.needsPostgres, true);
 
   assert.throws(
     () =>
-      loadPersistenceRuntimeConfig({ PERSISTENCE_IDENTITY_STORE: 'postgres' }, { nodeEnv: 'test' }),
-    /must cut over or roll back as one atomic boundary/,
-  );
-  assert.throws(
-    () =>
-      loadPersistenceRuntimeConfig(
-        { PERSISTENCE_CHALLENGES_STORE: 'postgres' },
-        { nodeEnv: 'test' },
-      ),
-    /not ready for domain/,
+      loadPersistenceRuntimeConfig({ PERSISTENCE_IDENTITY_STORE: 'invalid' }, { nodeEnv: 'test' }),
+    /must be postgres/,
   );
   assert.throws(
     () =>
       loadPersistenceRuntimeConfig(cutoverEnvironment({ PERSISTENCE_LEGACY_API_MODE: 'enabled' }), {
-        nodeEnv: 'test',
+        nodeEnv: 'production',
       }),
     /must be disabled/,
   );
 });
 
 test('approved atomic PostgreSQL runtime config is exact and database activation must match', async () => {
-  const config = loadPersistenceRuntimeConfig(cutoverEnvironment(), {
-    nodeEnv: 'test',
+  const env = cutoverEnvironment({
+    PERSISTENCE_ENVIRONMENT: 'production',
+    PERSISTENCE_CUTOVER_APPROVAL: `cutover:production:codewithmee_test:generation-001:${REPORT}:${DOMAINS}`,
+  });
+  const config = loadPersistenceRuntimeConfig(env, {
+    nodeEnv: 'production',
     now: () => new Date('2030-01-01T00:00:00.000Z'),
   });
   assert.deepEqual(config.postgresDomains, DOMAINS.split(','));

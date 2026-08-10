@@ -2,7 +2,6 @@ const assert = require('node:assert/strict');
 const { once } = require('node:events');
 const test = require('node:test');
 
-const mongoose = require('mongoose');
 
 const { createApp } = require('../app');
 const { loadRuntimeConfig } = require('../config/runtime');
@@ -49,11 +48,9 @@ test('runtime configuration validates ports, origins, and execution URLs', () =>
   );
 });
 
-test('creating the Express app does not connect to MongoDB or open a listener', () => {
-  assert.equal(mongoose.connection.readyState, 0);
+test('creating the Express app does not open a listener', () => {
   const app = createApp();
   assert.equal(typeof app.listen, 'function');
-  assert.equal(mongoose.connection.readyState, 0);
 });
 
 test('the constructed app serves its smoke route on an ephemeral listener', async () => {
@@ -121,7 +118,7 @@ test('startup accepts injected test configuration and closes cleanly', async () 
     assert.notEqual(address, null);
     assert.equal(typeof address, 'object');
     assert.equal(runtime.database.connected, false);
-    assert.equal(runtime.database.reason, 'not_configured');
+    assert.equal(runtime.database.reason, 'not_required');
 
     const response = await fetch(`http://127.0.0.1:${address.port}/api/test`);
     assert.equal(response.status, 200);
@@ -134,5 +131,4 @@ test('startup accepts injected test configuration and closes cleanly', async () 
     await runtime.close();
   }
 
-  assert.equal(mongoose.connection.readyState, 0);
 });

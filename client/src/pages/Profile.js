@@ -34,12 +34,22 @@ const Profile = () => {
     e.preventDefault();
     setStatusMessage('Updating...');
     try {
-      const res = await axios.put('/api/user/me', { username: formData.username });
-      setUser(res.data);
+      const res = await axios.put('/api/v1/me/profile', {
+        username: formData.username,
+        displayName: formData.username,
+      });
+      const userData = res.data.user || res.data;
+      setUser((prev) => ({
+        ...prev,
+        ...userData,
+        displayName: userData.displayName || userData.username || prev.displayName,
+        username: userData.username || prev.username,
+      }));
       setStatusMessage('Profile updated successfully!');
       setTimeout(() => setStatusMessage(''), 3000);
-    } catch {
-      setStatusMessage('Error updating profile.');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Error updating profile.';
+      setStatusMessage(msg);
       setTimeout(() => setStatusMessage(''), 3000);
     }
   };
@@ -53,14 +63,22 @@ const Profile = () => {
 
     setStatusMessage('Uploading photo...');
     try {
-      const res = await axios.post('/api/user/upload-picture', uploadData);
+      const res = await axios.post('/api/v1/me/avatar', uploadData);
+      const newUrl = res.data.avatarUrl || res.data.profilePictureUrl;
+      const fullUrl = newUrl.startsWith('/uploads') ? assetUrl(newUrl) : newUrl;
+
       setUser((prevUser) => ({
         ...prevUser,
-        avatarUrl: res.data.profilePictureUrl,
-        profilePictureUrl: res.data.profilePictureUrl,
+        avatarUrl: newUrl,
+        profilePictureUrl: newUrl,
       }));
 
-      setStatusMessage(res.data.message);
+      setFormData((prev) => ({
+        ...prev,
+        profilePictureUrl: fullUrl,
+      }));
+
+      setStatusMessage(res.data.message || 'Profile picture updated successfully!');
       setTimeout(() => setStatusMessage(''), 3000);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Photo upload failed.';

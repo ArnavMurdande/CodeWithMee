@@ -108,11 +108,34 @@ const CreateChallenge = () => {
     e.preventDefault();
     setError('');
     try {
-      const body = { ...formData, tags: tags.split(',').map((t) => t.trim()), testCases };
-      await axios.post('/api/challenges', body);
+      if (!testCases.some((testCase) => testCase.isExample) || !testCases.some((testCase) => !testCase.isExample)) {
+        setError('Add at least one visible example and one hidden test case before publishing.');
+        return;
+      }
+      const normalizedCases = testCases.map((testCase) => ({
+        input: testCase.input,
+        expectedOutput: testCase.output,
+      }));
+      const body = {
+        ...formData,
+        referenceSolution: formData.solution,
+        constraintsText: formData.constraints,
+        starterTemplates: {
+          [formData.solutionLanguage]: ['python', 'ruby', 'r', 'bash', 'perl'].includes(formData.solutionLanguage)
+            ? `# Write your ${formData.solutionLanguage} solution here`
+            : `// Write your ${formData.solutionLanguage} solution here`,
+        },
+        difficulty: String(formData.difficulty || 'easy').toLowerCase(),
+        tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        visibleTestCases: normalizedCases.filter((_testCase, index) => testCases[index].isExample),
+        hiddenTestCases: normalizedCases.filter((_testCase, index) => !testCases[index].isExample),
+      };
+      const created = await axios.post('/api/v1/challenges', body);
+      await axios.post(`/api/v1/challenges/${created.data.id}/review`, {});
+      await axios.post(`/api/v1/challenges/${created.data.id}/publish`, {});
       navigate('/challenges');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create challenge.');
+      setError(err.response?.data?.error?.code || err.response?.data?.message || 'Failed to create challenge.');
     }
   };
 

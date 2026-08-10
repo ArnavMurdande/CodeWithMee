@@ -14,6 +14,7 @@ Scope: shipped Vite client modules/routes and mounted Express endpoint surfaces
 | `/sandbox`           | Authenticated                    | Active compatibility learning/practice UI.                                                      | P1B/P5A                                        |
 | `/profile`           | Authenticated                    | Active compatibility profile UI.                                                                | P3A                                            |
 | `/settings`          | Authenticated                    | Active theme/session/social-privacy UI; two inert “Coming Soon” sections removed.               | P2/P3 feature owners                           |
+| `/provider`          | Authenticated, verified email    | Active organization onboarding, verification, staff invitation, and draft-course provider center. | P2A/P2B                                        |
 | `/challenges`        | Authenticated                    | Active compatibility challenge catalog.                                                         | P1A/P1B                                        |
 | `/challenges/new`    | Authenticated                    | Active compatibility authoring UI; not a secure provider workflow.                              | P1A                                            |
 | `/challenges/:id`    | Authenticated                    | Active compatibility solver/comment UI.                                                         | P1A/P1B                                        |
@@ -45,6 +46,7 @@ Every file below is reachable from `client/src/main.tsx`; `scripts/tests/client-
 | `NotesWidget`          | Active compatibility Notes workflow; fake Share action and obsolete mobile-warning CSS removed.                                        |
 | `PomodoroTimer`        | Active local timer with accessible settings/dialog behavior.                                                                           |
 | `ProfileDropdown`      | Active account menu.                                                                                                                   |
+| `ProviderCenter`       | Active organization-scoped provider onboarding and course-management surface.                                                          |
 | `RestrictedMarkdown`   | Active safe React-node content renderer.                                                                                               |
 | `ScrollProgress`       | Active decorative/navigation progress primitive.                                                                                       |
 | `ScrollTrackRow`       | Active named horizontal-overflow primitive.                                                                                            |
@@ -88,6 +90,8 @@ The generated OpenAPI document remains canonical. All current operations are lis
 | `GET`    | `/auth/google/start`                                 | `startGoogleLogin`                |
 | `GET`    | `/auth/google/callback`                              | `completeGoogleLogin`             |
 | `GET`    | `/me`                                                | `getMe`                           |
+| `GET`    | `/me/preferences/theme`                              | `getMyTheme`                      |
+| `PUT`    | `/me/preferences/theme`                              | `updateMyTheme`                   |
 | `GET`    | `/me/sessions`                                       | `listMySessions`                  |
 | `DELETE` | `/me/sessions/{sessionId}`                           | `revokeMySession`                 |
 | `GET`    | `/organizations`                                     | `listMyOrganizations`             |
@@ -113,13 +117,51 @@ The generated OpenAPI document remains canonical. All current operations are lis
 | `POST`   | `/files/{fileId}/complete`                           | `completeFileUpload`              |
 | `POST`   | `/files/{fileId}/download`                           | `createFileDownload`              |
 | `PATCH`  | `/files/{fileId}/visibility`                         | `setFileVisibility`               |
+| `GET`    | `/challenges`                                        | `listChallenges`                  |
+| `GET`    | `/challenges/{challengeId}`                          | `getChallenge`                    |
+| `POST`   | `/challenges`                                        | `createChallenge`                 |
+| `POST`   | `/challenges/{challengeId}/publish`                  | `publishChallenge`                |
+| `POST`   | `/challenges/{challengeId}/run`                      | `runChallengeCode`                |
+| `POST`   | `/challenges/{challengeId}/submit`                   | `submitChallengeCode`             |
+| `GET`    | `/challenges/{challengeId}/submissions`              | `listChallengeSubmissions`        |
+| `GET`    | `/challenges/{challengeId}/submissions/{submissionId}` | `getChallengeSubmission`          |
+| `GET`    | `/courses`                                           | `listCourses`                     |
+| `GET`    | `/courses/{courseId}`                                | `getCourse`                       |
+| `POST`   | `/courses/{courseId}/enroll`                         | `enrollInCourse`                  |
+| `GET`    | `/courses/{courseId}/progress`                       | `getCourseProgress`               |
+| `GET`    | `/courses/{courseId}/lessons/{contentId}/progress`   | `getLessonProgress`               |
+| `PATCH`  | `/courses/{courseId}/lessons/{contentId}/progress`   | `updateLessonProgress`            |
+| `GET`    | `/lms/provider/organizations/{organizationId}/dashboard` | `getProviderDashboard`         |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/staff` | `listCourseStaff`       |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/staff/{userId}` | `setCourseStaffRole` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/structure` | `getCourseStructure`   |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/structure` | `replaceCourseStructure` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/roster` | `getCourseRoster`       |
+| `PATCH`  | `/lms/provider/organizations/{organizationId}/courses/{courseId}/enrollments/{enrollmentId}` | `updateCourseEnrollment` |
+| `POST`   | `/lms/provider/organizations/{organizationId}/courses/{courseId}/invitations` | `inviteCourseLearner` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/grading` | `listAssignmentGrading` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/quiz-grading` | `listQuizGrading` |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/quiz-attempts/{attemptId}/grade` | `gradeQuizAttempt` |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/submissions/{submissionId}/grade` | `gradeAssignmentSubmission` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/payments` | `listPaymentReviews`             |
+| `GET`    | `/lms/provider/organizations/{organizationId}/payment-settings` | `getPaymentSettings`        |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/payment-settings` | `setPaymentSettings`        |
+| `PUT`    | `/lms/provider/organizations/{organizationId}/payments/{orderId}/review` | `reviewManualPayment`  |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/analytics` | `getProviderCourseAnalytics` |
+| `GET`    | `/lms/provider/organizations/{organizationId}/courses/{courseId}/analytics.csv` | `exportProviderCourseAnalytics` |
+| `POST`   | `/lms/invitations/{token}/accept`                    | `acceptCourseInvitation`         |
+| `POST`   | `/lms/courses/{courseId}/quizzes/{quizId}/attempts`  | `submitCourseQuiz`               |
+| `POST`   | `/lms/courses/{courseId}/assignments/{assignmentId}/submissions` | `submitCourseAssignment` |
+| `POST`   | `/lms/courses/{courseId}/payment-orders`             | `createCoursePaymentOrder`       |
+| `PUT`    | `/lms/payment-orders/{orderId}/proof`                | `attachCoursePaymentProof`       |
+| `GET`    | `/lms/courses/{courseId}/results`                    | `getLearnerCourseResults`        |
 
 ## Legacy endpoint-family disposition
 
 | Mount             | State                                          | Replacement                  | Final owner                       |
 | ----------------- | ---------------------------------------------- | ---------------------------- | --------------------------------- |
 | `/api/auth`       | Tombstone                                      | `/api/v1/auth`               | `P0D-S6`                          |
-| `/api/code`       | Compatibility                                  | `/api/v1/executions`         | `P1B`                             |
+| `/api/code`       | Retired (HTTP 410 after PostgreSQL cutover)    | `/api/v1/execution`          | `P1B`                             |
 | `/api/ai`         | Compatibility                                  | `/api/v1/learning-assistant` | `P1B`                             |
 | `/api/youtube`    | Compatibility                                  | `/api/v1/videos`             | `P1C`                             |
 | `/api/roadmap`    | Compatibility                                  | `/api/v1/learning-paths`     | `P1C`                             |
@@ -127,7 +169,7 @@ The generated OpenAPI document remains canonical. All current operations are lis
 | `/api/challenges` | Compatibility                                  | `/api/v1/challenges`         | `P1B`                             |
 | `/api/courses`    | Compatibility, with company subtree tombstoned | `/api/v1/courses`            | `P1C`; provider replacement is P2 |
 | `/api/admin`      | Tombstone                                      | `/api/v1/admin`              | `P0B-S6`                          |
-| `/api/space`      | Compatibility                                  | `/api/v1/space`              | `P4C`                             |
+| `/api/space`      | Retired (HTTP 410 after PostgreSQL cutover)    | `/api/v1/space`              | `P3`                              |
 
 ## Exact legacy verb inventory
 

@@ -25,13 +25,15 @@ const Settings = () => {
         whoCanViewComments: user.privacySettings.whoCanViewComments || 'everyone',
         whoCanViewProfileInfo: user.privacySettings.whoCanViewProfileInfo || 'everyone',
       });
+    } else if (user) {
+      axios.get('/api/v1/me/privacy').then((response) => setPrivacySettings(response.data.privacySettings)).catch(() => {});
     }
   }, [user]);
 
   const handlePrivacySave = async () => {
     setSavingPrivacy(true);
     try {
-      const res = await axios.put('/api/user/me', { privacySettings });
+      const res = await axios.put('/api/v1/me/privacy', privacySettings);
       setUser(res.data);
       alert('Privacy settings updated successfully!');
     } catch {

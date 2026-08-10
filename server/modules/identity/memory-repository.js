@@ -22,6 +22,10 @@ function createMemoryIdentityRepository(seed = {}) {
   const oneTimeTokens = new Map(
     (seed.oneTimeTokens || []).map((token) => [token.id, clone(token)]),
   );
+  const themes = new Map(
+    (seed.themes || []).map(({ userId, theme }) => [userId, clone(theme)]),
+  );
+  const privacySettings = new Map();
 
   function findStoredUserByEmail(normalizedEmail) {
     return [...users.values()].find((user) => user.email === normalizedEmail) || null;
@@ -244,6 +248,34 @@ function createMemoryIdentityRepository(seed = {}) {
       }
       oneTimeTokens.set(tokenId, { ...token, consumedAt });
       return clone(token);
+    },
+
+    async updateUserProfile(userId, { displayName, username, avatarUrl }) {
+      const user = users.get(userId);
+      if (!user) return null;
+      if (displayName) user.displayName = displayName;
+      if (username) user.username = username;
+      if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
+      user.updatedAt = new Date();
+      users.set(userId, user);
+      return clone(user);
+    },
+
+    async getThemePreferences(userId) {
+      return clone(themes.get(userId) || null);
+    },
+
+    async setThemePreferences(userId, theme) {
+      themes.set(userId, clone(theme));
+      return clone(theme);
+    },
+
+    async setPrivacySettings(userId, settings) {
+      privacySettings.set(userId, clone(settings));
+      return clone(settings);
+    },
+    async getPrivacySettings(userId) {
+      return clone(privacySettings.get(userId) || null);
     },
 
     snapshot() {

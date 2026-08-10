@@ -44,14 +44,17 @@ const MIME_EXTENSIONS = Object.freeze({
   'image/webp': ['.webp'],
   'text/markdown': ['.md'],
   'text/plain': ['.txt'],
+  'video/mp4': ['.mp4'],
+  'video/webm': ['.webm'],
 });
 
-function policy({ maxBytes, mimes, ownerTypes, publicAllowed = false }) {
+function policy({ maxBytes, mimes, ownerTypes, publicAllowed = false, enrolledAllowed = false }) {
   return Object.freeze({
     allowedMimes: Object.freeze([...mimes]),
     allowedOwnerTypes: Object.freeze([...ownerTypes]),
     allowedVisibilities: Object.freeze([
       FILE_VISIBILITY.PRIVATE,
+      ...(enrolledAllowed ? [FILE_VISIBILITY.ENROLLED] : []),
       ...(publicAllowed ? [FILE_VISIBILITY.PUBLIC] : []),
     ]),
     maxBytes,
@@ -68,6 +71,16 @@ const DOCUMENT_MIMES = Object.freeze([
 ]);
 
 const FILE_PURPOSE_POLICY = Object.freeze({
+  payment_qr: policy({
+    maxBytes: 5 * 1024 * 1024,
+    mimes: IMAGE_MIMES,
+    ownerTypes: [FILE_OWNER_TYPE.ORGANIZATION],
+  }),
+  payment_proof: policy({
+    maxBytes: 15 * 1024 * 1024,
+    mimes: [...IMAGE_MIMES, 'application/pdf'],
+    ownerTypes: [FILE_OWNER_TYPE.USER],
+  }),
   assignment_submission: policy({
     maxBytes: 100 * 1024 * 1024,
     mimes: DOCUMENT_MIMES,
@@ -77,6 +90,13 @@ const FILE_PURPOSE_POLICY = Object.freeze({
     maxBytes: 100 * 1024 * 1024,
     mimes: [...DOCUMENT_MIMES, ...IMAGE_MIMES],
     ownerTypes: [FILE_OWNER_TYPE.ORGANIZATION],
+    enrolledAllowed: true,
+  }),
+  course_video: policy({
+    maxBytes: 100 * 1024 * 1024,
+    mimes: ['video/mp4', 'video/webm'],
+    ownerTypes: [FILE_OWNER_TYPE.ORGANIZATION],
+    enrolledAllowed: true,
   }),
   idea_artifact: policy({
     maxBytes: 100 * 1024 * 1024,

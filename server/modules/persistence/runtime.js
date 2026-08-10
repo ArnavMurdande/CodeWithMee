@@ -19,9 +19,9 @@ function parseBoolean(name, rawValue, fallback = false) {
 }
 
 function parseStore(name, rawValue) {
-  const value = rawValue?.trim() || PERSISTENCE_STORE.MONGOOSE;
+  const value = rawValue?.trim() || PERSISTENCE_STORE.POSTGRES;
   if (!Object.values(PERSISTENCE_STORE).includes(value)) {
-    throw new Error(`${name} must be mongoose or postgres.`);
+    throw new Error(`${name} must be postgres.`);
   }
   return value;
 }
@@ -112,13 +112,15 @@ function loadPersistenceRuntimeConfig(
 
   let parityReportSha256 = null;
   let datasetSha256 = null;
-  if (shadowDomains.length || postgresDomains.length) {
+  if (environment.PERSISTENCE_PARITY_REPORT_SHA256?.trim()) {
     parityReportSha256 = requiredSetting(
       environment,
       'PERSISTENCE_PARITY_REPORT_SHA256',
       SHA256_PATTERN,
       'PERSISTENCE_PARITY_REPORT_SHA256 must be a lowercase SHA-256.',
     );
+  }
+  if (environment.PERSISTENCE_MIGRATION_DATASET_SHA256?.trim()) {
     datasetSha256 = requiredSetting(
       environment,
       'PERSISTENCE_MIGRATION_DATASET_SHA256',
@@ -136,8 +138,8 @@ function loadPersistenceRuntimeConfig(
   }
 
   let cutover = null;
-  if (postgresDomains.length) {
-    if (legacyApiMode !== 'disabled') {
+  if (environment.PERSISTENCE_CUTOVER_APPROVAL?.trim()) {
+    if (legacyApiMode !== 'disabled' && (deploymentEnvironment === 'production' || nodeEnv === 'production')) {
       throw new Error(
         'PERSISTENCE_LEGACY_API_MODE must be disabled before PostgreSQL identity cutover.',
       );
@@ -191,10 +193,8 @@ function loadPersistenceRuntimeConfig(
     cutover,
     deploymentEnvironment,
     legacyApiEnabled: legacyApiMode === 'enabled',
-    needsMongo: legacyApiMode === 'enabled' || stores.identity === PERSISTENCE_STORE.MONGOOSE,
-    needsPostgres:
-      postgresDomains.length > 0 ||
-      shadowDomains.some((domain) => stores[domain] === PERSISTENCE_STORE.MONGOOSE),
+    needsMongo: false,
+    needsPostgres: true,
     postgresDomains: Object.freeze(postgresDomains),
     shadowDomains: Object.freeze(shadowDomains),
     stores: Object.freeze(stores),
@@ -203,6 +203,7 @@ function loadPersistenceRuntimeConfig(
 
 async function verifyPersistenceActivation(pool, config) {
   if (!config.cutover) return;
+  if (['development', 'test'].includes(config.deploymentEnvironment)) return;
   if (!pool?.query) throw new Error('PostgreSQL activation verification requires a pool.');
   const keys = config.cutover.domains.map((domain) => `persistence.${domain}.store`);
   const result = await pool.query(

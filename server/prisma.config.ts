@@ -1,6 +1,9 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import path from 'node:path';
 import { defineConfig } from 'prisma/config';
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config();
 
 const unconfiguredUrl =
   'postgresql://unconfigured:unconfigured@127.0.0.1:1/codewithmee_unconfigured';

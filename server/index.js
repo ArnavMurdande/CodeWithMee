@@ -1,4 +1,5 @@
-require('dotenv').config({ quiet: true });
+const path = require('path');
+require('dotenv').config({ quiet: true, path: path.resolve(__dirname, '.env') });
 
 const { startServer } = require('./start');
 const { asStructuredLogger } = require('./modules/http/structured-logger');
@@ -19,6 +20,6 @@ startServer()
     process.once('SIGTERM', () => shutdown('SIGTERM').finally(() => process.exit(0)));
   })
   .catch((error) => {
-    logger.error('server_startup_failed', { errorCode: error.code || 'internal_error' });
+    logger.error('server_startup_failed', { errorCode: error.code || 'internal_error', message: error.message, stack: error.stack });
     process.exitCode = 1;
   });

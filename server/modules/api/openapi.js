@@ -94,6 +94,9 @@ function createOpenApiDocument() {
       { name: 'Administration' },
       { name: 'Files' },
       { name: 'Operations' },
+      { name: 'Challenges' },
+      { name: 'Courses' },
+      { name: 'LMS' },
     ],
   });
 }

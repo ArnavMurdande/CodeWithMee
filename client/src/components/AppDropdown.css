@@ -112,7 +112,10 @@
 .app-dropdown-scroll-wrapper {
   max-height: 220px;
   overflow-y: auto;
-  padding-right: 2px;
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
   cursor: pointer;
@@ -141,6 +144,7 @@
 /* Option Items */
 .app-dropdown-item {
   width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -150,13 +154,13 @@
   color: rgba(255, 255, 255, 0.85);
   font-size: 0.88rem;
   font-weight: 500;
-  cursor: pointer !important;
+  cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
   user-select: none;
   text-align: left;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   font-family: inherit;
 }
 
@@ -166,16 +170,38 @@
   user-select: none;
 }
 
-.app-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+.app-dropdown-item > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-dropdown-item:hover,
+.app-dropdown-item:focus,
+.app-dropdown-item:focus-visible {
+  background: rgba(0, 248, 241, 0.16);
   color: #ffffff;
-  transform: translateX(2px);
-  cursor: pointer !important;
+  border-color: rgba(0, 248, 241, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 248, 241, 0.3);
+  cursor: pointer;
 }
 
 .app-dropdown-item.selected {
-  background: rgba(0, 248, 241, 0.12);
+  background: rgba(0, 248, 241, 0.22);
   color: #00f8f1;
+  border-color: rgba(0, 248, 241, 0.5);
+  box-shadow: 0 0 0 1px rgba(0, 248, 241, 0.2);
   font-weight: 600;
-  cursor: pointer !important;
+  cursor: pointer;
 }
+
+.app-dropdown-item.selected:hover,
+.app-dropdown-item.selected:focus,
+.app-dropdown-item.selected:focus-visible {
+  background: rgba(0, 248, 241, 0.28);
+  border-color: #00f8f1;
+  box-shadow: 0 0 0 1px rgba(0, 248, 241, 0.4);
+}
+

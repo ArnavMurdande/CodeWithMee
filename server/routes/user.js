@@ -3,8 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
-const User = require('../models/User');
-// FIX: Correctly import the authMiddleware function from the middleware folder
+const { evaluateRequestPermission } = require('../middleware/policyMiddleware');
 const authMiddleware = require('../middleware/authMiddleware');
 const requireLocalUploadCompatibility = require('../middleware/localUploadCompatibility');
 const { createLegacyLogger } = require('../utils/legacyLogger');

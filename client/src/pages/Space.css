@@ -1457,9 +1457,9 @@
     font-size: 0.85rem;
   }
 
-  /* Floating FAB Alignment: Exact same 48px size and 96px bottom alignment as Notes FAB */
+  /* Floating FAB Alignment: Exact same size and 24px bottom alignment as Notes FAB */
   .space-chat-fab {
-    bottom: 96px !important;
+    bottom: 24px !important;
     right: 76px !important;
     width: 48px !important;
     height: 48px !important;

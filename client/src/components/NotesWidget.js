@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios, { assetUrl } from '../lib/api';
 import { AuthContext } from '../context/AuthContext';
+import { getUserStorageKey } from '../lib/cache-isolation';
 import {
   escapeTextDownload,
   plainTextDocument,
@@ -9,7 +10,7 @@ import {
 } from '../lib/restricted-content';
 import './NotesWidget.css';
 
-const API = '/api/user/notes';
+const API = '/api/v1/learning/notes';
 
 const formatDate = (d) => {
   const date = new Date(d);
@@ -23,7 +24,7 @@ const formatDate = (d) => {
 const noteText = (note) => readRestrictedDocument(note?.contentDocument, note?.content).text;
 
 const NotesWidget = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const [activeNoteId, setActiveNoteId] = useState(null);
@@ -35,9 +36,16 @@ const NotesWidget = () => {
   const [fabPos, setFabPos] = useState(() => {
     try {
       const s = localStorage.getItem('notesWidgetFabPos');
-      return s ? JSON.parse(s) : { bottom: 90, right: 24 };
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (parsed && typeof parsed.bottom === 'number' && parsed.bottom >= 60) {
+          return { bottom: 24, right: 24 };
+        }
+        return parsed || { bottom: 24, right: 24 };
+      }
+      return { bottom: 24, right: 24 };
     } catch {
-      return { bottom: 90, right: 24 };
+      return { bottom: 24, right: 24 };
     }
   });
   const [panelPos, setPanelPos] = useState({ top: 60, left: window.innerWidth - 560 });
@@ -100,6 +108,17 @@ const NotesWidget = () => {
   useEffect(() => {
     if (isOpen && isAuthenticated) fetchNotes();
   }, [isOpen, isAuthenticated, fetchNotes]);
+
+  useEffect(() => {
+    if (Array.isArray(notes) && notes.length > 0) {
+      try {
+        const notesStorageKey = getUserStorageKey(user?.id, 'saved_notes');
+        localStorage.setItem(notesStorageKey, JSON.stringify(notes));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [notes, user?.id]);
 
   // ─── Mobile detection ────
   // Clean up stale storage keys from previous versions
@@ -831,7 +850,10 @@ const NotesWidget = () => {
       if (!moved) {
         setIsOpen((prev) => !prev);
       }
-      localStorage.setItem('notesWidgetFabPos', JSON.stringify(fabPos));
+      setFabPos((prev) => {
+        localStorage.setItem('notesWidgetFabPos', JSON.stringify(prev));
+        return prev;
+      });
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);

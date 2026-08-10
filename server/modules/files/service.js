@@ -47,6 +47,7 @@ function normalizeEtag(value) {
 
 function createFileService({
   authorizeOrganization = async () => false,
+  authorizeRelated = async () => false,
   clock = () => new Date(),
   idFactory = randomUUID,
   objectStore,
@@ -103,6 +104,7 @@ function createFileService({
     ) {
       return;
     }
+    if (await authorizeRelated({ action: 'read', principal, record })) return;
     throw new FileError('file_not_found', 404);
   }
 
@@ -122,51 +124,53 @@ function createFileService({
     });
   }
 
-  return Object.freeze({
-    async applyTrustedScanResult(input = {}) {
-      const record = await getRecord(input.fileId);
-      if (!record.uploadedAt) throw new FileError('file_upload_incomplete', 409);
-      if (record.state !== FILE_STATE.UPLOAD_PENDING) {
-        if (record.state === FILE_STATE.READY && record.scanStatus === FILE_SCAN_STATUS.CLEAN) {
-          return publicFileDto(record);
-        }
-        throw new FileError('file_state_conflict', 409);
+  async function applyScanResult(input = {}) {
+    const record = await getRecord(input.fileId);
+    if (!record.uploadedAt) throw new FileError('file_upload_incomplete', 409);
+    if (record.state !== FILE_STATE.UPLOAD_PENDING) {
+      if (record.state === FILE_STATE.READY && record.scanStatus === FILE_SCAN_STATUS.CLEAN) {
+        return publicFileDto(record);
       }
+      throw new FileError('file_state_conflict', 409);
+    }
 
-      const scanStatus = input.scanStatus;
-      if (![FILE_SCAN_STATUS.CLEAN, ...Object.keys(SCAN_FAILURE_REASON)].includes(scanStatus)) {
-        throw new FileError('invalid_scan_result', 400);
-      }
-      const actualSha256 = normalizeSha256(input.sha256);
-      const detectedMime = normalizeMime(input.detectedMime);
-      const byteSize = Number(input.byteSize);
-      const contentMatches =
-        Number.isSafeInteger(byteSize) &&
-        byteSize === record.byteSize &&
-        actualSha256 === record.sha256 &&
-        mimeAllowedForPurpose(record.purpose, detectedMime);
-      const effectiveStatus =
-        scanStatus === FILE_SCAN_STATUS.CLEAN && contentMatches
-          ? FILE_SCAN_STATUS.CLEAN
-          : scanStatus === FILE_SCAN_STATUS.CLEAN
-            ? FILE_SCAN_STATUS.FAILED
-            : scanStatus;
-      const quarantineReason =
-        effectiveStatus === FILE_SCAN_STATUS.CLEAN
-          ? null
-          : scanStatus === FILE_SCAN_STATUS.CLEAN
-            ? 'content_verification_failed'
-            : SCAN_FAILURE_REASON[scanStatus];
-      const updated = await repository.markScanResult({
-        detectedMime,
-        id: record.id,
-        quarantineReason,
-        scannedAt: clock(),
-        scanStatus: effectiveStatus,
-        sha256: actualSha256,
-      });
-      return publicFileDto(updated);
-    },
+    const scanStatus = input.scanStatus;
+    if (![FILE_SCAN_STATUS.CLEAN, ...Object.keys(SCAN_FAILURE_REASON)].includes(scanStatus)) {
+      throw new FileError('invalid_scan_result', 400);
+    }
+    const actualSha256 = normalizeSha256(input.sha256);
+    const detectedMime = normalizeMime(input.detectedMime);
+    const byteSize = Number(input.byteSize);
+    const contentMatches =
+      Number.isSafeInteger(byteSize) &&
+      byteSize === record.byteSize &&
+      actualSha256 === record.sha256 &&
+      mimeAllowedForPurpose(record.purpose, detectedMime);
+    const effectiveStatus =
+      scanStatus === FILE_SCAN_STATUS.CLEAN && contentMatches
+        ? FILE_SCAN_STATUS.CLEAN
+        : scanStatus === FILE_SCAN_STATUS.CLEAN
+          ? FILE_SCAN_STATUS.FAILED
+          : scanStatus;
+    const quarantineReason =
+      effectiveStatus === FILE_SCAN_STATUS.CLEAN
+        ? null
+        : scanStatus === FILE_SCAN_STATUS.CLEAN
+          ? 'content_verification_failed'
+          : SCAN_FAILURE_REASON[scanStatus];
+    const updated = await repository.markScanResult({
+      detectedMime,
+      id: record.id,
+      quarantineReason,
+      scannedAt: clock(),
+      scanStatus: effectiveStatus,
+      sha256: actualSha256,
+    });
+    return publicFileDto(updated);
+  }
+
+  return Object.freeze({
+    applyTrustedScanResult: applyScanResult,
 
     async cleanupExpired({ pendingBefore, quarantineBefore }) {
       if (!(pendingBefore instanceof Date) || !(quarantineBefore instanceof Date)) {
@@ -222,6 +226,9 @@ function createFileService({
         id: record.id,
         uploadedAt: clock(),
       });
+      if (typeof objectStore.scanObject === 'function') {
+        return applyScanResult(await objectStore.scanObject(updated));
+      }
       return publicFileDto(updated);
     },
 

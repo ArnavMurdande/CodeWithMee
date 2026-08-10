@@ -178,7 +178,7 @@ test('legacy disk upload handlers gate before Multer and no longer create direct
   );
   assert.match(
     spaceSource,
-    /authMiddleware,\s*requireLocalUploadCompatibility,\s*parseAuthor,\s*upload\.array/,
+    /retiredSpaceRoute/,
   );
   assert.doesNotMatch(userSource, /mkdirSync|existsSync/);
   assert.doesNotMatch(spaceSource, /mkdirSync|existsSync/);

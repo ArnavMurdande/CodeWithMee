@@ -1,0 +1,21 @@
+.provider-center { max-width: 1180px; margin: 0 auto; padding: 7rem 1rem 3rem; color: var(--text-primary, #f6f7fb); }
+.provider-hero { margin-bottom: 1.5rem; }
+.provider-eyebrow { color: #7de7e7; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.provider-card { border: 1px solid rgba(255,255,255,.12); border-radius: 1.25rem; background: rgba(20,21,27,.94); padding: 1.25rem; }
+.provider-card--wide { grid-column: 1 / -1; }
+.provider-card form, .provider-card > div { display: grid; gap: .75rem; margin-top: 1rem; }
+.provider-card input, .provider-card textarea, .provider-card select { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.16); border-radius: .75rem; background: #111218; color: inherit; padding: .75rem; }
+.provider-card textarea { min-height: 6rem; resize: vertical; }
+.provider-card button { border: 0; border-radius: 999px; background: #7de7e7; color: #071111; font-weight: 700; padding: .7rem 1rem; cursor: pointer; }
+.provider-card button:disabled { cursor: not-allowed; opacity: .45; }
+.provider-message { border-radius: .75rem; background: rgba(125,231,231,.12); padding: .8rem 1rem; }
+.provider-course-list article { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid rgba(255,255,255,.1); padding: .9rem 0; }
+.provider-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.provider-metrics span { border: 1px solid rgba(255,255,255,.1); border-radius: .75rem; padding: 1rem; }
+.provider-metrics strong { display: block; font-size: 1.6rem; }
+.provider-card .provider-json-editor { min-height: 18rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.provider-card .provider-row { display: flex; grid-template-columns: none; align-items: center; justify-content: space-between; gap: .75rem; border-top: 1px solid rgba(255,255,255,.1); padding: .75rem 0; }
+.provider-row span { display: flex; flex-wrap: wrap; gap: .5rem; }
+@media (max-width: 760px) { .provider-grid { grid-template-columns: 1fr; } .provider-card--wide { grid-column: auto; } }
+@media (max-width: 760px) { .provider-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .provider-card .provider-row { align-items: stretch; flex-direction: column; } }

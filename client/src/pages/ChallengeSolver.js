@@ -6,6 +6,7 @@ import { AsyncState } from '../components/ui/AsyncState';
 import AppDropdown from '../components/AppDropdown';
 import { AccessibleDialog } from '../components/ui/AccessibleDialog';
 import Editor from '../components/CodeEditor';
+import { getUserStorageKey } from '../lib/cache-isolation';
 
 // --- Custom Dropdown Component ---
 const CustomDropdown = ({ options, selected, onSelect }) => {
@@ -54,8 +55,9 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const netScore = (comment.likes?.length || 0) - (comment.dislikes?.length || 0);
-  const hasUpvoted = comment.likes?.includes(user?._id);
-  const hasDownvoted = comment.dislikes?.includes(user?._id);
+  const currentUserId = user?.id || user?._id;
+  const hasUpvoted = comment.likes?.includes(currentUserId);
+  const hasDownvoted = comment.dislikes?.includes(currentUserId);
   const authorName = comment.author?.username || 'Unknown';
   const authorInitial = authorName.charAt(0).toUpperCase();
   const profilePic = comment.author?.profilePictureUrl;
@@ -63,7 +65,7 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
   const handleVote = async (isLike) => {
     const route = isLike ? 'like' : 'dislike';
     try {
-      await axios.post(`/api/challenges/${challengeId}/comments/${comment._id}/${route}`, {});
+      await axios.post(`/api/v1/challenges/${challengeId}/comments/${comment._id}/reactions/${route}`, {});
       onAction();
     } catch (error) {
       console.error('Failed to vote on comment', error);
@@ -74,7 +76,7 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
     e.preventDefault();
     if (!replyText.trim()) return;
     try {
-      await axios.post(`/api/challenges/${challengeId}/comments/${comment._id}/reply`, {
+      await axios.post(`/api/v1/challenges/${challengeId}/comments/${comment._id}/reply`, {
         text: replyText,
       });
       setReplyText('');
@@ -87,7 +89,7 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
 
   const handleAward = async (awardType) => {
     try {
-      await axios.post(`/api/challenges/${challengeId}/comments/${comment._id}/award`, {
+      await axios.post(`/api/v1/challenges/${challengeId}/comments/${comment._id}/award`, {
         awardType,
       });
       setShowAwardPicker(false);
@@ -106,7 +108,7 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
   const handleDelete = async () => {
     if (!window.confirm('Delete this comment? This cannot be undone.')) return;
     try {
-      await axios.delete(`/api/challenges/${challengeId}/comments/${comment._id}`);
+      await axios.delete(`/api/v1/challenges/${challengeId}/comments/${comment._id}`);
       onAction();
     } catch (error) {
       console.error('Failed to delete comment', error);
@@ -114,7 +116,7 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
     }
   };
 
-  const isAuthor = user?._id === (comment.author?._id || comment.author);
+  const isAuthor = currentUserId === (comment.author?._id || comment.author?.id || comment.author);
   const canDelete = isAuthor || user?.role === 'superadmin' || user?.role === 'moderator';
 
   // Count awards by type
@@ -382,8 +384,9 @@ const ChallengeSolver = () => {
   const [language, setLanguage] = useState('python');
   const [output, setOutput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSolution, setShowSolution] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   const languageOptions = [
     { value: 'python', label: 'Python' },
@@ -417,7 +420,7 @@ const ChallengeSolver = () => {
     setIsLoading(true);
     setLoadError(false);
     try {
-      const res = await axios.get(`/api/challenges/${id}`);
+      const res = await axios.get(`/api/v1/challenges/${id}`);
       setChallenge(res.data);
     } catch {
       setLoadError(true);
@@ -427,13 +430,33 @@ const ChallengeSolver = () => {
     }
   }, [id, token]);
 
-  useEffect(() => {
-    fetchChallenge();
-  }, [fetchChallenge]);
+  const fetchSubmissions = useCallback(async () => {
+    if (!user) return;
+    try {
+      const response = await axios.get(`/api/v1/challenges/${id}/submissions?limit=20`);
+      setSubmissions(response.data.submissions || response.data.items || []);
+    } catch {
+      setSubmissions([]);
+    }
+  }, [id, user]);
 
   useEffect(() => {
-    setCode(boilerplate[language] || '');
-  }, [language, id]);
+    fetchChallenge();
+    fetchSubmissions();
+  }, [fetchChallenge, fetchSubmissions]);
+
+  useEffect(() => {
+    const userId = user?.id || user?._id;
+    const key = getUserStorageKey(userId, `challenge_draft_${id}_${language}`);
+    setCode(localStorage.getItem(key) || challenge?.starterTemplates?.[language] || boilerplate[language] || '');
+  }, [challenge, language, id, user]);
+
+  const updateCode = (value) => {
+    const next = value || '';
+    setCode(next);
+    const userId = user?.id || user?._id;
+    localStorage.setItem(getUserStorageKey(userId, `challenge_draft_${id}_${language}`), next);
+  };
 
   const handleLanguageSelect = (option) => {
     setLanguage(option.value);
@@ -443,7 +466,7 @@ const ChallengeSolver = () => {
     if (!user) return;
     const route = isLike ? 'like' : 'dislike';
     try {
-      const res = await axios.post(`/api/challenges/${id}/${route}`, {});
+      const res = await axios.post(`/api/v1/challenges/${id}/reactions/${route}`, {});
       setChallenge((prev) => ({ ...prev, likes: res.data.likes, dislikes: res.data.dislikes }));
     } catch (error) {
       console.error('Failed to vote on challenge', error);
@@ -454,7 +477,7 @@ const ChallengeSolver = () => {
     e.preventDefault();
     if (!newComment.trim()) return;
     try {
-      await axios.post(`/api/challenges/${id}/comments`, { text: newComment });
+      await axios.post(`/api/v1/challenges/${id}/comments`, { text: newComment });
       setNewComment('');
       fetchChallenge();
     } catch (error) {
@@ -466,28 +489,39 @@ const ChallengeSolver = () => {
     setIsSubmitting(true);
     setOutput(isRunAction ? 'Running on example cases...' : 'Submitting solution...');
     try {
-      const res = await axios.post(`/api/challenges/${id}/submit`, {
+      const endpoint = isRunAction
+        ? `/api/v1/challenges/${id}/run`
+        : `/api/v1/challenges/${id}/submit`;
+
+      const res = await axios.post(endpoint, {
         code,
         language,
-        runOnly: isRunAction,
       });
 
-      const { message, results } = res.data;
-      let formattedOutput = `Result: ${message}\n\n--- Test Cases ---\n`;
-      results.forEach((r, i) => {
-        const testCaseTitle = r.isExample ? `Example Test ${i + 1}` : `Hidden Test ${i + 1}`;
-        if (r.passed) {
-          formattedOutput += `${testCaseTitle}: ✅ Passed\n`;
-        } else {
-          formattedOutput += `${testCaseTitle}: ❌ Failed\n`;
-          formattedOutput += `  Input: ${r.input}\n  Expected: ${r.expected}\n  Got: ${r.output}\n`;
-        }
+      const { status, results = [], passCount, totalCount } = res.data;
+      let formattedOutput = isRunAction
+        ? 'Visible test results\n'
+        : `Submission: ${status}\nPassed: ${passCount ?? 0}/${totalCount ?? 0}\n`;
+      results.forEach((result, index) => {
+        formattedOutput += `\nTest ${index + 1}: ${result.status || (result.passed ? 'PASSED' : 'FAILED')}\n`;
+        if (isRunAction && result.actualOutput != null) formattedOutput += `Output: ${result.actualOutput}\n`;
+        if (isRunAction && result.errorOutput) formattedOutput += `Error: ${result.errorOutput}\n`;
       });
       setOutput(formattedOutput);
+      if (!isRunAction) await fetchSubmissions();
     } catch (error) {
-      setOutput(`Execution Error: ${error.response?.data?.message || error.message}`);
+      setOutput(`Execution Error: ${error.response?.data?.error?.code || error.response?.data?.message || error.message}`);
     }
     setIsSubmitting(false);
+  };
+
+  const openSubmission = async (submissionId) => {
+    try {
+      const response = await axios.get(`/api/v1/challenges/${id}/submissions/${submissionId}`);
+      setSelectedSubmission(response.data);
+    } catch (error) {
+      setOutput(`Submission Error: ${error.response?.data?.error?.code || error.message}`);
+    }
   };
 
   if (isLoading) {
@@ -515,37 +549,12 @@ const ChallengeSolver = () => {
   return (
     <div className="solver-page-container">
       <div className="solver-container">
-        {showSolution && (
-          <AccessibleDialog
-            label="Challenge solution"
-            onClose={() => setShowSolution(false)}
-            overlayClassName="modal-overlay"
-            surfaceClassName="modal-content"
-          >
-            <h2>Solution</h2>
-            <div className="editor-wrapper">
-              <Editor
-                height="300px"
-                theme="vs-dark"
-                language={language}
-                value={challenge.solution}
-                options={{
-                  ariaLabel: 'Read-only challenge solution',
-                  readOnly: true,
-                  fontSize: 16,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                }}
-              />
-            </div>
-            <button
-              className="modal-close-btn"
-              onClick={() => setShowSolution(false)}
-              type="button"
-            >
-              Close
-            </button>
+        {selectedSubmission && (
+          <AccessibleDialog label="Submission details" onClose={() => setSelectedSubmission(null)} overlayClassName="modal-overlay" surfaceClassName="modal-content">
+            <h2>Submission details</h2>
+            <p>{selectedSubmission.status} · {selectedSubmission.passCount}/{selectedSubmission.totalCount} tests</p>
+            <pre className="terminal-content">{selectedSubmission.code}</pre>
+            <button onClick={() => setSelectedSubmission(null)} type="button">Close</button>
           </AccessibleDialog>
         )}
         <div className="problem-pane">
@@ -553,28 +562,24 @@ const ChallengeSolver = () => {
             <button onClick={() => navigate('/challenges')} className="back-button">
               ← Back
             </button>
-            <button onClick={() => setShowSolution(true)} className="solution-button">
-              View Solution
-            </button>
           </div>
           <h1>{challenge.title}</h1>
-          <p className="description">{challenge.description}</p>
+          <p className="description">{challenge.statement}</p>
 
-          {challenge.constraints && (
+          {challenge.constraintsText && (
             <>
               <h3>Constraints</h3>
-              <pre className="constraints-list">{challenge.constraints}</pre>
+              <pre className="constraints-list">{challenge.constraintsText}</pre>
             </>
           )}
 
           <h3>Examples</h3>
           <div className="test-cases">
-            {challenge.testCases
-              .filter((tc) => tc.isExample)
+            {(challenge.testCases || [])
               .map((tc, i) => (
                 <div key={i} className="test-case">
                   <strong>Input:</strong> <pre>{tc.input}</pre>
-                  <strong>Output:</strong> <pre>{tc.output}</pre>
+                  <strong>Output:</strong> <pre>{tc.expectedOutput ?? tc.output}</pre>
                 </div>
               ))}
           </div>
@@ -582,13 +587,13 @@ const ChallengeSolver = () => {
           <div className="challenge-feedback">
             <button
               onClick={() => handleLikeChallenge(true)}
-              className={challenge.likes.includes(user?._id) ? 'active' : ''}
+              className={(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}
             >
               👍 {challenge.likes.length}
             </button>
             <button
               onClick={() => handleLikeChallenge(false)}
-              className={challenge.dislikes.includes(user?._id) ? 'active' : ''}
+              className={(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}
             >
               👎 {challenge.dislikes.length}
             </button>
@@ -610,7 +615,7 @@ const ChallengeSolver = () => {
                 theme="vs-dark"
                 language={language}
                 value={code}
-                onChange={(value) => setCode(value || '')}
+                onChange={updateCode}
                 options={{
                   ariaLabel: 'Challenge code editor',
                   fontSize: 16,
@@ -640,12 +645,34 @@ const ChallengeSolver = () => {
                 {isSubmitting ? '...' : 'Submit'}
               </button>
             </div>
+            <section className="submission-history" aria-labelledby="submission-history-title">
+              <h3 id="submission-history-title">Submission history</h3>
+              {submissions.length === 0 ? (
+                <p>No submissions yet.</p>
+              ) : (
+                <div className="table-scroll" tabIndex="0">
+                  <table>
+                    <thead><tr><th>Status</th><th>Language</th><th>Passed</th><th>Submitted</th></tr></thead>
+                    <tbody>
+                      {submissions.map((submission) => (
+                        <tr key={submission.id}>
+                          <td><button onClick={() => openSubmission(submission.id)} type="button">{submission.status}</button></td>
+                          <td>{submission.language}</td>
+                          <td>{submission.passCount}/{submission.totalCount}</td>
+                          <td>{new Date(submission.createdAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </div>
 
       <div className="comments-section">
-        <h3>Comments ({challenge.comments.length})</h3>
+        <h3>Comments ({(challenge.comments || []).length})</h3>
         <form onSubmit={handleCommentSubmit} className="comment-form">
           <textarea
             aria-label="Add a challenge comment"
@@ -658,7 +685,7 @@ const ChallengeSolver = () => {
           </button>
         </form>
         <div className="comment-list">
-          {challenge.comments.map((comment) => (
+          {(challenge.comments || []).map((comment) => (
             <Comment
               key={comment._id}
               comment={comment}

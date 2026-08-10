@@ -104,15 +104,14 @@ test('identity runtime requires paired strong secrets and all-or-none Google con
       }),
     /at least 32 bytes/,
   );
-  assert.throws(
-    () =>
-      loadIdentityRuntimeConfig({
-        ACCESS_TOKEN_SECRET: ACCESS_SECRET,
-        GOOGLE_OAUTH_CLIENT_ID: 'client',
-        REFRESH_TOKEN_PEPPER: REFRESH_PEPPER,
-      }),
-    /requires client ID/,
-  );
+  const partialGoogle = loadIdentityRuntimeConfig({
+    ACCESS_TOKEN_SECRET: ACCESS_SECRET,
+    GOOGLE_OAUTH_CLIENT_ID: 'client',
+    REFRESH_TOKEN_PEPPER: REFRESH_PEPPER,
+  });
+  assert.equal(partialGoogle.enabled, true);
+  assert.equal(partialGoogle.google.enabled, false);
+  assert.equal(partialGoogle.google.partial, true);
 
   const enabled = loadIdentityRuntimeConfig({
     ACCESS_TOKEN_SECRET: ACCESS_SECRET,

@@ -83,6 +83,15 @@ function requestSecurityProfile(method, path) {
 function createJsonBodyParser() {
   const parsers = new Map();
   return function boundedJsonBodyParser(request, response, next) {
+    const contentType = request.get('content-type') || '';
+    if (
+      contentType.includes('multipart/form-data') ||
+      request.path.endsWith('/avatar') ||
+      request.path.includes('upload-picture')
+    ) {
+      return next();
+    }
+
     const profile = requestSecurityProfile(request.method, request.path);
     request.securityProfile = profile;
     const contentLength = Number(request.get('content-length'));

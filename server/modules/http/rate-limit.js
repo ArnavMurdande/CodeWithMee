@@ -5,14 +5,16 @@ const { createHmac, randomBytes } = require('node:crypto');
 const { PublicHttpError } = require('./error-handler');
 const { requestSecurityProfile } = require('./route-security');
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const DEFAULT_RATE_LIMITS = Object.freeze({
-  administration: Object.freeze({ limit: 120, windowMs: 5 * 60 * 1000 }),
-  authentication: Object.freeze({ limit: 30, windowMs: 15 * 60 * 1000 }),
-  execution: Object.freeze({ limit: 30, windowMs: 60 * 1000 }),
-  external: Object.freeze({ limit: 60, windowMs: 5 * 60 * 1000 }),
-  read: Object.freeze({ limit: 1200, windowMs: 5 * 60 * 1000 }),
-  upload: Object.freeze({ limit: 60, windowMs: 15 * 60 * 1000 }),
-  write: Object.freeze({ limit: 300, windowMs: 5 * 60 * 1000 }),
+  administration: Object.freeze({ limit: isDev ? 10000 : 120, windowMs: 5 * 60 * 1000 }),
+  authentication: Object.freeze({ limit: isDev ? 5000 : 30, windowMs: 15 * 60 * 1000 }),
+  execution: Object.freeze({ limit: isDev ? 10000 : 30, windowMs: 60 * 1000 }),
+  external: Object.freeze({ limit: isDev ? 10000 : 60, windowMs: 5 * 60 * 1000 }),
+  read: Object.freeze({ limit: isDev ? 50000 : 1200, windowMs: 5 * 60 * 1000 }),
+  upload: Object.freeze({ limit: isDev ? 5000 : 60, windowMs: 15 * 60 * 1000 }),
+  write: Object.freeze({ limit: isDev ? 10000 : 300, windowMs: 5 * 60 * 1000 }),
 });
 
 class MemoryRateLimitStore {

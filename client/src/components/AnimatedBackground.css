@@ -7,4 +7,8 @@
     overflow: hidden;
     z-index: -1;
     pointer-events: none; /* Ensure it doesn't block interaction */
+    background: radial-gradient(circle at 15% 15%, rgba(20, 158, 204, 0.3) 0%, transparent 55%),
+                radial-gradient(circle at 85% 85%, rgba(65, 46, 204, 0.35) 0%, transparent 55%),
+                radial-gradient(circle at 50% 50%, rgba(68, 207, 135, 0.2) 0%, transparent 65%),
+                #0b0d12;
 }

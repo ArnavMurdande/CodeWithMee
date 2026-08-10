@@ -7,6 +7,9 @@ const { LEGACY_ROUTE_LIFECYCLE } = require('./modules/api/legacy-route-lifecycle
 const { browserRequestDefense } = require('./modules/http/browser-defense');
 const { createUnavailableIdentityRouter } = require('./modules/identity/router');
 const { createUnavailableFileRouter } = require('./modules/files/router');
+const { createUnavailableChallengeRouter } = require('./modules/challenges/router');
+const { createUnavailableCoursesRouter } = require('./modules/courses/router');
+const { createUnavailableLmsRouter } = require('./modules/lms/router');
 const { errorHandler, notFoundHandler, PublicHttpError } = require('./modules/http/error-handler');
 const { requestContext } = require('./modules/http/request-context');
 const { createJsonBodyParser } = require('./modules/http/route-security');
@@ -14,6 +17,9 @@ const { createRateLimitMiddleware } = require('./modules/http/rate-limit');
 const { securityHeaders } = require('./modules/http/security-headers');
 const { asStructuredLogger } = require('./modules/http/structured-logger');
 const { createHealthRouter } = require('./modules/health/router');
+const roadmapRouter = require('./routes/roadmap');
+const aiRouter = require('./routes/ai');
+const youtubeRouter = require('./routes/youtube');
 const {
   createDisabledErrorReporter,
   createTelemetry,
@@ -40,7 +46,7 @@ function corsOptions(allowedOrigins) {
       'X-Request-ID',
     ],
     maxAge: 600,
-    methods: ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST'],
+    methods: ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT'],
     optionsSuccessStatus: 204,
     origin(origin, callback) {
       if (!origin || allowlist.has(origin)) return callback(null, true);
@@ -55,6 +61,13 @@ function corsOptions(allowedOrigins) {
 function createApp({
   allowedOrigins = [],
   errorReporter = createDisabledErrorReporter(),
+  challengeRouter,
+  coursesRouter,
+  lmsRouter,
+  learningRouter,
+  spaceRouter,
+  executionRouter,
+  fileObjectRouter,
   fileRouter,
   identityAuthenticate = null,
   identityRouter,
@@ -94,6 +107,7 @@ function createApp({
   app.use(cors(corsOptions(allowedOrigins)));
   app.use(browserRequestDefense({ trustedOrigins: allowedOrigins }));
   app.use(createRateLimitMiddleware({ limits: rateLimits, store: rateLimitStore }));
+  if (fileObjectRouter) app.use('/api/v1/file-objects', fileObjectRouter);
   app.use(createJsonBodyParser());
   if (serveLocalUploads) {
     app.use('/uploads', express.static(resolvedUploadsDirectory));
@@ -105,6 +119,21 @@ function createApp({
 
   app.use('/api/v1', createApiContractRouter());
   app.use('/api/v1', createHealthRouter({ authenticate: identityAuthenticate, readinessProbe }));
+  app.use(
+    '/api/v1/challenges',
+    challengeRouter || createUnavailableChallengeRouter({ reason: 'challenges_not_configured' }),
+  );
+  app.use(
+    '/api/v1/courses',
+    coursesRouter || createUnavailableCoursesRouter({ reason: 'courses_not_configured' }),
+  );
+  app.use('/api/v1/lms', lmsRouter || createUnavailableLmsRouter());
+  if (learningRouter) app.use('/api/v1/learning', learningRouter);
+  if (spaceRouter) app.use('/api/v1/space', spaceRouter);
+  if (executionRouter) app.use('/api/v1/execution', executionRouter);
+  app.use('/api/v1/roadmaps', roadmapRouter);
+  app.use('/api/v1/ai', aiRouter);
+  app.use('/api/v1/videos', youtubeRouter);
   app.use(
     '/api/v1',
     identityRouter || createUnavailableIdentityRouter({ reason: 'identity_not_configured' }),

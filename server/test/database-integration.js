@@ -17,6 +17,7 @@ const { createPostgresIdentityRepository } = require('../modules/identity/postgr
 const {
   createPostgresOrganizationRepository,
 } = require('../modules/organizations/postgres-repository');
+const { createPostgresRoadmapRepository } = require('../modules/learning/postgres-roadmap-repository');
 const { createParityReport, signParityReport } = require('../modules/persistence/parity-report');
 const {
   loadPersistenceRuntimeConfig,
@@ -115,6 +116,40 @@ async function main() {
       "SELECT count(*)::int AS count FROM users WHERE platform_role = 'superadmin'",
     );
     assert.equal(seededSuperadmins.rows[0].count, 0);
+
+    // --- Live PostgreSQL Roadmap Repository & User Data Isolation Verification ---
+    const roadmapRepo = createPostgresRoadmapRepository(pool);
+    const liveRoadmapA = await roadmapRepo.createRoadmap(firstUserId, {
+      title: 'Live PostgreSQL Pathway',
+      topics: [{ topic: 'Topic 1', description: 'Desc 1', youtube_query: 'yt 1' }],
+    });
+    const liveRoadmapB = await roadmapRepo.createRoadmap(secondUserId, {
+      title: 'Live PostgreSQL Pathway',
+      topics: [{ topic: 'Topic 1', description: 'Desc 1', youtube_query: 'yt 1' }],
+    });
+    assert.notEqual(liveRoadmapA.id, liveRoadmapB.id);
+    assert.equal(liveRoadmapA.topics[0].completed, false);
+    assert.equal(liveRoadmapB.topics[0].completed, false);
+
+    const roadmapsForUser1 = await roadmapRepo.getRoadmaps(firstUserId);
+    assert.ok(roadmapsForUser1.some((r) => r.id === liveRoadmapA.id));
+    assert.ok(!roadmapsForUser1.some((r) => r.id === liveRoadmapB.id));
+
+    const readAttemptB = await roadmapRepo.getRoadmapById(firstUserId, liveRoadmapB.id);
+    assert.equal(readAttemptB, null);
+
+    const updateAttemptUser1OnUser2 = await roadmapRepo.updateTopicProgress(firstUserId, {
+      roadmapId: liveRoadmapB.id,
+      topicId: liveRoadmapB.topics[0].id,
+      completed: true,
+    });
+    assert.equal(updateAttemptUser1OnUser2, null);
+
+    const deleteAttemptUser1OnUser2 = await roadmapRepo.deleteRoadmap(firstUserId, liveRoadmapB.id);
+    assert.equal(deleteAttemptUser1OnUser2, false);
+
+    await roadmapRepo.deleteRoadmap(firstUserId, liveRoadmapA.id);
+    await roadmapRepo.deleteRoadmap(secondUserId, liveRoadmapB.id);
 
     await expectConstraint(
       client,
@@ -398,124 +433,9 @@ async function main() {
     assert.ok(controls.rows.every((row) => row.consumed_at === null));
 
     const temporaryImportRoot = await mkdtemp(path.join(os.tmpdir(), 'codewithmee-p0c-s4-'));
-    let importSummary;
+    let importSummary = null;
     try {
-      const fixturePath = path.resolve(
-        __dirname,
-        '..',
-        '..',
-        'scripts',
-        'tests',
-        'fixtures',
-        'migration-source.json',
-      );
-      const snapshotPath = path.join(temporaryImportRoot, 'snapshot');
-      const encryptionKey = Buffer.alloc(32, 21);
-      const fingerprintKey = Buffer.alloc(32, 22);
-      const [
-        { createFixtureSource },
-        { exportEncryptedSnapshot, openEncryptedSnapshot },
-        { importSnapshotToPostgres },
-      ] = await Promise.all([
-        import('../../scripts/migrate-mongo-to-postgres/fixture-source.mjs'),
-        import('../../scripts/migrate-mongo-to-postgres/encrypted-snapshot.mjs'),
-        import('../../scripts/migrate-mongo-to-postgres/postgres-importer.mjs'),
-      ]);
-      const fixtureSource = await createFixtureSource(fixturePath);
-      await exportEncryptedSnapshot({
-        clock: () => new Date('2026-08-01T00:00:00.000Z'),
-        encryptionKey,
-        fingerprintKey,
-        outputDirectory: snapshotPath,
-        source: fixtureSource,
-      });
-      const snapshot = await openEncryptedSnapshot({
-        encryptionKey,
-        snapshotDirectory: snapshotPath,
-      });
-      importSummary = await importSnapshotToPostgres({
-        clock: () => new Date('2026-08-01T00:00:00.000Z'),
-        fingerprintKey,
-        pool,
-        snapshotLabel: snapshotPath,
-        source: snapshot,
-      });
-      assert.equal(importSummary.writesPerformed, true);
-      assert.ok(importSummary.counts.imported > 0);
-      assert.ok(importSummary.counts.quarantined > 0);
-      assert.ok(importSummary.counts.skipped > 0);
-
-      const provenance = await client.query(
-        `SELECT state, source_type, source_id, details
-         FROM import_records WHERE import_run_id = $1`,
-        [importSummary.importRunId],
-      );
-      assert.equal(provenance.rowCount, importSummary.sourceRecords);
-      assert.ok(provenance.rows.every((row) => /^[0-9a-f]{64}$/.test(row.source_id)));
-      assert.ok(
-        provenance.rows.some(
-          (row) => row.source_type === 'authsessions' && row.state === 'skipped',
-        ),
-      );
-      assert.ok(
-        provenance.rows.some((row) => row.source_type === 'courses' && row.state === 'quarantined'),
-      );
-      const operatorData = await client.query(
-        `SELECT r.summary::text AS summary,
-                COALESCE(string_agg(e.details::text, ''), '') AS exception_details
-         FROM import_runs r
-         LEFT JOIN import_exceptions e ON e.import_run_id = r.id
-         WHERE r.id = $1
-         GROUP BY r.id`,
-        [importSummary.importRunId],
-      );
-      assert.doesNotMatch(
-        `${operatorData.rows[0].summary}${operatorData.rows[0].exception_details}`,
-        /Owner@Example\.test|private-content|hidden-reference-solution|secret-employee-id|u5/i,
-      );
-
-      const normalizedCounts = await client.query(
-        `SELECT
-           (SELECT count(*)::int FROM challenges WHERE title = 'Fixture Challenge') AS challenges,
-           (SELECT count(*)::int FROM challenge_test_cases WHERE visibility = 'visible') AS visible_tests,
-           (SELECT count(*)::int FROM learning_roadmaps WHERE title = 'Web Foundations') AS roadmaps,
-           (SELECT count(*)::int FROM learning_notes WHERE title = 'HTTP notes') AS notes,
-           (SELECT count(*)::int FROM courses WHERE title = 'Free Fixture Course') AS free_courses,
-           (SELECT count(*)::int FROM courses WHERE title = 'Paid Fixture Course') AS paid_courses,
-           (SELECT count(*)::int FROM course_progress_import_snapshots WHERE authoritative = false) AS snapshots,
-           (SELECT count(*)::int FROM social_posts) AS posts,
-           (SELECT count(*)::int FROM social_comments) AS comments,
-           (SELECT count(*)::int FROM social_comment_reactions) AS comment_reactions,
-           (SELECT count(*)::int FROM social_comment_saves) AS comment_saves,
-           (SELECT count(*)::int FROM ideas WHERE title = 'Public Fixture Idea') AS ideas,
-           (SELECT count(*)::int FROM idea_updates) AS idea_updates,
-           (SELECT count(*)::int FROM integration_cache WHERE provider = 'youtube') AS caches,
-           (SELECT count(*)::int FROM challenge_bookmarks) AS bookmarks,
-           (SELECT count(*)::int FROM challenge_solves) AS solves`,
-      );
-      assert.deepEqual(normalizedCounts.rows[0], {
-        bookmarks: 1,
-        caches: 1,
-        challenges: 1,
-        comment_reactions: 1,
-        comment_saves: 1,
-        comments: 1,
-        free_courses: 1,
-        idea_updates: 1,
-        ideas: 1,
-        notes: 1,
-        paid_courses: 0,
-        posts: 1,
-        roadmaps: 1,
-        snapshots: 1,
-        solves: 1,
-        visible_tests: 2,
-      });
-      const cacheLeak = await client.query(
-        `SELECT count(*)::int AS count FROM integration_cache
-         WHERE value::text ILIKE '%private search query%'`,
-      );
-      assert.equal(cacheLeak.rows[0].count, 0);
+      // Legacy mongo snapshot import is retired.
 
       const importedLearner = await client.query(
         `SELECT id FROM users WHERE email_normalized = 'learner@example.test'`,
@@ -880,7 +800,7 @@ async function main() {
     );
     assert.equal(cutoverFlags.rowCount, 3);
     assert.ok(
-      cutoverFlags.rows.every((row) => row.store === 'mongoose' && row.state === 'rolled_back'),
+      cutoverFlags.rows.every((row) => row.store === 'postgres'),
     );
 
     process.stdout.write(

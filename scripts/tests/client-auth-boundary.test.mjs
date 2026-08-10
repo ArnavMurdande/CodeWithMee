@@ -95,3 +95,27 @@ test('web identity UX covers verification, recovery, and session revocation', as
   assert.doesNotMatch(runtimeConfig, /googleClientId|VITE_GOOGLE_CLIENT_ID/);
   assert.doesNotMatch(environmentExample, /VITE_GOOGLE_CLIENT_ID/);
 });
+
+test('client storage keys use user isolation helpers for authenticated data', async () => {
+  for (const file of await sourceFiles(clientSourceRoot)) {
+    const source = await readFile(file, 'utf8');
+    const relativePath = path.relative(clientSourceRoot, file);
+    if (relativePath.includes('cache-isolation')) continue;
+
+    assert.doesNotMatch(
+      source,
+      /localStorage\.(?:getItem|setItem)\(\s*['"]cwm_saved_roadmaps['"]\s*[,)]/,
+      `Unscoped cwm_saved_roadmaps found in ${relativePath}`,
+    );
+    assert.doesNotMatch(
+      source,
+      /localStorage\.(?:getItem|setItem)\(\s*['"]cwm_saved_notes['"]\s*[,)]/,
+      `Unscoped cwm_saved_notes found in ${relativePath}`,
+    );
+    assert.doesNotMatch(
+      source,
+      /localStorage\.(?:getItem|setItem)\(\s*[`'"]cwm_vid_progress_/,
+      `Unscoped cwm_vid_progress found in ${relativePath}`,
+    );
+  }
+});

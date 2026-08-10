@@ -1,7 +1,8 @@
 'use strict';
 
-const { spawnSync } = require('node:child_process');
 const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const { spawnSync } = require('node:child_process');
 const { assertDatabaseSafety } = require('./database-safety');
 
 const command = process.argv[2];

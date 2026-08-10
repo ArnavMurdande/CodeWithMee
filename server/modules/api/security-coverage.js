@@ -105,6 +105,18 @@ declare(['getMe'], {
   permission: PERMISSION.PROFILE_READ_SELF,
   scope: 'self',
 });
+declare(['getMyTheme'], {
+  authorization: AUTHORIZATION_MODE.SELF,
+  exposure: 'theme_preferences',
+  permission: PERMISSION.PROFILE_READ_SELF,
+  scope: 'self',
+});
+declare(['updateMyTheme'], {
+  authorization: AUTHORIZATION_MODE.SELF,
+  exposure: 'theme_preferences',
+  permission: PERMISSION.PROFILE_WRITE_SELF,
+  scope: 'self',
+});
 declare(['listMySessions'], {
   authorization: AUTHORIZATION_MODE.SELF,
   exposure: 'session_metadata',
@@ -215,6 +227,45 @@ declare(['createFileDownload'], {
   capability: SENSITIVE_CAPABILITY.DOWNLOAD_URL,
   exposure: 'download_capability',
   scope: 'file_owner_or_authorized_organization',
+});
+declare(['listChallenges', 'getChallenge', 'listCourses', 'getCourse'], {
+  authorization: AUTHORIZATION_MODE.PUBLIC,
+  exposure: 'public_catalog',
+  scope: 'global',
+});
+declare(['createChallenge', 'publishChallenge'], {
+  authorization: AUTHORIZATION_MODE.AUTHENTICATED,
+  exposure: 'challenge',
+  scope: 'author',
+});
+declare(['runChallengeCode', 'submitChallengeCode', 'listChallengeSubmissions', 'getChallengeSubmission'], {
+  authorization: AUTHORIZATION_MODE.AUTHENTICATED,
+  exposure: 'submission',
+  scope: 'learner',
+});
+declare(['enrollInCourse', 'getCourseProgress', 'getLessonProgress', 'updateLessonProgress'], {
+  authorization: AUTHORIZATION_MODE.AUTHENTICATED,
+  exposure: 'progress',
+  scope: 'learner',
+});
+declare([
+  'getProviderDashboard','listCourseStaff','setCourseStaffRole','getCourseStructure','replaceCourseStructure','getCourseRoster',
+  'updateCourseEnrollment','inviteCourseLearner','listAssignmentGrading','listQuizGrading','gradeQuizAttempt',
+  'gradeAssignmentSubmission','listPaymentReviews','getPaymentSettings','setPaymentSettings',
+  'reviewManualPayment','getProviderCourseAnalytics','exportProviderCourseAnalytics',
+], {
+  authorization: AUTHORIZATION_MODE.ORGANIZATION_PERMISSION,
+  exposure: 'provider_lms',
+  permission: PERMISSION.ORGANIZATION_READ_PRIVATE,
+  scope: 'organization_and_course',
+});
+declare([
+  'acceptCourseInvitation','submitCourseQuiz','submitCourseAssignment','createCoursePaymentOrder',
+  'attachCoursePaymentProof','getLearnerCourseResults',
+], {
+  authorization: AUTHORIZATION_MODE.AUTHENTICATED,
+  exposure: 'learner_lms',
+  scope: 'learner',
 });
 
 const operationIds = new Set(operations.map((entry) => entry.id));

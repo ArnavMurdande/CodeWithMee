@@ -6,6 +6,7 @@ import AppDropdown from '../components/AppDropdown';
 import ScrollTrackRow from '../components/ScrollTrackRow';
 import { AsyncState } from '../components/ui/AsyncState';
 import { AccessibleMedia } from '../components/ui/AccessibleMedia';
+import { uploadSecureFile } from '../lib/secure-file-upload';
 import { AccessibleDialog } from '../components/ui/AccessibleDialog';
 const timeAgo = (date) => {
   const seconds = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -50,7 +51,7 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
     const route = isLike ? 'like' : 'dislike';
     try {
       const res = await axios.post(
-        `/api/space/posts/${postId}/comment/${comment._id}/${route}`,
+        `/api/v1/space/posts/${postId}/comment/${comment._id}/${route}`,
         {},
       );
       onAction(postId, res.data); // backend route needs to return updated comments array or we refresh posts
@@ -63,7 +64,7 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
     e.preventDefault();
     if (!replyText.trim()) return;
     try {
-      const res = await axios.post(`/api/space/posts/${postId}/comment/${comment._id}/reply`, {
+      const res = await axios.post(`/api/v1/space/posts/${postId}/comment/${comment._id}/reply`, {
         text: replyText,
       });
       setReplyText('');
@@ -76,7 +77,7 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
 
   const handleAward = async (awardType) => {
     try {
-      const res = await axios.post(`/api/space/posts/${postId}/comment/${comment._id}/award`, {
+      const res = await axios.post(`/api/v1/space/posts/${postId}/comment/${comment._id}/award`, {
         awardType,
       });
       setShowAwardPicker(false);
@@ -89,7 +90,7 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
   const handleDelete = async () => {
     if (!window.confirm('Delete this comment? This cannot be undone.')) return;
     try {
-      const res = await axios.delete(`/api/space/posts/${postId}/comment/${comment._id}`);
+      const res = await axios.delete(`/api/v1/space/posts/${postId}/comment/${comment._id}`);
       onAction(postId, res.data);
     } catch {
       console.error('Failed to delete comment');
@@ -272,7 +273,7 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
                 onClick={async () => {
                   try {
                     const res = await axios.post(
-                      `/api/space/posts/${postId}/comment/${comment._id}/save`,
+                      `/api/v1/space/posts/${postId}/comment/${comment._id}/save`,
                       {},
                     );
                     onAction(postId, res.data);
@@ -384,7 +385,14 @@ const SpaceComment = ({ comment, postId, token, onAction, depth = 0 }) => {
 };
 
 const Space = () => {
-  const { token, user } = useContext(AuthContext);
+  const { token, user: authenticatedUser } = useContext(AuthContext);
+  const user = authenticatedUser ? {
+    ...authenticatedUser,
+    _id: authenticatedUser.id || authenticatedUser._id,
+    role: authenticatedUser.platformRole || authenticatedUser.role,
+    profilePictureUrl: authenticatedUser.avatarUrl || authenticatedUser.profilePictureUrl,
+    isBanned: authenticatedUser.status === 'banned' || authenticatedUser.isBanned,
+  } : null;
   const [activeTab, setActiveTab] = useState('feed'); // 'feed', 'leaderboards', 'projects', 'profile'
 
   // Data State
@@ -442,9 +450,16 @@ const Space = () => {
   const [chatFabPos, setChatFabPos] = useState(() => {
     try {
       const s = localStorage.getItem('spaceChatFabPos');
-      return s ? JSON.parse(s) : { bottom: 90, right: 86 };
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (parsed && typeof parsed.bottom === 'number' && parsed.bottom >= 60) {
+          return { bottom: 24, right: 86 };
+        }
+        return parsed || { bottom: 24, right: 86 };
+      }
+      return { bottom: 24, right: 86 };
     } catch {
-      return { bottom: 90, right: 86 };
+      return { bottom: 24, right: 86 };
     }
   });
 
@@ -514,7 +529,7 @@ const Space = () => {
   const fetchPosts = async () => {
     try {
       const res = await axios.get(
-        `/api/space/posts?feedType=${feedType}&sort=${feedSort}&timeframe=${feedTime}`,
+        `/api/v1/space/posts?feedType=${feedType}&sort=${feedSort}&timeframe=${feedTime}`,
       );
       setPosts(res.data);
     } catch {
@@ -524,7 +539,7 @@ const Space = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await axios.get(`/api/space/leaderboard?timeframe=${lbTime}&filter=${lbFilter}`);
+      const res = await axios.get(`/api/v1/space/leaderboard?timeframe=${lbTime}&filter=${lbFilter}`);
       setLeaderboard(res.data);
     } catch {
       console.error('Failed to fetch leaderboard');
@@ -533,7 +548,7 @@ const Space = () => {
 
   const fetchMyProfile = async () => {
     try {
-      const res = await axios.get('/api/space/profile/me');
+      const res = await axios.get('/api/v1/space/profile/me');
       setMyProfileData({
         profile: res.data.profile,
         posts: res.data.posts,
@@ -548,7 +563,7 @@ const Space = () => {
 
   const handleFollowRequest = async (userId, action) => {
     try {
-      await axios.post(`/api/space/network/follow-request/${userId}/${action}`, {});
+      await axios.post(`/api/v1/space/network/follow-request/${userId}/${action}`, {});
       setMyProfileData((prev) => ({
         ...prev,
         profile: {
@@ -569,7 +584,7 @@ const Space = () => {
   useEffect(() => {
     if (selectedUserId) {
       axios
-        .get(`/api/space/profile/${selectedUserId}`)
+        .get(`/api/v1/space/profile/${selectedUserId}`)
         .then((res) => {
           if (res.data.isCompany) {
             // Set viewingProfile with the company flag so the modal can handle it
@@ -595,9 +610,9 @@ const Space = () => {
       setLoading(true);
       setLoadError(false);
       const [leaderboardResponse, postsResponse, projectsResponse] = await Promise.all([
-        axios.get(`/api/space/leaderboard?timeframe=${lbTime}&filter=${lbFilter}`),
-        axios.get(`/api/space/posts?feedType=${feedType}&sort=${feedSort}&timeframe=${feedTime}`),
-        axios.get('/api/space/projects'),
+        axios.get(`/api/v1/space/leaderboard?timeframe=${lbTime}&filter=${lbFilter}`),
+        axios.get(`/api/v1/space/posts?feedType=${feedType}&sort=${feedSort}&timeframe=${feedTime}`),
+        axios.get('/api/v1/space/projects'),
       ]);
       setLeaderboard(leaderboardResponse.data);
       setPosts(postsResponse.data);
@@ -614,12 +629,12 @@ const Space = () => {
   // ===================================
   const toggleFollow = async (userId) => {
     try {
-      const res = await axios.post(`/api/space/network/follow/${userId}`, {});
+      const res = await axios.post(`/api/v1/space/network/follow/${userId}`, {});
       setLocalFollowing(res.data.following || []);
       setLocalPending(res.data.sentFollowRequests || []);
       fetchPosts();
       if (selectedUserId === userId) {
-        axios.get(`/api/space/profile/${selectedUserId}`).then((r) => setViewingProfile(r.data));
+        axios.get(`/api/v1/space/profile/${selectedUserId}`).then((r) => setViewingProfile(r.data));
       }
     } catch (err) {
       alert(err.response?.data?.msg || 'Action failed');
@@ -629,7 +644,7 @@ const Space = () => {
   const toggleBlock = async (userId) => {
     if (!window.confirm('Block this user? Their posts will be hidden from your feed.')) return;
     try {
-      const res = await axios.post(`/api/space/network/block/${userId}`, {});
+      const res = await axios.post(`/api/v1/space/network/block/${userId}`, {});
       alert(res.data.isBlocked ? 'User Blocked' : 'User Unblocked');
       fetchPosts(); // refresh feed
     } catch {
@@ -651,7 +666,7 @@ const Space = () => {
             .filter((m) => m.trim())
             .map((m) => ({ title: m.trim() }))
         : [];
-      const res = await axios.post('/api/space/projects', {
+      const res = await axios.post('/api/v1/space/projects', {
         title: projectDraft.title,
         description: projectDraft.description,
         techStack: projectDraft.techStack,
@@ -676,7 +691,7 @@ const Space = () => {
   const deleteProject = async (id) => {
     if (!window.confirm('Delete this project?')) return;
     try {
-      await axios.delete(`/api/space/projects/${id}`);
+      await axios.delete(`/api/v1/space/projects/${id}`);
       setProjects(projects.filter((p) => p._id !== id));
     } catch {
       alert('Failed to delete project');
@@ -685,7 +700,7 @@ const Space = () => {
 
   const toggleMilestone = async (projectId, milestoneId) => {
     try {
-      const res = await axios.put(`/api/space/projects/${projectId}/milestone/${milestoneId}`, {});
+      const res = await axios.put(`/api/v1/space/projects/${projectId}/milestone/${milestoneId}`, {});
       setProjects(projects.map((p) => (p._id === projectId ? res.data : p)));
     } catch {
       alert('Failed to update milestone');
@@ -694,7 +709,7 @@ const Space = () => {
 
   const likeProject = async (projectId) => {
     try {
-      const res = await axios.put(`/api/space/projects/${projectId}/like`, {});
+      const res = await axios.put(`/api/v1/space/projects/${projectId}/like`, {});
       setProjects(projects.map((p) => (p._id === projectId ? { ...p, likes: res.data.likes } : p)));
     } catch {
       alert('Failed');
@@ -715,12 +730,10 @@ const Space = () => {
     if (!draftContent.trim() && attachments.length === 0) return;
 
     setIsPosting(true);
-    const formData = new FormData();
-    formData.append('content', draftContent);
-    attachments.forEach((file) => formData.append('files', file));
-
     try {
-      const res = await axios.post('/api/space/posts', formData);
+      const fileIds = [];
+      for (const file of attachments) fileIds.push(await uploadSecureFile(file, 'social_image', { makePublic: true }));
+      const res = await axios.post('/api/v1/space/posts', { content: draftContent, fileIds });
       setPosts([res.data, ...posts]);
       setDraftContent('');
       setAttachments([]);
@@ -737,7 +750,7 @@ const Space = () => {
   const deletePost = async (postId) => {
     if (!window.confirm('Delete this post?')) return;
     try {
-      await axios.delete(`/api/space/posts/${postId}`);
+      await axios.delete(`/api/v1/space/posts/${postId}`);
       setPosts(posts.filter((p) => p._id !== postId));
     } catch {
       alert('Delete failed');
@@ -746,7 +759,7 @@ const Space = () => {
 
   const likePost = async (postId) => {
     try {
-      const res = await axios.put(`/api/space/posts/${postId}/like`, {});
+      const res = await axios.put(`/api/v1/space/posts/${postId}/like`, {});
       setPosts(
         posts.map((p) =>
           p._id === postId ? { ...p, likes: res.data.likes, dislikes: res.data.dislikes } : p,
@@ -759,7 +772,7 @@ const Space = () => {
 
   const dislikePost = async (postId) => {
     try {
-      const res = await axios.put(`/api/space/posts/${postId}/dislike`, {});
+      const res = await axios.put(`/api/v1/space/posts/${postId}/dislike`, {});
       setPosts(
         posts.map((p) =>
           p._id === postId ? { ...p, likes: res.data.likes, dislikes: res.data.dislikes } : p,
@@ -772,7 +785,7 @@ const Space = () => {
 
   const submitAward = async (postId) => {
     try {
-      const res = await axios.post(`/api/space/posts/${postId}/award`, { awardType: 'diamond' });
+      const res = await axios.post(`/api/v1/space/posts/${postId}/award`, { awardType: 'diamond' });
       setPosts(posts.map((p) => (p._id === postId ? { ...p, awards: res.data } : p)));
     } catch {
       alert('Action failed');
@@ -786,7 +799,7 @@ const Space = () => {
 
   const savePost = async (postId) => {
     try {
-      const res = await axios.put(`/api/space/posts/${postId}/save`, {});
+      const res = await axios.put(`/api/v1/space/posts/${postId}/save`, {});
       setPosts(posts.map((p) => (p._id === postId ? { ...p, saves: res.data.saves } : p)));
     } catch {
       alert('Action failed');
@@ -803,7 +816,7 @@ const Space = () => {
   const submitComment = async (postId) => {
     if (!commentText[postId] || commentText[postId].trim() === '') return;
     try {
-      const res = await axios.post(`/api/space/posts/${postId}/comment`, {
+      const res = await axios.post(`/api/v1/space/posts/${postId}/comment`, {
         content: commentText[postId],
       });
       setPosts(posts.map((p) => (p._id === postId ? { ...p, comments: res.data } : p)));
@@ -816,7 +829,7 @@ const Space = () => {
   const deleteComment = async (postId, commentId) => {
     if (!window.confirm('Delete this comment?')) return;
     try {
-      const res = await axios.delete(`/api/space/posts/${postId}/comment/${commentId}`);
+      const res = await axios.delete(`/api/v1/space/posts/${postId}/comment/${commentId}`);
       setPosts(posts.map((p) => (p._id === postId ? { ...p, comments: res.data } : p)));
     } catch {
       alert('Failed to delete comment');
@@ -994,7 +1007,7 @@ const Space = () => {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       className="file-input"
-                      accept="image/*,video/*,audio/*"
+                      accept="image/png,image/jpeg,image/gif,image/webp"
                       id="media-upload"
                     />
                     <label htmlFor="media-upload" className="neo-button outline small media-label">
@@ -1876,7 +1889,7 @@ const Space = () => {
                                   return;
                                 try {
                                   await axios.post(
-                                    `/api/space/network/remove-follower/${follower._id}`,
+                                    `/api/v1/space/network/remove-follower/${follower._id}`,
                                     {},
                                   );
                                   setMyProfileData((prev) => ({
@@ -2207,6 +2220,7 @@ const Space = () => {
           background: 'linear-gradient(135deg, #a855f7, #6366f1)',
           color: '#fff',
           border: 'none',
+          outline: 'none',
           boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
           zIndex: 9999,
           cursor: 'grab',

@@ -1,0 +1,184 @@
+{
+  "691f2818-f046-4c5b-8845-7de3520172ae": [
+    {
+      "_id": "rdm_1785696155217_t4g2f54",
+      "id": "rdm_1785696155217_t4g2f54",
+      "title": "Python Programming (Beginner)",
+      "topics": [
+        {
+          "topic": "Environment Setup & First Program",
+          "description": "Install Python, set up a code editor like VS Code, and write your first 'Hello, World!' script.",
+          "youtube_query": "how to install python and vs code beginner tutorial",
+          "completed": true
+        },
+        {
+          "topic": "Variables & Basic Data Types",
+          "description": "Learn how to store data using variables and understand fundamental data types: Integers, Floats, Strings, and Booleans.",
+          "youtube_query": "python variables and data types beginner tutorial",
+          "completed": true
+        },
+        {
+          "topic": "User Input & String Formatting",
+          "description": "Capture user input using input() and format outputs cleanly using f-strings and basic string operations.",
+          "youtube_query": "python user input and f strings tutorial",
+          "completed": true
+        },
+        {
+          "topic": "Operators & Expressions",
+          "description": "Perform mathematical calculations, compare values, and use logical operators (AND, OR, NOT).",
+          "youtube_query": "python operators arithmetic logical comparison",
+          "completed": false
+        },
+        {
+          "topic": "Conditional Logic (if, elif, else)",
+          "description": "Control the flow of your program by making decisions based on dynamic conditions.",
+          "youtube_query": "python conditional statements if elif else tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Loops & Iteration (for and while)",
+          "description": "Repeat actions efficiently using for loops, while loops, range(), break, and continue statements.",
+          "youtube_query": "python for and while loops for beginners",
+          "completed": false
+        },
+        {
+          "topic": "Lists & List Methods",
+          "description": "Store collections of items in lists, access them using indexing/slicing, and modify them with methods like append(), remove(), and sort().",
+          "youtube_query": "python lists indexing slicing and methods",
+          "completed": false
+        },
+        {
+          "topic": "Tuples & Sets",
+          "description": "Explore fixed collections (Tuples) and collections of unique elements (Sets) along with their practical use cases.",
+          "youtube_query": "python tuples and sets tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Dictionaries",
+          "description": "Organize data using key-value pairs to quickly look up, add, update, and delete information.",
+          "youtube_query": "python dictionaries tutorial key value pairs",
+          "completed": false
+        },
+        {
+          "topic": "Functions & Scope",
+          "description": "Write reusable blocks of code using def, pass parameters, return values, and understand local vs. global scope.",
+          "youtube_query": "python functions definition parameters return values",
+          "completed": false
+        },
+        {
+          "topic": "Working with Modules & Standard Library",
+          "description": "Learn to import and use Python's built-in modules like math, random, and datetime to extend functionality.",
+          "youtube_query": "python importing modules standard library math random",
+          "completed": false
+        },
+        {
+          "topic": "File Handling (Read & Write)",
+          "description": "Learn how to open, read, write, and append data to text files using the 'with open()' statement.",
+          "youtube_query": "python read and write files tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Error & Exception Handling",
+          "description": "Prevent your application from crashing by handling unexpected runtime errors using try, except, and finally blocks.",
+          "youtube_query": "python try except error exception handling",
+          "completed": false
+        },
+        {
+          "topic": "Intro to Object-Oriented Programming (OOP)",
+          "description": "Understand basic OOP concepts including Classes, Objects, attributes, methods, and the __init__ constructor.",
+          "youtube_query": "python object oriented programming OOP beginners tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Beginner Capstone Project",
+          "description": "Combine everything you have learned to build a simple CLI application, such as a Number Guessing Game or a To-Do List app.",
+          "youtube_query": "python beginner project number guessing game todo list",
+          "completed": false
+        }
+      ],
+      "createdAt": "2026-08-02T18:42:35.217Z"
+    }
+  ],
+  "9c6a6a22-b740-40f8-9fb4-14dcdc6e16c0": [
+    {
+      "_id": "rdm_1785959212671_hlsz13l",
+      "id": "rdm_1785959212671_hlsz13l",
+      "title": "Python (Beginner)",
+      "topics": [
+        {
+          "topic": "Environment Setup & Hello World",
+          "description": "Install Python, set up a code editor like VS Code or PyCharm, and run your first 'Hello, World!' program.",
+          "youtube_query": "Python installation and VS Code setup for beginners",
+          "completed": false
+        },
+        {
+          "topic": "Variables & Core Data Types",
+          "description": "Learn how to store data using variables and work with basic types: integers, floats, strings, and booleans.",
+          "youtube_query": "Python variables and data types tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Basic Operations & User Input",
+          "description": "Perform arithmetic operations, concatenate strings, and take dynamic user input using the input() function.",
+          "youtube_query": "Python arithmetic operations and user input",
+          "completed": false
+        },
+        {
+          "topic": "Control Flow: Conditionals",
+          "description": "Make decisions in code using if, elif, and else statements, alongside comparison and logical operators.",
+          "youtube_query": "Python if else statements conditional logic",
+          "completed": false
+        },
+        {
+          "topic": "Loops & Iteration",
+          "description": "Automate repetitive tasks using 'for' and 'while' loops, and learn how to use range(), break, and continue.",
+          "youtube_query": "Python for loops and while loops beginner",
+          "completed": false
+        },
+        {
+          "topic": "Lists & Tuples",
+          "description": "Store ordered collections of data. Learn indexing, slicing, list methods, and the difference between mutable lists and immutable tuples.",
+          "youtube_query": "Python lists and tuples tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Dictionaries & Sets",
+          "description": "Work with key-value pairs using dictionaries and unique unordered elements using sets.",
+          "youtube_query": "Python dictionaries and sets explained",
+          "completed": false
+        },
+        {
+          "topic": "Functions & Scope",
+          "description": "Write reusable blocks of code using the 'def' keyword, pass parameters, return values, and understand variable scope.",
+          "youtube_query": "Python functions tutorial for beginners",
+          "completed": false
+        },
+        {
+          "topic": "Modules & Built-in Libraries",
+          "description": "Learn how to import and use built-in Python modules like 'math', 'random', and 'datetime' to extend functionality.",
+          "youtube_query": "Python modules and standard library tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Basic Error Handling",
+          "description": "Prevent your programs from crashing by handling errors gracefully using try, except, and finally blocks.",
+          "youtube_query": "Python exception handling try except tutorial",
+          "completed": false
+        },
+        {
+          "topic": "File I/O Basics",
+          "description": "Learn how to read data from and write data to text files using Python's built-in file handling methods.",
+          "youtube_query": "Python read and write files tutorial",
+          "completed": false
+        },
+        {
+          "topic": "Beginner Capstone Project",
+          "description": "Combine everything you've learned to build a simple command-line application, such as a To-Do List or a Number Guessing Game.",
+          "youtube_query": "Python beginner project command line app tutorial",
+          "completed": false
+        }
+      ],
+      "createdAt": "2026-08-05T19:46:52.671Z"
+    }
+  ]
+}

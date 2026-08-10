@@ -1,6 +1,99 @@
 {
   "components": {
     "schemas": {
+      "ThemePreferences": {
+        "additionalProperties": false,
+        "properties": {
+          "preset": {
+            "enum": [
+              "ocean",
+              "midnight",
+              "aurora",
+              "sunset",
+              "nebula",
+              "forest",
+              "monochrome",
+              "ember",
+              "custom"
+            ],
+            "type": "string"
+          },
+          "color1": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "color2": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "color3": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "customColors": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "preset",
+          "color1",
+          "color2",
+          "color3",
+          "customColors"
+        ],
+        "type": "object"
+      },
+      "Challenge": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "ChallengeSubmission": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "Course": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
       "AccessSession": {
         "additionalProperties": false,
         "properties": {
@@ -292,8 +385,11 @@
           },
           "purpose": {
             "enum": [
+              "payment_qr",
+              "payment_proof",
               "assignment_submission",
               "course_resource",
+              "course_video",
               "idea_artifact",
               "note_attachment",
               "organization_logo",
@@ -1834,11 +1930,56 @@
         "parameters": [
           {
             "in": "query",
+            "name": "authuser",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "code",
             "required": false,
             "schema": {
               "maxLength": 4096,
               "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hd",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "iss",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "prompt",
+            "required": false,
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "maxLength": 4096,
               "type": "string"
             }
           },
@@ -1899,6 +2040,106 @@
           "Identity"
         ],
         "x-codewithmee-contract": "getMe"
+      }
+    },
+    "/me/preferences/theme": {
+      "get": {
+        "operationId": "getMyTheme",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "theme": {
+                      "$ref": "#/components/schemas/ThemePreferences"
+                    }
+                  },
+                  "required": [
+                    "theme"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get the authenticated user theme preferences",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "getMyTheme"
+      },
+      "put": {
+        "operationId": "updateMyTheme",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "theme": {
+                      "$ref": "#/components/schemas/ThemePreferences"
+                    }
+                  },
+                  "required": [
+                    "theme"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update the authenticated user theme preferences",
+        "tags": [
+          "Identity"
+        ],
+        "x-codewithmee-contract": "updateMyTheme",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThemePreferences"
+              }
+            }
+          },
+          "required": true
+        }
       }
     },
     "/me/sessions": {
@@ -3490,8 +3731,11 @@
                   },
                   "purpose": {
                     "enum": [
+                      "payment_qr",
+                      "payment_proof",
                       "assignment_submission",
                       "course_resource",
+                      "course_video",
                       "idea_artifact",
                       "note_attachment",
                       "organization_logo",
@@ -3856,6 +4100,2430 @@
           "required": true
         }
       }
+    },
+    "/challenges": {
+      "get": {
+        "operationId": "listChallenges",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/Challenge"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "List published challenges with pagination and filters",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "listChallenges",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "difficulty",
+            "required": false,
+            "schema": {
+              "enum": [
+                "",
+                "EASY",
+                "MEDIUM",
+                "HARD"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createChallenge",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create draft challenge",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "createChallenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "difficulty": {
+                    "enum": [
+                      "EASY",
+                      "MEDIUM",
+                      "HARD"
+                    ],
+                    "type": "string"
+                  },
+                  "hiddenTestCases": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "input": {
+                          "type": "string"
+                        },
+                        "output": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "organizationId": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "referenceSolution": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "code": {
+                        "type": "string"
+                      },
+                      "language": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "starterTemplates": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "properties": {},
+                    "type": "object"
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "visibleTestCases": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "input": {
+                          "type": "string"
+                        },
+                        "output": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/challenges/{challengeId}": {
+      "get": {
+        "operationId": "getChallenge",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Get published challenge details for learner",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "getChallenge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/challenges/{challengeId}/publish": {
+      "post": {
+        "operationId": "publishChallenge",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Publish challenge version",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "publishChallenge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/challenges/{challengeId}/run": {
+      "post": {
+        "operationId": "runChallengeCode",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Run learner code against visible test cases",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "runChallengeCode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "customInput": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/challenges/{challengeId}/submit": {
+      "post": {
+        "operationId": "submitChallengeCode",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit learner code against hidden test suite",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "submitChallengeCode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "language": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "language"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/challenges/{challengeId}/submissions": {
+      "get": {
+        "operationId": "listChallengeSubmissions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/ChallengeSubmission"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List learner submission history",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "listChallengeSubmissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/challenges/{challengeId}/submissions/{submissionId}": {
+      "get": {
+        "operationId": "getChallengeSubmission",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get learner submission detail",
+        "tags": [
+          "Challenges"
+        ],
+        "x-codewithmee-contract": "getChallengeSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "challengeId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/courses": {
+      "get": {
+        "operationId": "listCourses",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "courses": {
+                      "items": {
+                        "$ref": "#/components/schemas/Course"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "List active public courses",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "listCourses",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/courses/{courseId}": {
+      "get": {
+        "operationId": "getCourse",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [],
+        "summary": "Get course details and lesson tree",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "getCourse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/courses/{courseId}/enroll": {
+      "post": {
+        "operationId": "enrollInCourse",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Enroll learner in published course",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "enrollInCourse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/courses/{courseId}/progress": {
+      "get": {
+        "operationId": "getCourseProgress",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "percent": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get overall course progress overview for learner",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "getCourseProgress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/courses/{courseId}/lessons/{contentId}/progress": {
+      "get": {
+        "operationId": "getLessonProgress",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get lesson progress and resume state",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "getLessonProgress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contentId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateLessonProgress",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update lesson video playback position and watched intervals",
+        "tags": [
+          "Courses"
+        ],
+        "x-codewithmee-contract": "updateLessonProgress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contentId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "lastPositionSec": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "markComplete": {
+                    "type": "boolean"
+                  },
+                  "watchedIntervals": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "endSec": {
+                          "type": "number"
+                        },
+                        "startSec": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/dashboard": {
+      "get": {
+        "operationId": "getProviderDashboard",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get provider dashboard aggregates",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getProviderDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/staff": {
+      "get": {
+        "operationId": "listCourseStaff",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List course staff assignments",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "listCourseStaff",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/staff/{userId}": {
+      "put": {
+        "operationId": "setCourseStaffRole",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Assign a course-scoped staff role",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "setCourseStaffRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/structure": {
+      "get": {
+        "operationId": "getCourseStructure",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get the latest editable course structure",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getCourseStructure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "replaceCourseStructure",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Save a new draft course structure version",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "replaceCourseStructure",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/roster": {
+      "get": {
+        "operationId": "getCourseRoster",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List course enrollments",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getCourseRoster",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/enrollments/{enrollmentId}": {
+      "patch": {
+        "operationId": "updateCourseEnrollment",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update enrollment state",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "updateCourseEnrollment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "enrollmentId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/invitations": {
+      "post": {
+        "operationId": "inviteCourseLearner",
+        "responses": {
+          "201": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Invite a learner to a private course",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "inviteCourseLearner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/grading": {
+      "get": {
+        "operationId": "listAssignmentGrading",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List assignment submissions for grading",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "listAssignmentGrading",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/quiz-grading": {
+      "get": {
+        "operationId": "listQuizGrading",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List written quiz attempts for grading",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "listQuizGrading",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/quiz-attempts/{attemptId}/grade": {
+      "put": {
+        "operationId": "gradeQuizAttempt",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Grade and optionally release a written quiz attempt",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "gradeQuizAttempt",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attemptId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/submissions/{submissionId}/grade": {
+      "put": {
+        "operationId": "gradeAssignmentSubmission",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Grade and optionally release an assignment",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "gradeAssignmentSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/payments": {
+      "get": {
+        "operationId": "listPaymentReviews",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List manual payment proofs awaiting review",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "listPaymentReviews",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/payment-settings": {
+      "get": {
+        "operationId": "getPaymentSettings",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get provider QR-payment configuration",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getPaymentSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "setPaymentSettings",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set provider QR-payment configuration",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "setPaymentSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/payments/{orderId}/review": {
+      "put": {
+        "operationId": "reviewManualPayment",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Approve, reject, or request more payment evidence",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "reviewManualPayment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/analytics": {
+      "get": {
+        "operationId": "getProviderCourseAnalytics",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get provider-scoped learner progress analytics",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getProviderCourseAnalytics",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/provider/organizations/{organizationId}/courses/{courseId}/analytics.csv": {
+      "get": {
+        "operationId": "exportProviderCourseAnalytics",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Export a bounded audited learner analytics CSV",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "exportProviderCourseAnalytics",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/invitations/{token}/accept": {
+      "post": {
+        "operationId": "acceptCourseInvitation",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Accept a private course invitation",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "acceptCourseInvitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/courses/{courseId}/quizzes/{quizId}/attempts": {
+      "post": {
+        "operationId": "submitCourseQuiz",
+        "responses": {
+          "201": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit a course quiz attempt",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "submitCourseQuiz",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "quizId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/courses/{courseId}/assignments/{assignmentId}/submissions": {
+      "post": {
+        "operationId": "submitCourseAssignment",
+        "responses": {
+          "201": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Submit written work and private files",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "submitCourseAssignment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignmentId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/courses/{courseId}/payment-orders": {
+      "post": {
+        "operationId": "createCoursePaymentOrder",
+        "responses": {
+          "201": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a manual QR-payment order",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "createCoursePaymentOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lms/payment-orders/{orderId}/proof": {
+      "put": {
+        "operationId": "attachCoursePaymentProof",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Attach a scanned payment proof",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "attachCoursePaymentProof",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/lms/courses/{courseId}/results": {
+      "get": {
+        "operationId": "getLearnerCourseResults",
+        "responses": {
+          "200": {
+            "description": "Successful response with no representation."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get released course grades and feedback",
+        "tags": [
+          "LMS"
+        ],
+        "x-codewithmee-contract": "getLearnerCourseResults",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "courseId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          }
+        ]
+      }
     }
   },
   "servers": [
@@ -3878,6 +6546,15 @@
     },
     {
       "name": "Operations"
+    },
+    {
+      "name": "Challenges"
+    },
+    {
+      "name": "Courses"
+    },
+    {
+      "name": "LMS"
     }
   ]
 }

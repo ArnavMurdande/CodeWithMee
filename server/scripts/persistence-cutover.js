@@ -122,7 +122,7 @@ async function rollback(client, safety) {
       environment: safety.deploymentEnvironment,
       rolledBackAt: new Date().toISOString(),
       state: 'rolled_back',
-      store: 'mongoose',
+      store: 'postgres',
     };
     await writeFlag(client, {
       domain,

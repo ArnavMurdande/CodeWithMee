@@ -4,7 +4,7 @@
   min-height: 100dvh;
   overflow-x: clip;
   color: var(--cwm-color-text);
-  background: var(--cwm-color-canvas);
+  background: transparent;
 }
 
 .app-main {

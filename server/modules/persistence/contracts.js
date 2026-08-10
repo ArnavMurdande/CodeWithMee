@@ -1,7 +1,6 @@
 'use strict';
 
 const PERSISTENCE_STORE = Object.freeze({
-  MONGOOSE: 'mongoose',
   POSTGRES: 'postgres',
 });
 
@@ -37,9 +36,8 @@ const CORE_AUTHORITY_DOMAINS = Object.freeze(
   ].sort(),
 );
 
-// These repositories have a complete PostgreSQL implementation in P0C-S5. Direct-Mongoose
-// feature routes remain explicitly ineligible until their owning phase introduces a service boundary.
-const POSTGRES_RUNTIME_READY_DOMAINS = Object.freeze(new Set(CORE_AUTHORITY_DOMAINS));
+// Complete PostgreSQL cutover runtime-ready domains across all persistence boundaries.
+const POSTGRES_RUNTIME_READY_DOMAINS = Object.freeze(new Set(Object.values(PERSISTENCE_DOMAIN)));
 
 module.exports = {
   CORE_AUTHORITY_DOMAINS,

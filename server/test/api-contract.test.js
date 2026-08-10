@@ -31,7 +31,7 @@ function visitSchemas(value, visitor) {
 test('OpenAPI 3.1 publishes every and only implemented v1 operation with resolvable schemas', () => {
   assert.equal(openApiDocument.openapi, '3.1.1');
   assert.equal(openApiDocument.jsonSchemaDialect, 'https://json-schema.org/draft/2020-12/schema');
-  assert.equal(operations.length, 41);
+  assert.equal(operations.length, 81);
 
   const published = [];
   for (const [path, pathItem] of Object.entries(openApiDocument.paths)) {

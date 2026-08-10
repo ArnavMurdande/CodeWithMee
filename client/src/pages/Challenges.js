@@ -5,15 +5,21 @@ import { AuthContext } from '../context/AuthContext';
 import AppDropdown from '../components/AppDropdown';
 import { AsyncState } from '../components/ui/AsyncState';
 
-// --- Icons ---
 const DeleteIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
-    fill="currentColor"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className="delete-icon"
   >
-    <path d="M7 6V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6H22V8H2V6H7ZM6 8H18V21C18 21.5523 17.5523 22 17 22H7C6.44772 22 6 21.5523 6 21V8ZM9 10V19H11V10H9ZM13 10V19H15V10H13Z"></path>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 );
 
@@ -48,25 +54,49 @@ const Challenges = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
   const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const fetchChallenges = async () => {
-    setIsLoading(true);
-    setLoadError(false);
+  const fetchChallenges = async ({ append = false, cursor = null } = {}) => {
+    if (!append) setIsLoading(true);
+    if (!append) setLoadError(false);
     try {
-      const [challengesRes, leaderboardRes] = await Promise.all([
-        axios.get('/api/challenges'),
-        axios.get('/api/challenges/leaderboard'),
+      const [challengesRes, leaderboardRes] = await Promise.allSettled([
+        axios.get('/api/v1/challenges', { params: { cursor, limit: 20 } }),
+        axios.get('/api/v1/challenges/leaderboard'),
       ]);
 
-      const challengesWithStatus = challengesRes.data.map((c) => ({
-        ...c,
-        isSaved: user?.savedChallenges?.includes(c._id),
-      }));
+      const challengesData = challengesRes.status === 'fulfilled'
+        ? (Array.isArray(challengesRes.value.data)
+            ? challengesRes.value.data
+            : (challengesRes.value.data.challenges || []))
+        : [];
+      if (challengesRes.status === 'rejected') {
+        throw challengesRes.reason;
+      }
 
-      setChallenges(challengesWithStatus);
-      setLeaderboard(leaderboardRes.data);
+      const challengesWithStatus = challengesData.map((c) => {
+        const id = c.id || c._id;
+        return {
+          ...c,
+          _id: id,
+          id,
+          isSaved: c.isSaved || user?.savedChallenges?.includes(id),
+        };
+      });
+
+      setChallenges((current) => append
+        ? [...current, ...challengesWithStatus.filter((entry) => !current.some((existing) => existing.id === entry.id))]
+        : challengesWithStatus);
+      if (challengesRes.status === 'fulfilled') {
+        setNextCursor(challengesRes.value.data.nextCursor || null);
+        setHasMore(Boolean(challengesRes.value.data.hasMore));
+      }
+      if (leaderboardRes.status === 'fulfilled' && Array.isArray(leaderboardRes.value.data)) {
+        setLeaderboard(leaderboardRes.value.data);
+      }
     } catch {
       setLoadError(true);
     }
@@ -90,7 +120,7 @@ const Challenges = () => {
       )
     ) {
       try {
-        await axios.delete(`/api/challenges/${challengeId}`);
+        await axios.delete(`/api/v1/challenges/${challengeId}`);
         setChallenges((prevChallenges) => prevChallenges.filter((c) => c._id !== challengeId));
       } catch (error) {
         console.error('Error deleting challenge:', error);
@@ -101,7 +131,7 @@ const Challenges = () => {
 
   const handleSaveChallenge = async (challengeId) => {
     try {
-      const res = await axios.put(`/api/user/save-challenge/${challengeId}`, {});
+      const res = await axios.put(`/api/v1/challenges/${challengeId}/bookmark`, {});
 
       setUser((prevUser) => ({
         ...prevUser,
@@ -118,7 +148,7 @@ const Challenges = () => {
 
   const handleVote = async (challengeId, voteType) => {
     try {
-      const res = await axios.post(`/api/challenges/${challengeId}/${voteType}`, {});
+      const res = await axios.post(`/api/v1/challenges/${challengeId}/reactions/${voteType}`, {});
 
       setChallenges((prevChallenges) =>
         prevChallenges.map((c) =>
@@ -161,6 +191,8 @@ const Challenges = () => {
         onSaveChallenge={handleSaveChallenge}
         onVote={handleVote}
         onCreateChallenge={() => navigate('/challenges/new')}
+        hasMore={hasMore}
+        onLoadMore={() => fetchChallenges({ append: true, cursor: nextCursor })}
         user={user}
       />
     </div>
@@ -177,6 +209,8 @@ const ChallengeList = ({
   onSaveChallenge,
   onVote,
   user,
+  hasMore,
+  onLoadMore,
 }) => {
   const [activeTab, setActiveTab] = useState('problems');
   const [searchTerm, setSearchTerm] = useState('');
@@ -312,7 +346,8 @@ const ChallengeList = ({
             </thead>
             <tbody>
               {filteredAndSortedChallenges.map((challenge) => {
-                const isAuthor = user && user._id === challenge.author?._id;
+                const currentUserId = user?.id || user?._id;
+                const isAuthor = Boolean(currentUserId && currentUserId === challenge.createdByUserId);
                 return (
                   <tr key={challenge._id} className={challenge.isSolved ? 'solved' : ''}>
                     <td className="status-col">
@@ -331,7 +366,7 @@ const ChallengeList = ({
                         {challenge.title}
                       </button>
                     </td>
-                    <td className="author-col">{challenge.author?.username || 'N/A'}</td>
+                    <td className="author-col">{isAuthor ? 'You' : 'Community'}</td>
                     <td className="difficulty-col">
                       <span className={difficultyColor[challenge.difficulty]}>
                         {challenge.difficulty}
@@ -341,27 +376,27 @@ const ChallengeList = ({
                     <td className="actions-cell actions-col">
                       <div className="vote-group-pill">
                         <button
-                          className={`action-btn like-btn ${challenge.likes.includes(user?._id) ? 'active' : ''}`}
+                          className={`action-btn like-btn ${(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             onVote(challenge._id, 'like');
                           }}
                         >
                           <span>👍</span>
-                          <span>{challenge.likes.length}</span>
+                          <span>{(challenge.likes || []).length}</span>
                         </button>
 
                         <div className="pill-divider"></div>
 
                         <button
-                          className={`action-btn dislike-btn ${challenge.dislikes.includes(user?._id) ? 'active' : ''}`}
+                          className={`action-btn dislike-btn ${(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             onVote(challenge._id, 'dislike');
                           }}
                         >
                           <span>👎</span>
-                          <span>{challenge.dislikes.length}</span>
+                          <span>{(challenge.dislikes || []).length}</span>
                         </button>
                       </div>
 
@@ -418,6 +453,9 @@ const ChallengeList = ({
           </table>
         )}
       </div>
+      {activeTab === 'problems' && hasMore && (
+        <button className="load-more-btn" onClick={onLoadMore} type="button">Load more challenges</button>
+      )}
     </>
   );
 };

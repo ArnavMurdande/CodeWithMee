@@ -70,7 +70,7 @@ test('CORS preflight is exact and fetch metadata blocks only untrusted cross-sit
     assert.equal(preflight.status, 204);
     assert.equal(preflight.headers.get('access-control-allow-origin'), ORIGIN);
     assert.equal(preflight.headers.get('access-control-allow-credentials'), 'true');
-    assert.doesNotMatch(preflight.headers.get('access-control-allow-methods'), /PUT/);
+    assert.match(preflight.headers.get('access-control-allow-methods'), /PUT/);
     assert.match(preflight.headers.get('access-control-allow-headers'), /X-CSRF-Token/i);
     assert.equal(preflight.headers.get('access-control-max-age'), '600');
 

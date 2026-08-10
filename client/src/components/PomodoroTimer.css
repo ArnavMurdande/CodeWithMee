@@ -1,116 +1,440 @@
 .pomodoro-container {
   position: relative;
+  display: inline-block;
 }
 
+/* ===================================
+   PILL BUTTON WITH PROGRESS FILL
+   =================================== */
+
 .pomodoro-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.5rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1.1rem;
   border-radius: 9999px;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  background-color: rgba(18, 18, 26, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  user-select: none;
 }
 
 .pomodoro-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.pomodoro-button:active {
+  transform: translateY(0);
+}
+
+/* Progress Fill Bar inside Pill */
+.pomodoro-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Mode Gradients */
+.pomodoro-button.work-mode .pomodoro-progress-fill {
+  background: linear-gradient(90deg, #00c6ff 0%, #00f8f1 100%);
+}
+
+.pomodoro-button.break-mode .pomodoro-progress-fill {
+  background: linear-gradient(90deg, #8a2be2 0%, #ff007f 100%);
 }
 
 .pomodoro-button.active {
   border-color: #00f8f1;
+  box-shadow: 0 0 16px rgba(0, 248, 241, 0.35);
+}
+
+.pomodoro-button.break-mode.active {
+  border-color: #ff007f;
+  box-shadow: 0 0 16px rgba(255, 0, 127, 0.35);
 }
 
 .pomodoro-button.finished {
   background-color: #ff4d4d;
   border-color: #ff4d4d;
+  animation: finishedPulse 1.5s infinite;
 }
 
-/* Dropdown with proper gap from navbar */
+@keyframes finishedPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 77, 77, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
+  }
+}
+
+/* Content Container over Fill Layer - Styled to match Navbar */
+.pomodoro-button-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+/* Status Indicator Dot - Pure White */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.3s ease;
+}
+
+.pomodoro-button.break-mode .status-dot {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+}
+
+.status-dot.pulse {
+  animation: dotPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes dotPulse {
+  from {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.mode-label {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.time-display {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+/* ===================================
+   OPAQUE ENHANCED DROPDOWN
+   =================================== */
+
 .pomodoro-dropdown {
   position: fixed;
-  top: 90px; /* Fixed position below navbar with proper gap */
+  top: 90px;
   right: 40px;
-  width: 220px;
-  background-color: rgba(18, 18, 20, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 1.25rem;
-  z-index: 999;
-  color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  animation: dropdownFadeIn 0.2s ease-out;
+  width: 300px;
+  background-color: #12121a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.35rem;
+  z-index: 10000;
+  color: #ffffff;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(0, 248, 241, 0.1);
+  animation: dropdownFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  user-select: none;
 }
 
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-12px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-.dropdown-section {
+.dropdown-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 0.85rem;
   margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dropdown-section label {
-  font-weight: bold;
-  font-size: 0.95rem;
-}
-
-.dropdown-section input {
-  width: 60px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  border-radius: 8px;
-  padding: 0.35rem 0.5rem;
-  text-align: center;
-  font-size: 0.9rem;
-  transition: border-color 0.2s ease;
-}
-
-.dropdown-section input:focus {
-  border-color: #00f8f1;
-}
-
-.dropdown-section span {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.pomodoro-actions {
+.header-title {
   display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
+  align-items: center;
   gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
-.pomodoro-actions button {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 48%;
+.header-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.header-dot.work {
+  background-color: #00f8f1;
+  box-shadow: 0 0 8px #00f8f1;
+}
+
+.header-dot.break {
+  background-color: #ff007f;
+  box-shadow: 0 0 8px #ff007f;
+}
+
+.mode-switch-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 0.75rem;
   font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-.pomodoro-actions button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.mode-switch-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.dropdown-section-group {
+  margin-bottom: 0.95rem;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.45rem;
+}
+
+.time-inputs-row {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.input-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.input-field:focus-within,
+.input-field:hover {
+  border-color: #00f8f1;
+  box-shadow: 0 0 10px rgba(0, 248, 241, 0.25);
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.input-field input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  padding-right: 0.2rem;
+}
+
+/* Remove spin buttons from Chrome, Safari, Edge, Opera */
+.input-field input::-webkit-outer-spin-button,
+.input-field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove spin buttons from Firefox */
+.input-field input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.unit-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  margin-right: 0.35rem;
+}
+
+/* Stepper Arrows */
+.stepper-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepper-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.55rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.stepper-btn:hover {
+  background: rgba(0, 248, 241, 0.4);
+  color: #ffffff;
+}
+
+.stepper-btn:active {
+  transform: scale(0.9);
+}
+
+/* Presets Group */
+.presets-group {
+  margin-top: 0.85rem;
+  margin-bottom: 1.15rem;
+}
+
+.presets-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.45rem;
+}
+
+.presets-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.45rem;
+}
+
+.presets-buttons button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.presets-buttons button:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* Identical Size Grid Action Buttons: Blue Start & Red Reset */
+.pomodoro-dropdown .pomodoro-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0.75rem !important;
+  margin-top: 1rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.pomodoro-dropdown .pomodoro-actions .action-btn {
+  width: 100% !important;
+  height: 42px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 1rem !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.2s ease !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  user-select: none !important;
+  pointer-events: auto !important;
+}
+
+/* Start / Pause Button - BLUE styling */
+.pomodoro-dropdown .pomodoro-actions .start-btn {
+  background: rgba(0, 122, 255, 0.18) !important;
+  border: 1px solid rgba(0, 122, 255, 0.4) !important;
+  color: #3897ff !important;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2) !important;
+}
+
+.pomodoro-dropdown .pomodoro-actions .start-btn:hover {
+  background: rgba(0, 122, 255, 0.3) !important;
+  border-color: rgba(0, 122, 255, 0.6) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.pomodoro-dropdown .pomodoro-actions .start-btn.active {
+  background: rgba(0, 122, 255, 0.25) !important;
+  border: 1px solid rgba(0, 122, 255, 0.5) !important;
+  color: #66b2ff !important;
+}
+
+.pomodoro-dropdown .pomodoro-actions .start-btn.active:hover {
+  background: rgba(0, 122, 255, 0.38) !important;
+  color: #ffffff !important;
+}
+
+/* Reset Button - RED styling */
+.pomodoro-dropdown .pomodoro-actions .reset-btn {
+  background: rgba(255, 77, 77, 0.12) !important;
+  border: 1px solid rgba(255, 77, 77, 0.25) !important;
+  color: #ff6b6b !important;
+}
+
+.pomodoro-dropdown .pomodoro-actions .reset-btn:hover {
+  background: rgba(255, 77, 77, 0.22) !important;
+  border-color: rgba(255, 77, 77, 0.45) !important;
+  color: #ff8585 !important;
   transform: translateY(-1px);
 }
 
@@ -155,6 +479,7 @@
     0 24px 80px rgba(0, 0, 0, 0.5),
     0 0 60px rgba(0, 248, 241, 0.1);
   animation: contentSlideIn 0.4s ease-out 0.1s both;
+  font-family: inherit;
 }
 
 @keyframes contentSlideIn {
@@ -189,7 +514,7 @@
 }
 
 .break-title {
-  font-family: 'Martian Mono', 'Courier New', monospace;
+  font-family: inherit;
   font-size: 2rem;
   font-weight: 800;
   color: #fff;
@@ -201,7 +526,8 @@
 }
 
 .break-timer-display {
-  font-family: 'Martian Mono', 'Courier New', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 5rem;
   font-weight: 700;
   color: #fff;
@@ -227,12 +553,11 @@
   background: linear-gradient(135deg, #00f8f1 0%, #00d4aa 100%);
   border: none;
   color: #000;
-  font-family: 'Martian Mono', 'Courier New', monospace;
+  font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
   padding: 1rem 2rem;
   border-radius: 12px;
-  cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 248, 241, 0.3);
 }
@@ -246,12 +571,11 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.7);
-  font-family: 'Martian Mono', 'Courier New', monospace;
+  font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 

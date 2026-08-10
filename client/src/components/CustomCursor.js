@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { useMobile } from '../hooks/useMobile';
 import './CustomCursor.css';
@@ -53,7 +54,7 @@ const CustomCursor = () => {
         particle.style.height = '4px';
         particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         particle.style.pointerEvents = 'none';
-        particle.style.zIndex = '10000';
+        particle.style.zIndex = '1000000';
         particle.style.left = `${e.clientX}px`;
         particle.style.top = `${e.clientY}px`;
         document.body.appendChild(particle);
@@ -90,7 +91,7 @@ const CustomCursor = () => {
 
   if (isMobile) return null;
 
-  return (
+  return createPortal(
     <img
       ref={cursorRef}
       src={isHovering ? HandIcon : ArrowIcon}
@@ -101,14 +102,15 @@ const CustomCursor = () => {
         position: 'fixed',
         top: 0,
         left: 0,
-        zIndex: 99999,
+        zIndex: 1000000,
         pointerEvents: 'none',
         width: '24px',
         height: 'auto',
         display: 'block', // Ensure not hidden
         willChange: 'transform',
       }}
-    />
+    />,
+    document.body,
   );
 };
 

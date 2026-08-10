@@ -16,6 +16,25 @@
   margin-bottom: 1.5rem;
 }
 
+.course-payment-instructions {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  max-width: 34rem;
+  padding: 1rem;
+  border: 1px solid rgba(113, 229, 232, 0.45);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+
+.course-payment-instructions img {
+  width: min(100%, 22rem);
+  height: auto;
+  border-radius: 8px;
+  background: #fff;
+}
+
 /* Tabs */
 .courses-tabs {
   display: flex;

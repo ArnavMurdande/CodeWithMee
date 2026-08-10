@@ -1,10 +1,7 @@
 'use strict';
 
-const { createMongooseAuthorityRepository } = require('../authority/mongoose-repository');
 const { createPostgresAuthorityRepository } = require('../authority/postgres-repository');
-const { createMongooseIdentityRepository } = require('../identity/mongoose-repository');
 const { createPostgresIdentityRepository } = require('../identity/postgres-repository');
-const { createMongooseOrganizationRepository } = require('../organizations/mongoose-repository');
 const { createPostgresOrganizationRepository } = require('../organizations/postgres-repository');
 const { PERSISTENCE_DOMAIN, PERSISTENCE_STORE } = require('./contracts');
 const { createShadowReadRepository } = require('./shadow-repository');
@@ -16,18 +13,11 @@ const SHADOW_METHODS = Object.freeze({
 });
 
 function repositoriesForStore(store, postgresPool) {
-  if (store === PERSISTENCE_STORE.POSTGRES) {
-    if (!postgresPool) throw new Error('PostgreSQL repositories require an active pool.');
-    return {
-      authority: createPostgresAuthorityRepository(postgresPool),
-      identity: createPostgresIdentityRepository(postgresPool),
-      organizations: createPostgresOrganizationRepository(postgresPool),
-    };
-  }
+  if (!postgresPool) throw new Error('PostgreSQL repositories require an active pool.');
   return {
-    authority: createMongooseAuthorityRepository(),
-    identity: createMongooseIdentityRepository(),
-    organizations: createMongooseOrganizationRepository(),
+    authority: createPostgresAuthorityRepository(postgresPool),
+    identity: createPostgresIdentityRepository(postgresPool),
+    organizations: createPostgresOrganizationRepository(postgresPool),
   };
 }
 

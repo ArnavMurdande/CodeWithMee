@@ -32,10 +32,20 @@ const AppDropdown = ({
     const spaceAbove = rect.top;
     const isDropUp = spaceBelow < 220 && spaceAbove > 200;
 
+    const triggerWidth = rect.width;
+    const minMenuWidth = Math.max(triggerWidth, 200);
+
+    // Clamp left position so menu stays within screen boundaries and doesn't overflow adjacent panels
+    let left = rect.left;
+    if (left + minMenuWidth > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - minMenuWidth - 16);
+    }
+    left = Math.max(16, left);
+
     setCoords({
       top: isDropUp ? rect.top - 8 : rect.bottom + 8,
-      left: rect.left,
-      width: rect.width,
+      left,
+      width: triggerWidth,
       isDropUp,
     });
   };
@@ -109,6 +119,7 @@ const AppDropdown = ({
     requestAnimationFrame(() => focusOption(selectedIndex));
 
     const handleScrollOrResize = () => updateCoords();
+    const handleCloseEvent = () => closeMenu();
     const handleClickOutside = (event) => {
       if (
         dropdownRef.current &&
@@ -122,11 +133,21 @@ const AppDropdown = ({
 
     window.addEventListener('scroll', handleScrollOrResize, true);
     window.addEventListener('resize', handleScrollOrResize);
+    window.addEventListener('cwm:close-dropdowns', handleCloseEvent);
     document.addEventListener('mousedown', handleClickOutside);
+
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined' && dropdownRef.current) {
+      ro = new ResizeObserver(() => updateCoords());
+      ro.observe(dropdownRef.current);
+    }
+
     return () => {
       window.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('cwm:close-dropdowns', handleCloseEvent);
       document.removeEventListener('mousedown', handleClickOutside);
+      if (ro) ro.disconnect();
     };
   }, [isOpen, selectedIndex]);
 
@@ -142,8 +163,9 @@ const AppDropdown = ({
         top: coords.isDropUp ? 'auto' : `${coords.top}px`,
         bottom: coords.isDropUp ? `${window.innerHeight - coords.top}px` : 'auto',
         left: `${coords.left}px`,
-        minWidth: `${Math.max(coords.width, 150)}px`,
-        maxWidth: '320px',
+        width: `${coords.width}px`,
+        minWidth: `${Math.max(coords.width, 160)}px`,
+        maxWidth: '380px',
         zIndex: 999999,
       }}
     >

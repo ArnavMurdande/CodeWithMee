@@ -18,6 +18,7 @@ const CreateChallenge = lazy(() => import('./pages/CreateChallenge'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const HomePage = lazy(() => import('./pages/HomePage'));
 const Pathways = lazy(() => import('./pages/Pathways'));
+const ProviderCenter = lazy(() => import('./pages/ProviderCenter'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Sandbox = lazy(() => import('./pages/Sandbox'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -125,6 +126,14 @@ function App() {
                 </ProtectedRoute>
               }
               path="/settings"
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <ProviderCenter />
+                </ProtectedRoute>
+              }
+              path="/provider"
             />
             <Route
               element={

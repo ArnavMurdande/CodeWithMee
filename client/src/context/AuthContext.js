@@ -8,6 +8,7 @@ import {
   setAccessToken,
   subscribeToAccessToken,
 } from '../lib/auth-session';
+import { cleanupObsoleteStorageKeys, clearUserScopedStorage } from '../lib/cache-isolation';
 
 export const AuthContext = createContext(null);
 
@@ -106,12 +107,21 @@ export const AuthProvider = ({ children }) => {
     [establishSession],
   );
 
+  useEffect(() => {
+    cleanupObsoleteStorageKeys();
+  }, []);
+
+  const clearLocalCaches = () => {
+    clearUserScopedStorage();
+  };
+
   const logout = useCallback(async () => {
     try {
       await apiClient.post('/api/v1/auth/logout');
     } finally {
       clearAccessToken();
       setUser(null);
+      clearLocalCaches();
       channelRef.current?.postMessage({ type: 'signed_out' });
       navigate('/auth', { replace: true });
     }
@@ -123,6 +133,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       clearAccessToken();
       setUser(null);
+      clearLocalCaches();
       channelRef.current?.postMessage({ type: 'signed_out' });
       navigate('/auth', { replace: true });
     }

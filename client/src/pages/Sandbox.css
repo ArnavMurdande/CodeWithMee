@@ -484,6 +484,15 @@
   padding: 1rem;
 }
 
+.editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
 .editor-header {
   display: flex;
   justify-content: space-between;

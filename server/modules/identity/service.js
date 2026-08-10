@@ -19,6 +19,50 @@ const ONE_TIME_PURPOSE = Object.freeze({
   PASSWORD_RESET: 'password_reset',
 });
 
+const THEME_PRESETS = new Set([
+  'ocean',
+  'midnight',
+  'aurora',
+  'sunset',
+  'nebula',
+  'forest',
+  'monochrome',
+  'ember',
+  'custom',
+]);
+const THEME_COLOR = /^#[0-9a-f]{6}$/i;
+const DEFAULT_THEME = Object.freeze({
+  preset: 'ocean',
+  color1: '#149ecc',
+  color2: '#412ecc',
+  color3: '#44cf87',
+  customColors: false,
+});
+
+function normalizeThemePreferences(candidate, { rejectInvalid = false } = {}) {
+  const valid =
+    candidate &&
+    typeof candidate === 'object' &&
+    !Array.isArray(candidate) &&
+    THEME_PRESETS.has(candidate.preset) &&
+    THEME_COLOR.test(candidate.color1) &&
+    THEME_COLOR.test(candidate.color2) &&
+    THEME_COLOR.test(candidate.color3) &&
+    typeof candidate.customColors === 'boolean' &&
+    (candidate.preset === 'custom' ? candidate.customColors : !candidate.customColors);
+  if (!valid) {
+    if (rejectInvalid) throw new IdentityError('invalid_theme_preferences', 400);
+    return { ...DEFAULT_THEME };
+  }
+  return {
+    preset: candidate.preset,
+    color1: candidate.color1.toLowerCase(),
+    color2: candidate.color2.toLowerCase(),
+    color3: candidate.color3.toLowerCase(),
+    customColors: candidate.customColors,
+  };
+}
+
 function normalizeEmail(value) {
   return String(value || '')
     .trim()
@@ -497,6 +541,45 @@ function createIdentityService({
       if (!identity) throw new IdentityError('invalid_or_expired_token', 400);
       await repository.updateIdentityPassword(identity.id, await passwordHasher.hash(password));
       await repository.revokeAllSessions(token.userId, consumedAt);
+    },
+
+    async updateUserProfile(authentication, { avatarUrl, displayName, username } = {}) {
+      const updatedUser = await repository.updateUserProfile(authentication.user.id, {
+        avatarUrl,
+        displayName: displayName ? sanitizeDisplayName(displayName) : undefined,
+        username,
+      });
+      return userDto(updatedUser || authentication.user);
+    },
+
+    async getThemePreferences(authentication) {
+      const stored = await repository.getThemePreferences(authentication.user.id);
+      return normalizeThemePreferences(stored);
+    },
+
+    async setThemePreferences(authentication, candidate) {
+      const theme = normalizeThemePreferences(candidate, { rejectInvalid: true });
+      return repository.setThemePreferences(authentication.user.id, theme);
+    },
+
+    async setPrivacySettings(authentication, candidate) {
+      const choices = new Set(['everyone', 'followers', 'friends', 'nobody']);
+      const keys = ['whoCanFollow', 'whoCanViewPosts', 'whoCanViewComments', 'whoCanViewProfileInfo'];
+      const settings = {};
+      for (const key of keys) {
+        if (!choices.has(candidate?.[key])) throw new IdentityError('invalid_privacy_settings', 400);
+        settings[key] = candidate[key];
+      }
+      return repository.setPrivacySettings(authentication.user.id, settings);
+    },
+
+    async getPrivacySettings(authentication) {
+      return (await repository.getPrivacySettings(authentication.user.id)) || {
+        whoCanFollow: 'everyone',
+        whoCanViewPosts: 'everyone',
+        whoCanViewComments: 'everyone',
+        whoCanViewProfileInfo: 'everyone',
+      };
     },
 
     userDto,

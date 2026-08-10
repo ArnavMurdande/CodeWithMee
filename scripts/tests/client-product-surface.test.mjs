@@ -103,6 +103,7 @@ test('client route inventory is exact and retired provider bookmarks fail closed
     '/sandbox',
     '/profile',
     '/settings',
+    '/provider',
     '/challenges',
     '/challenges/new',
     '/challenges/:id',

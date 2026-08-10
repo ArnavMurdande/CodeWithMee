@@ -95,7 +95,7 @@ function normalizeTheme(candidate) {
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
 
   const [theme, setTheme] = useState(() => {
     try {
@@ -114,24 +114,30 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.setItem('cwm-theme', JSON.stringify(theme));
+      const userId = user?.id || user?._id;
+      if (userId) localStorage.setItem(`cwm_${userId}_theme`, JSON.stringify(theme));
     } catch {
       // Theme persistence is optional; the in-memory theme remains usable.
     }
-  }, [theme]);
+  }, [theme, user?.id, user?._id]);
 
   // Load theme from backend on login
   useEffect(() => {
     if (!isAuthenticated) return;
     const loadTheme = async () => {
       try {
-        const res = await axios.get('/api/user/theme');
-        if (res.data && res.data.preset) {
+        const userId = user?.id || user?._id;
+        const cached = userId ? localStorage.getItem(`cwm_${userId}_theme`) : null;
+        if (cached) setTheme(normalizeTheme(JSON.parse(cached)));
+        const res = await axios.get('/api/v1/me/preferences/theme');
+        const stored = res.data?.theme;
+        if (stored?.preset) {
           const serverTheme = normalizeTheme({
-            preset: res.data.preset,
-            color1: res.data.color1 || defaultTheme.color1,
-            color2: res.data.color2 || defaultTheme.color2,
-            color3: res.data.color3 || defaultTheme.color3,
-            customColors: res.data.customColors || false,
+            preset: stored.preset,
+            color1: stored.color1 || defaultTheme.color1,
+            color2: stored.color2 || defaultTheme.color2,
+            color3: stored.color3 || defaultTheme.color3,
+            customColors: stored.customColors || false,
           });
           setTheme(serverTheme);
         }
@@ -141,7 +147,7 @@ export const ThemeProvider = ({ children }) => {
       }
     };
     loadTheme();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id, user?._id]);
 
   // Debounced save to backend
   const saveToBackend = useCallback(
@@ -150,7 +156,7 @@ export const ThemeProvider = ({ children }) => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(async () => {
         try {
-          await axios.put('/api/user/theme', newTheme);
+          await axios.put('/api/v1/me/preferences/theme', newTheme);
         } catch {
           console.warn('Could not save theme to server.');
         }

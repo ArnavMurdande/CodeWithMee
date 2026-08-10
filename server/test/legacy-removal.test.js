@@ -17,7 +17,7 @@ test('legacy removal remains blocked while any safety proof or domain is incompl
     clock: () => new Date('2026-08-01T00:00:00.000Z'),
     persistence: {
       legacyApiMode: 'enabled',
-      stores: Object.fromEntries(domains.map((domain) => [domain, 'mongoose'])),
+      stores: Object.fromEntries(domains.map((domain) => [domain, 'other'])),
     },
     rollbackUntil: '2026-08-02T00:00:00.000Z',
   });
