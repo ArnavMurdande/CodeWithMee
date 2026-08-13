@@ -47,8 +47,8 @@ const CHALLENGES = Object.freeze([
 async function seedChallenges(client) {
   await client.query(
     `INSERT INTO users (id,email_normalized,email_display,display_name,username,status,platform_role,email_verified_at)
-     VALUES ($1,'seed-system@codewithmee.invalid','seed-system@codewithmee.invalid','CodeWithMee','codewithmee','active','superadmin',NOW())
-     ON CONFLICT (id) DO NOTHING`,
+     VALUES ($1,'seed-system@codewithmee.invalid','seed-system@codewithmee.invalid','CodeWithMee','codewithmee','active','learner',NOW())
+     ON CONFLICT (id) DO UPDATE SET platform_role='learner', updated_at=NOW()`,
     [SYSTEM_AUTHOR_ID],
   );
   for (const challenge of CHALLENGES) {

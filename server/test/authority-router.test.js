@@ -215,6 +215,26 @@ test('authority HTTP workflow denies stale authority, untrusted origins, and non
   });
 });
 
+test('authority HTTP workflow permanently deletes a user and retains the deletion audit event', async () => {
+  await withServer(async ({ baseUrl, repository }) => {
+    const response = await fetch(`${baseUrl}/admin/users/target`, {
+      body: JSON.stringify({
+        reason: 'Approved permanent account erasure through admin governance',
+        revision: 1,
+      }),
+      headers: headers(),
+      method: 'DELETE',
+    });
+
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.deletedUserId, 'target');
+    assert.equal(body.revokedSessionCount, 1);
+    assert.equal(body.auditEvent.action, 'account_delete');
+    assert.equal(repository.snapshot().users.some((entry) => entry.id === 'target'), false);
+  });
+});
+
 test('ownership transfer HTTP route requires the current owner and commits one revision', async () => {
   await withServer(async ({ baseUrl, repository }) => {
     const response = await fetch(`${baseUrl}/organizations/org-1/ownership-transfer`, {

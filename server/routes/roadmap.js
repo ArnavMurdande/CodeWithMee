@@ -72,13 +72,17 @@ function extractJson(text) {
   const trimmed = text.trim();
   try {
     return JSON.parse(trimmed);
-  } catch {}
+  } catch {
+    // Continue with fenced or embedded JSON extraction.
+  }
 
   const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   if (codeBlockMatch && codeBlockMatch[1]) {
     try {
       return JSON.parse(codeBlockMatch[1].trim());
-    } catch {}
+    } catch {
+      // Continue with embedded JSON extraction.
+    }
   }
 
   const firstBrace = trimmed.indexOf('{');
@@ -86,7 +90,9 @@ function extractJson(text) {
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     try {
       return JSON.parse(trimmed.substring(firstBrace, lastBrace + 1));
-    } catch {}
+    } catch {
+      // Invalid model output is handled by the caller's safe fallback.
+    }
   }
 
   return null;

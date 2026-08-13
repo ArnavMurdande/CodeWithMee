@@ -4,6 +4,7 @@ import { AsyncState } from '../components/ui/AsyncState';
 import { AuthContext } from '../context/AuthContext';
 import { getUserStorageKey } from '../lib/cache-isolation';
 import axios from '../lib/api';
+import './Dashboard.css';
 
 // --- Helper Functions and Data ---
 
@@ -45,50 +46,53 @@ const calculateRoadmapProgress = (roadmap) => {
 
 const RoadmapCard = ({ roadmaps, loading }) => {
   const navigate = useNavigate();
+  const count = roadmaps ? roadmaps.length : 0;
+
   return (
     <div className="dashboard-card roadmaps">
       <div className="card-header">
-        <h3>My Roadmaps</h3>
+        <div className="card-header-title-group">
+          <h3>My Roadmaps</h3>
+          {!loading && count > 0 && (
+            <span className="card-count-badge">
+              {count} {count === 1 ? 'pathway' : 'pathways'}
+            </span>
+          )}
+        </div>
         <span className="card-icon">🗺️</span>
       </div>
-      <div
-        className={`card-content ${!loading && (!roadmaps || roadmaps.length === 0) ? 'empty' : ''}`}
-      >
+      <div className={`card-content ${!loading && count === 0 ? 'empty' : ''}`}>
         {loading ? (
-          <div style={{ opacity: 0.6, padding: '1rem 0' }}>
+          <div className="card-loading-state">
             <p className="stat-label">Loading your learning pathways…</p>
           </div>
-        ) : roadmaps && roadmaps.length > 0 ? (
-          <>
-            <p className="stat-number">{roadmaps.length}</p>
-            <p className="stat-label">learning paths created</p>
-            <div className="progress-list">
-              {roadmaps.slice(0, 3).map((roadmap, index) => (
-                <button
-                  className="progress-item"
-                  key={roadmap._id || index}
-                  onClick={() => navigate('/pathways')}
-                  type="button"
+        ) : count > 0 ? (
+          <div className="progress-list">
+            {roadmaps.slice(0, 3).map((roadmap, index) => (
+              <button
+                className="progress-item"
+                key={roadmap._id || index}
+                onClick={() => navigate('/pathways')}
+                type="button"
+              >
+                <span className="progress-title">{roadmap.title}</span>
+                <span
+                  aria-label={`${roadmap.title} progress`}
+                  aria-valuemax="100"
+                  aria-valuemin="0"
+                  aria-valuenow={calculateRoadmapProgress(roadmap)}
+                  className="progress-bar-container"
+                  role="progressbar"
                 >
-                  <span className="progress-title">{roadmap.title}</span>
                   <span
-                    aria-label={`${roadmap.title} progress`}
-                    aria-valuemax="100"
-                    aria-valuemin="0"
-                    aria-valuenow={calculateRoadmapProgress(roadmap)}
-                    className="progress-bar-container"
-                    role="progressbar"
-                  >
-                    <span
-                      className="progress-bar"
-                      style={{ width: `${calculateRoadmapProgress(roadmap)}%` }}
-                    />
-                  </span>
-                  <span className="progress-percent">{calculateRoadmapProgress(roadmap)}%</span>
-                </button>
-              ))}
-            </div>
-          </>
+                    className="progress-bar"
+                    style={{ width: `${calculateRoadmapProgress(roadmap)}%` }}
+                  />
+                </span>
+                <span className="progress-percent">{calculateRoadmapProgress(roadmap)}%</span>
+              </button>
+            ))}
+          </div>
         ) : (
           <>
             <p className="motivational-quote">"{getMotivationalQuote()}"</p>
@@ -104,45 +108,47 @@ const RoadmapCard = ({ roadmaps, loading }) => {
 
 const CoursesCard = ({ courses, loading }) => {
   const navigate = useNavigate();
+  const count = courses ? courses.length : 0;
+
   return (
     <div className="dashboard-card courses">
       <div className="card-header">
-        <h3>My Courses</h3>
+        <div className="card-header-title-group">
+          <h3>My Courses</h3>
+          {!loading && count > 0 && (
+            <span className="card-count-badge">
+              {count} {count === 1 ? 'course' : 'courses'}
+            </span>
+          )}
+        </div>
         <span className="card-icon">🎓</span>
       </div>
-      <div
-        className={`card-content ${!loading && (!courses || courses.length === 0) ? 'empty' : ''}`}
-      >
+      <div className={`card-content ${!loading && count === 0 ? 'empty' : ''}`}>
         {loading ? (
-          <div style={{ opacity: 0.6, padding: '1rem 0' }}>
+          <div className="card-loading-state">
             <p className="stat-label">Loading courses…</p>
           </div>
-        ) : courses && courses.length > 0 ? (
-          <>
-            <p className="stat-number">{courses.length}</p>
-            <p className="stat-label">courses enrolled</p>
-            <div className="notes-list">
-              {courses.slice(0, 3).map((enrollment, index) => {
-                const course = enrollment.course || enrollment;
-                return (
-                  <button
-                    className="note-item"
-                    key={enrollment._id || index}
-                    onClick={() => navigate('/courses')}
-                    style={{ cursor: 'pointer', display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'inherit' }}
-                    type="button"
-                  >
-                    <strong>{course.title || 'Untitled Course'}</strong>
-                    {course.company?.companyName && (
-                      <span style={{ fontSize: '0.8rem', color: '#aaa', marginLeft: '8px' }}>
-                        ({course.company.companyName})
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </>
+        ) : count > 0 ? (
+          <div className="notes-list">
+            {courses.slice(0, 3).map((enrollment, index) => {
+              const course = enrollment.course || enrollment;
+              return (
+                <button
+                  className="note-item course-item"
+                  key={enrollment._id || index}
+                  onClick={() => navigate('/courses')}
+                  type="button"
+                >
+                  <strong>{course.title || 'Untitled Course'}</strong>
+                  {course.company?.companyName && (
+                    <span className="course-company-tag">
+                      ({course.company.companyName})
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         ) : (
           <>
             <p className="motivational-quote">"{getMotivationalQuote()}"</p>
@@ -157,31 +163,34 @@ const CoursesCard = ({ courses, loading }) => {
 };
 
 const NotesCard = ({ notes, loading }) => {
+  const count = notes ? notes.length : 0;
+
   return (
     <div className="dashboard-card notes">
       <div className="card-header">
-        <h3>My Notes</h3>
+        <div className="card-header-title-group">
+          <h3>My Notes</h3>
+          {!loading && count > 0 && (
+            <span className="card-count-badge">
+              {count} {count === 1 ? 'note' : 'notes'}
+            </span>
+          )}
+        </div>
         <span className="card-icon">📝</span>
       </div>
-      <div
-        className={`card-content ${!loading && (!notes || notes.length === 0) ? 'empty' : ''}`}
-      >
+      <div className={`card-content ${!loading && count === 0 ? 'empty' : ''}`}>
         {loading ? (
-          <div style={{ opacity: 0.6, padding: '1rem 0' }}>
+          <div className="card-loading-state">
             <p className="stat-label">Loading notes…</p>
           </div>
-        ) : notes && notes.length > 0 ? (
-          <>
-            <p className="stat-number">{notes.length}</p>
-            <p className="stat-label">notes taken</p>
-            <div className="notes-list">
-              {notes.slice(0, 4).map((note, index) => (
-                <p className="note-item" key={note._id || index}>
-                  {note.title || 'Untitled Note'}
-                </p>
-              ))}
-            </div>
-          </>
+        ) : count > 0 ? (
+          <div className="notes-list">
+            {notes.slice(0, 4).map((note, index) => (
+              <p className="note-item" key={note._id || index}>
+                {note.title || 'Untitled Note'}
+              </p>
+            ))}
+          </div>
         ) : (
           <>
             <p className="motivational-quote">"{getMotivationalQuote()}"</p>
@@ -194,18 +203,26 @@ const NotesCard = ({ notes, loading }) => {
 };
 
 const ChallengesCard = ({ challenges }) => {
+  const count = challenges ? challenges.length : 0;
+
   return (
     <div className="dashboard-card challenges">
       <div className="card-header">
-        <h3>Challenges</h3>
+        <div className="card-header-title-group">
+          <h3>Challenges</h3>
+          {count > 0 && (
+            <span className="card-count-badge">
+              {count} solved
+            </span>
+          )}
+        </div>
         <span className="card-icon">🏆</span>
       </div>
-      <div className={`card-content ${!challenges || challenges.length === 0 ? 'empty' : ''}`}>
-        {challenges && challenges.length > 0 ? (
-          <>
-            <p className="stat-number">{challenges.length}</p>
-            <p className="stat-label">challenges solved</p>
-          </>
+      <div className={`card-content ${count === 0 ? 'empty' : ''}`}>
+        {count > 0 ? (
+          <div className="notes-list">
+            <p className="stat-label" style={{ textAlign: 'left' }}>{count} challenges solved so far</p>
+          </div>
         ) : (
           <>
             <p className="motivational-quote">"{getMotivationalQuote()}"</p>
@@ -366,4 +383,5 @@ const Dashboard = () => {
     </div>
   );
 };
+
 export default Dashboard;

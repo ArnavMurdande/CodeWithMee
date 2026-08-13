@@ -398,6 +398,16 @@ const operations = Object.freeze([
   }),
   operation({
     acceptsBody: true,
+    id: 'deleteAuthorityUser',
+    method: 'delete',
+    path: '/admin/users/{userId}',
+    request: requestSchemas.authorityUserDelete,
+    response: responseSchemas.authorityUserDelete,
+    summary: 'Permanently delete an eligible platform user with an audit record',
+    tags: ['Administration'],
+  }),
+  operation({
+    acceptsBody: true,
     id: 'transferOrganizationOwnership',
     method: 'post',
     path: '/organizations/{organizationId}/ownership-transfer',

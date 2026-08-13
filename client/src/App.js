@@ -25,7 +25,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Space = lazy(() => import('./pages/Space'));
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useContext(AuthContext);
+  const { isAuthenticated, loading, user } = useContext(AuthContext);
 
   if (loading) {
     return (
@@ -38,7 +38,11 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : <Navigate replace to="/auth" />;
+  if (!isAuthenticated) return <Navigate replace to="/auth" />;
+  if (user?.emailVerified !== true) {
+    return <Navigate replace to="/auth?mode=verify-pending" />;
+  }
+  return children;
 };
 
 const NotFoundRoute = () => (
@@ -71,12 +75,13 @@ function App() {
   const [viewRoadmapsHandler, setViewRoadmapsHandler] = useState(null);
   const [pageTitle, setPageTitle] = useState('');
   const showHeader = location.pathname !== '/auth';
+  const hasWorkspaceAccess = isAuthenticated && user?.emailVerified === true;
 
   return (
     <AppErrorBoundary>
       <AppShell
         headerProps={{ onViewRoadmapsClick: viewRoadmapsHandler, pageTitle }}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={hasWorkspaceAccess}
         showHeader={showHeader}
         theme={theme}
       >
@@ -84,7 +89,13 @@ function App() {
           <Routes>
             <Route element={<HomePage />} path="/" />
             <Route
-              element={isAuthenticated ? <Navigate replace to="/dashboard" /> : <Auth />}
+              element={
+                isAuthenticated && user?.emailVerified === true ? (
+                  <Navigate replace to="/dashboard" />
+                ) : (
+                  <Auth />
+                )
+              }
               path="/auth"
             />
             <Route

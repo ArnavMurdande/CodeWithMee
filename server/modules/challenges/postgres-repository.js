@@ -25,19 +25,18 @@ function decodeCursor(cursorStr) {
 function createPostgresChallengeRepository(pool) {
   if (!pool) throw new Error('PostgreSQL pool is required.');
 
-  async function createChallenge(authorUserId, { title, slug, difficulty, score, tags, description, constraints, constraintsText, referenceSolution, solution, starterTemplates, visibleTestCases, hiddenTestCases, testCases }) {
+  async function createChallenge(authorUserId, { title, difficulty, score, tags, description, constraints, constraintsText, referenceSolution, solution, starterTemplates, visibleTestCases, hiddenTestCases, testCases }) {
     if (!isUuid(authorUserId)) throw new Error('Valid author user ID is required.');
 
     return pool.withTransaction ? pool.withTransaction(execute) : execute(pool);
 
     async function execute(client) {
       const challengeRes = await client.query(
-        `INSERT INTO challenges (title, slug, difficulty, status, score, tags, created_by_user_id, created_at, updated_at)
-         VALUES ($1, $2, $3::"challenge_difficulty", 'DRAFT'::"challenge_status", $4, $6::jsonb, $5, NOW(), NOW())
-         RETURNING id, title, slug, difficulty, status, score, tags, created_by_user_id, created_at, updated_at`,
+        `INSERT INTO challenges (title, difficulty, status, score, tags, created_by_user_id, created_at, updated_at)
+         VALUES ($1, $2::"challenge_difficulty", 'DRAFT'::"challenge_status", $3, $5::jsonb, $4, NOW(), NOW())
+         RETURNING id, title, difficulty, status, score, tags, created_by_user_id, created_at, updated_at`,
         [
           title,
-          slug || title.toLowerCase().replace(/\s+/g, '-'),
           String(difficulty || 'easy').toLowerCase(),
           Math.min(10, Math.max(1, Number(score) || 10)),
           authorUserId,
@@ -378,13 +377,21 @@ function createPostgresChallengeRepository(pool) {
 
   async function setReaction(userId, challengeId, kind) {
     if (!isUuid(userId) || !isUuid(challengeId) || !['like', 'dislike'].includes(kind)) return null;
-    await pool.query(
-      `INSERT INTO challenge_reactions (challenge_id, user_id, kind, created_at)
-       SELECT id, $1, $3, NOW() FROM challenges
-       WHERE id = $2 AND status = 'PUBLISHED'::"challenge_status" AND archived_at IS NULL
-       ON CONFLICT (challenge_id, user_id) DO UPDATE SET kind = EXCLUDED.kind, created_at = NOW()`,
-      [userId, challengeId, kind],
-    );
+    await (pool.withTransaction ? pool.withTransaction(execute) : execute(pool));
+    async function execute(client) {
+      const removed = await client.query(
+        'DELETE FROM challenge_reactions WHERE challenge_id = $1 AND user_id = $2 AND kind = $3 RETURNING challenge_id',
+        [challengeId, userId, kind],
+      );
+      if (removed.rowCount) return;
+      await client.query('DELETE FROM challenge_reactions WHERE challenge_id = $1 AND user_id = $2', [challengeId, userId]);
+      await client.query(
+        `INSERT INTO challenge_reactions (challenge_id, user_id, kind, created_at)
+         SELECT id, $1, $3, NOW() FROM challenges
+         WHERE id = $2 AND status = 'PUBLISHED'::"challenge_status" AND archived_at IS NULL`,
+        [userId, challengeId, kind],
+      );
+    }
     return getEngagement(challengeId, userId);
   }
 
@@ -433,11 +440,12 @@ function createPostgresChallengeRepository(pool) {
     if (!['like', 'dislike', 'award'].includes(kind)) return false;
     if (kind === 'award' && !['star', 'fire', 'heart', 'rocket', 'diamond'].includes(awardType)) return false;
     if (kind !== 'award') {
-      await pool.query(
-        `DELETE FROM challenge_comment_reactions
-         WHERE comment_id = $1 AND user_id = $2 AND kind IN ('like', 'dislike')`,
-        [commentId, userId],
+      const removed = await pool.query(
+        'DELETE FROM challenge_comment_reactions WHERE comment_id = $1 AND user_id = $2 AND kind = $3 RETURNING comment_id',
+        [commentId, userId, kind],
       );
+      if (removed.rowCount) return true;
+      await pool.query('DELETE FROM challenge_comment_reactions WHERE comment_id = $1 AND user_id = $2 AND kind IN (\'like\', \'dislike\')', [commentId, userId]);
     }
     const result = await pool.query(
       `INSERT INTO challenge_comment_reactions (comment_id, user_id, kind, award_type, created_at)

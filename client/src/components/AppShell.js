@@ -1,6 +1,7 @@
 import AnimatedBackground from './AnimatedBackground';
 import CustomCursor from './CustomCursor';
 import Header from './Header';
+import MobileOptimizationNotice from './MobileOptimizationNotice';
 import NotesWidget from './NotesWidget';
 import ScrollProgress from './ScrollProgress';
 import './AppShell.css';
@@ -42,6 +43,7 @@ function AppShell({ children, headerProps = {}, isAuthenticated, showHeader, the
       </svg>
 
       <ScrollProgress />
+      <MobileOptimizationNotice />
       <AnimatedBackground color1={primary} color2={secondary} color3={accent} />
       {showHeader ? <Header {...headerProps} /> : null}
 

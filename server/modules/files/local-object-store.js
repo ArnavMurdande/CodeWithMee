@@ -104,7 +104,7 @@ function detectedMime(bytes, declaredMime) {
   if (declaredMime === 'image/gif' && ['GIF87a', 'GIF89a'].includes(bytes.subarray(0, 6).toString())) return declaredMime;
   if (declaredMime === 'image/webp' && bytes.subarray(0, 4).toString() === 'RIFF' && bytes.subarray(8, 12).toString() === 'WEBP') return declaredMime;
   if (declaredMime === 'video/mp4' && bytes.subarray(4, 8).toString() === 'ftyp') return declaredMime;
-  if (declaredMime === 'video/webm' && bytes.subarray(0, 4).equals(Buffer.from('1a45dfa3', 'hex'))) return declaredMime;
+  if (['video/webm', 'audio/webm'].includes(declaredMime) && bytes.subarray(0, 4).equals(Buffer.from('1a45dfa3', 'hex'))) return declaredMime;
   if (declaredMime === 'audio/ogg' && bytes.subarray(0, 4).toString() === 'OggS') return declaredMime;
   if (declaredMime === 'audio/wav' && bytes.subarray(0, 4).toString() === 'RIFF' && bytes.subarray(8, 12).toString() === 'WAVE') return declaredMime;
   if (declaredMime === 'audio/mpeg' && (bytes.subarray(0, 3).toString() === 'ID3' || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0))) return declaredMime;

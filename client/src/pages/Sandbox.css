@@ -23,7 +23,7 @@
 .sandbox-container {
   flex-grow: 1;
   display: flex;
-  gap: 16px; /* Generous gap between display panes and resize handles */
+  gap: 10px; /* Balanced uniform gap between display panes and resize handles */
   overflow: hidden;
 }
 
@@ -31,7 +31,7 @@
 .right-pane {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Space between display boxes */
+  gap: 10px; /* Balanced uniform gap between cards and horizontal resize handles */
   min-width: 0;
   min-height: 0;
 }
@@ -43,7 +43,7 @@
   justify-content: center;
   flex-shrink: 0;
   z-index: 5;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   touch-action: none;
 }
 
@@ -51,7 +51,7 @@
   width: 10px;
   cursor: col-resize;
   border-radius: 7px;
-  background-color: rgba(60, 60, 70, 0.9);
+  background-color: rgba(45, 45, 55, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -59,13 +59,14 @@
   height: 10px;
   cursor: row-resize;
   border-radius: 7px;
-  background-color: rgba(60, 60, 70, 0.9);
+  background-color: rgba(45, 45, 55, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .resize-handle:hover {
-  background-color: rgba(80, 80, 95, 1);
-  border-color: rgba(0, 248, 241, 0.3);
+  background-color: rgba(65, 65, 80, 0.95);
+  border-color: rgba(0, 248, 241, 0.4);
+  box-shadow: 0 0 10px rgba(0, 248, 241, 0.2);
 }
 
 /* The 3 dots */
@@ -480,8 +481,9 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
-  overflow: visible; /* Allows dropdown menu in header to float cleanly */
+  overflow: hidden; /* Clips Monaco canvas inside editor-pane so it cannot overlap handle */
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .editor-wrapper {

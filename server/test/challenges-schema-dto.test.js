@@ -34,14 +34,15 @@ function mockQuery(sql, params, challenges, versions, testCases) {
   }
 
   if (norm.includes('INSERT INTO challenges')) {
+    assert.doesNotMatch(norm, /\bslug\b/i);
     const id = '10000000-0000-4000-8000-00000000000' + (challenges.size + 1);
     const row = {
       id,
       title: params[0],
-      difficulty: params[2] || 'EASY',
+      difficulty: params[1] || 'EASY',
       status: 'DRAFT',
-      score: 100,
-      tags: [],
+      score: params[2],
+      tags: JSON.parse(params[4]),
       created_by_user_id: params[3],
       created_at: new Date(),
       updated_at: new Date(),
@@ -119,5 +120,7 @@ test('P1A-S1: challenge repository creates versioned challenge with starter temp
 
   assert.ok(created.id);
   assert.equal(created.title, 'Reverse String');
+  assert.equal(created.difficulty, 'Easy');
+  assert.equal(created.score, 10);
   assert.equal(created.starterTemplates.python, 'def reverse_string(s):\n    pass');
 });

@@ -190,7 +190,7 @@ test('legacy route sources contain no account-type authorization or token mintin
     /User\.(?:find|update|delete)/,
   );
   assert.match(source, /authorize\(PERMISSION\.PLATFORM_USERS_READ\)/);
-  assert.match(source, /evaluateRequestPermission/);
+  assert.match(source, /legacy_user_api_retired/);
 
   const authSource = await readFile(
     path.join(__dirname, '..', 'middleware', 'authMiddleware.js'),

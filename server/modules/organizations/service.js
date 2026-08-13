@@ -156,11 +156,17 @@ function createOrganizationService({
     );
   }
 
-  function requirePermission(permission, authentication, context = {}) {
+  function requirePermission(
+    permission,
+    authentication,
+    context = {},
+    { requireRecentAuthentication = true } = {},
+  ) {
     const result = evaluatePermission({
       context: {
         ...context,
-        recentAuthentication: recentAuthentication(authentication),
+        recentAuthentication:
+          !requireRecentAuthentication || recentAuthentication(authentication),
       },
       permission,
       principal: authentication?.principal,
@@ -369,7 +375,9 @@ function createOrganizationService({
     },
 
     async listVerificationReviews(authentication, status = 'pending_review') {
-      requirePermission(PERMISSION.ORGANIZATION_VERIFICATION_REVIEW, authentication);
+      requirePermission(PERMISSION.ORGANIZATION_VERIFICATION_REVIEW, authentication, {}, {
+        requireRecentAuthentication: false,
+      });
       const allowed = ['', 'pending_review', 'approved', 'rejected'];
       if (!allowed.includes(status || '')) throw new OrganizationError('invalid_review_status');
       const reviews = await repository.listVerificationReviews(status || null);

@@ -42,6 +42,90 @@
       "name": "20260801000600_operation_reliability",
       "path": "prisma/migrations/20260801000600_operation_reliability/migration.sql",
       "sha256": "d7a8fa8b9f53c8a8d9877e1c16bae69612870f9899f09f4c5bafde9a0f35ce16"
+    },
+    {
+      "bytes": 153,
+      "name": "20260810000100_add_starter_templates",
+      "path": "prisma/migrations/20260810000100_add_starter_templates/migration.sql",
+      "sha256": "5c16c101f41f0397fb030c7387b467a37a2822682435cf9b33a83fe6fd8acc80"
+    },
+    {
+      "bytes": 206,
+      "name": "20260810000200_challenge_status_enum",
+      "path": "prisma/migrations/20260810000200_challenge_status_enum/migration.sql",
+      "sha256": "bea00f450a4d49158e737f77ad82d2540d1b2c1e2faed59334becb503c28c6ea"
+    },
+    {
+      "bytes": 1728,
+      "name": "20260810000300_add_challenge_submissions",
+      "path": "prisma/migrations/20260810000300_add_challenge_submissions/migration.sql",
+      "sha256": "d464bd7b1ad02ac7e26da76af4f6882876aa37a010eeea8a3371ce39bd1416b9"
+    },
+    {
+      "bytes": 1110,
+      "name": "20260810000400_add_lesson_progress",
+      "path": "prisma/migrations/20260810000400_add_lesson_progress/migration.sql",
+      "sha256": "63c233b2952833813c57f3bad7ba525371b1d4a9e2a44e1e549349c7364e383c"
+    },
+    {
+      "bytes": 1318,
+      "name": "20260810000600_add_execution_jobs",
+      "path": "prisma/migrations/20260810000600_add_execution_jobs/migration.sql",
+      "sha256": "4c93149c60b9bbb68cc850941f9d840124dc43d111a6cad5749ebb8979978f56"
+    },
+    {
+      "bytes": 367,
+      "name": "20260810000700_add_course_publication_status",
+      "path": "prisma/migrations/20260810000700_add_course_publication_status/migration.sql",
+      "sha256": "b7f17d1ad8b45e70e5e8560d37c6bedde8961e9b93cee2713b4867a83c6f2e2e"
+    },
+    {
+      "bytes": 85,
+      "name": "20260810000800_add_lesson_progress_lookup",
+      "path": "prisma/migrations/20260810000800_add_lesson_progress_lookup/migration.sql",
+      "sha256": "dacb4e2aa093db0f984bd1a04f4d6c31991a66a9b0f8db9dddef5290e3b6ac8c"
+    },
+    {
+      "bytes": 713,
+      "name": "20260810000900_align_execution_job_foreign_keys",
+      "path": "prisma/migrations/20260810000900_align_execution_job_foreign_keys/migration.sql",
+      "sha256": "f77e9cdfdf9a0853272f63bb83dfa5f0060c372b4c8c5c12cdaa5eb5f8e5af75"
+    },
+    {
+      "bytes": 543,
+      "name": "20260810001000_bind_enrollments_to_course_versions",
+      "path": "prisma/migrations/20260810001000_bind_enrollments_to_course_versions/migration.sql",
+      "sha256": "454aa56a197a9cda976bbcc6a77f1a7d94cc22ce18a2b7d83bc7a05c6d424c1f"
+    },
+    {
+      "bytes": 215,
+      "name": "20260810001100_add_course_content_duration",
+      "path": "prisma/migrations/20260810001100_add_course_content_duration/migration.sql",
+      "sha256": "b45fc894d8b486dd3e940f7f2770f6dd0e2a34fea1c5439a88d98d4e5e3e697e"
+    },
+    {
+      "bytes": 7228,
+      "name": "20260810001200_complete_provider_lms",
+      "path": "prisma/migrations/20260810001200_complete_provider_lms/migration.sql",
+      "sha256": "fd82284b93b0b9ecc3a5bd15931bcdeecbb237d266992e94a56d192e5c851ed7"
+    },
+    {
+      "bytes": 486,
+      "name": "20260810001300_add_quiz_grading_feedback",
+      "path": "prisma/migrations/20260810001300_add_quiz_grading_feedback/migration.sql",
+      "sha256": "e70ab9674905dc64ec87416d9a23df3e8b927bf166aba2314448640fde26d87d"
+    },
+    {
+      "bytes": 1733,
+      "name": "20260810001400_add_course_uploaded_media",
+      "path": "prisma/migrations/20260810001400_add_course_uploaded_media/migration.sql",
+      "sha256": "681ecd583ffa86a5009fc8268a242c615e4dd04dcb6a359cc3d78bef9139092a"
+    },
+    {
+      "bytes": 1080,
+      "name": "20260810001500_version_course_publication",
+      "path": "prisma/migrations/20260810001500_version_course_publication/migration.sql",
+      "sha256": "66ba9cd55b41679c2b9d908ba9f5018d91600767ddd4cb178d8f30d9c035b235"
     }
   ],
   "prisma": "7.9.1",
@@ -50,5 +134,5 @@
     "path": "prisma/schema.prisma",
     "sha256": "9103760028a612164202c209831ddba58483a8bddf654a48afe4539da47c8047"
   },
-  "verification": "All six checksum-pinned migrations are required in order; fresh PostgreSQL apply, seed, runtime adapter, parity, activation, rollback and drift evidence is recorded in docs/TEST_RESULTS.md."
+  "verification": "All checksum-pinned migrations are required in order; fresh PostgreSQL apply, seed, runtime adapter, parity, activation, rollback and drift evidence is recorded in docs/TEST_RESULTS.md."
 }

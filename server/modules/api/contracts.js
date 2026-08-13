@@ -446,6 +446,17 @@ const requestSchemas = Object.freeze({
     headers: optionalIdempotencyHeader,
     params: identifierParams(['userId']),
   },
+  authorityUserDelete: {
+    body: objectSchema(
+      {
+        reason: { maxLength: 500, minLength: 12, type: 'string' },
+        revision: { minimum: 1, type: 'integer' },
+      },
+      ['reason', 'revision'],
+    ),
+    headers: optionalIdempotencyHeader,
+    params: identifierParams(['userId']),
+  },
   authorityTransfer: {
     body: objectSchema(
       {
@@ -633,14 +644,19 @@ const requestSchemas = Object.freeze({
       {
         category: { type: 'string' },
         description: { type: 'string' },
-        difficulty: { enum: ['EASY', 'MEDIUM', 'HARD'], type: 'string' },
-        hiddenTestCases: arrayOf(objectSchema({ input: { type: 'string' }, output: { type: 'string' } })),
+        constraints: { type: 'string' },
+        constraintsText: { type: 'string' },
+        difficulty: { enum: ['easy', 'medium', 'hard'], type: 'string' },
+        hiddenTestCases: arrayOf(objectSchema({ expectedOutput: { type: 'string' }, input: { type: 'string' } })),
         organizationId: UUID,
-        referenceSolution: objectSchema({ code: { type: 'string' }, language: { type: 'string' } }),
+        referenceSolution: { type: 'string' },
+        score: { maximum: 10, minimum: 1, type: 'integer' },
+        solution: { type: 'string' },
+        solutionLanguage: { type: 'string' },
         starterTemplates: objectSchema({}, [], { additionalProperties: { type: 'string' } }),
         tags: arrayOf({ type: 'string' }),
         title: { minLength: 1, type: 'string' },
-        visibleTestCases: arrayOf(objectSchema({ input: { type: 'string' }, output: { type: 'string' } })),
+        visibleTestCases: arrayOf(objectSchema({ expectedOutput: { type: 'string' }, input: { type: 'string' } })),
       },
       ['title'],
     ),
@@ -723,6 +739,14 @@ const responseSchemas = Object.freeze({
       user: ref('AuthorityUser'),
     },
     ['auditEvent', 'revokedSessionCount', 'user'],
+  ),
+  authorityUserDelete: objectSchema(
+    {
+      auditEvent: ref('AuditEvent'),
+      deletedUserId: UUID,
+      revokedSessionCount: { minimum: 0, type: 'integer' },
+    },
+    ['auditEvent', 'deletedUserId', 'revokedSessionCount'],
   ),
   authorityUsers: objectSchema({ users: arrayOf(ref('AuthorityUser')) }, ['users']),
   download: objectSchema({ download: ref('DownloadGrant') }, ['download']),

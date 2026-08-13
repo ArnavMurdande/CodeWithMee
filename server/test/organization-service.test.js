@@ -267,7 +267,7 @@ test('organization updates require optimistic revisions and ignore privileged fi
   );
 });
 
-test('provider verification is recent-auth superadmin-only and gates publishing', async () => {
+test('provider review reads allow stale superadmin sessions but decisions require recent auth', async () => {
   const harness = createHarness();
   const created = await createOrganization(harness);
   const submitted = await harness.service.submitVerification(
@@ -308,14 +308,16 @@ test('provider verification is recent-auth superadmin-only and gates publishing'
     harness.service.listVerificationReviews(harness.auth('moderator')),
     expectCode('deny_by_default'),
   );
+  const staleSuperadmin = harness.auth(
+    'superadmin',
+    new Date('2026-03-01T11:00:00.000Z'),
+  );
+  const queue = await harness.service.listVerificationReviews(staleSuperadmin);
+  assert.equal(queue.length, 1);
   await assert.rejects(
-    harness.service.listVerificationReviews(
-      harness.auth('superadmin', new Date('2026-03-01T11:00:00.000Z')),
-    ),
+    harness.service.decideVerification(staleSuperadmin, queue[0].id, { status: 'approved' }),
     expectCode('recent_authentication_required'),
   );
-  const queue = await harness.service.listVerificationReviews(harness.auth('superadmin'));
-  assert.equal(queue.length, 1);
   const decided = await harness.service.decideVerification(
     harness.auth('superadmin'),
     queue[0].id,

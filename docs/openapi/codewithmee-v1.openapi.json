@@ -3520,6 +3520,112 @@
         }
       }
     },
+    "/admin/users/{userId}": {
+      "delete": {
+        "operationId": "deleteAuthorityUser",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "auditEvent": {
+                      "$ref": "#/components/schemas/AuditEvent"
+                    },
+                    "deletedUserId": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "revokedSessionCount": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "auditEvent",
+                    "deletedUserId",
+                    "revokedSessionCount"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A stable problem-details response."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Permanently delete an eligible platform user with an audit record",
+        "tags": [
+          "Administration"
+        ],
+        "x-codewithmee-contract": "deleteAuthorityUser",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "maxLength": 500,
+                    "minLength": 12,
+                    "type": "string"
+                  },
+                  "revision": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "reason",
+                  "revision"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/organizations/{organizationId}/ownership-transfer": {
       "post": {
         "operationId": "transferOrganizationOwnership",
@@ -4240,11 +4346,17 @@
                   "description": {
                     "type": "string"
                   },
+                  "constraints": {
+                    "type": "string"
+                  },
+                  "constraintsText": {
+                    "type": "string"
+                  },
                   "difficulty": {
                     "enum": [
-                      "EASY",
-                      "MEDIUM",
-                      "HARD"
+                      "easy",
+                      "medium",
+                      "hard"
                     ],
                     "type": "string"
                   },
@@ -4252,10 +4364,10 @@
                     "items": {
                       "additionalProperties": false,
                       "properties": {
-                        "input": {
+                        "expectedOutput": {
                           "type": "string"
                         },
-                        "output": {
+                        "input": {
                           "type": "string"
                         }
                       },
@@ -4268,16 +4380,18 @@
                     "type": "string"
                   },
                   "referenceSolution": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "code": {
-                        "type": "string"
-                      },
-                      "language": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
+                    "type": "string"
+                  },
+                  "score": {
+                    "maximum": 10,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "solution": {
+                    "type": "string"
+                  },
+                  "solutionLanguage": {
+                    "type": "string"
                   },
                   "starterTemplates": {
                     "additionalProperties": {
@@ -4300,10 +4414,10 @@
                     "items": {
                       "additionalProperties": false,
                       "properties": {
-                        "input": {
+                        "expectedOutput": {
                           "type": "string"
                         },
-                        "output": {
+                        "input": {
                           "type": "string"
                         }
                       },

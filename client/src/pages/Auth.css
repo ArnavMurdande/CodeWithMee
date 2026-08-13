@@ -209,6 +209,46 @@
   gap: 0.5rem;
 }
 
+.auth-verification-pending {
+  margin-top: 2.25rem;
+}
+
+.auth-verification-pending h2 {
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+
+.auth-verification-copy,
+.auth-verification-hint {
+  line-height: 1.65;
+  text-align: center;
+}
+
+.auth-verification-copy {
+  margin: 0 auto 0.85rem;
+}
+
+.auth-verification-hint {
+  color: #b9bcc8;
+  font-size: 0.9rem;
+  margin: 0 auto 1.75rem;
+}
+
+.auth-verification-actions {
+  flex-direction: column;
+  margin: 2rem 0 0;
+}
+
+.auth-verification-actions .auth-button {
+  flex: none;
+  min-height: 3.25rem;
+  width: 100%;
+}
+
+.auth-button--secondary {
+  background-color: transparent;
+}
+
 .form-group small {
   color: #a8abb7;
   display: block;

@@ -34,13 +34,12 @@ async function saveCachedVideoIdPg(q, videoId) {
   if (!pool) return false;
   try {
     const hash = getCacheHash(q);
-    const id = 'cache_' + hash.substring(0, 16);
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000);
     await pool.query(
-      `INSERT INTO integration_cache (id, provider, key_hash, value, expires_at, created_at)
-       VALUES ($1, 'youtube', $2, $3::jsonb, $4, NOW())
+      `INSERT INTO integration_cache (provider, key_hash, value, expires_at, created_at)
+       VALUES ('youtube', $1, $2::jsonb, $3, NOW())
        ON CONFLICT (provider, key_hash) DO UPDATE SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at`,
-      [id, hash, JSON.stringify({ videoId }), expiresAt]
+      [hash, JSON.stringify({ videoId }), expiresAt]
     );
     return true;
   } catch (err) {
@@ -112,6 +111,7 @@ router.get('/search', async (req, res) => {
         const apiKeys = getYoutubeKeys();
         if (apiKeys.length === 0) {
             const fallbackId = getFallbackVideoId(q);
+            await saveCachedVideoIdPg(q, fallbackId);
             return res.json({ videoId: fallbackId, fallback: true });
         }
 

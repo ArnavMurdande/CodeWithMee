@@ -353,7 +353,8 @@ Write-Output "Hello, $name!"`,
        PROGRAM-ID. HELLO-WORLD.
        PROCEDURE DIVISION.
            DISPLAY "Hello, CodeWithMee!".
-           STOP RUN.`,
+           STOP RUN.
+`,
 
   nasm: `; Welcome to the Assembly (NASM) sandbox!
 section .data
@@ -1167,26 +1168,21 @@ const Sandbox = ({ setPageTitle }) => {
     };
   }, [handleDragMove, handleDragEnd]);
 
-  const handleEditorMount = (editor) => {
+  const handleEditorMount = useCallback((editor) => {
     monacoEditorRef.current = editor;
-    setTimeout(() => {
-      try {
-        editor.layout();
-      } catch {}
-    }, 100);
+    try {
+      editor.layout();
+    } catch {}
 
     if (editorContainerRef.current) {
       const ro = new ResizeObserver(() => {
-        if (layoutTimerRef.current) clearTimeout(layoutTimerRef.current);
-        layoutTimerRef.current = setTimeout(() => {
-          try {
-            editor.layout();
-          } catch {}
-        }, 50);
+        try {
+          editor.layout();
+        } catch {}
       });
       ro.observe(editorContainerRef.current);
     }
-  };
+  }, []);
 
   return (
     <div className="sandbox-page-container">
@@ -1205,8 +1201,8 @@ const Sandbox = ({ setPageTitle }) => {
         />
       )}
       <div className="sandbox-container" ref={sandboxContainerRef}>
-        <div className="left-pane" style={{ width: `calc(${verticalSplit}% - 10px)` }}>
-          <div className="video-pane" style={{ height: `calc(${leftHorizontalSplit}% - 10px)` }}>
+        <div className="left-pane" style={{ width: `calc(${verticalSplit}% - 15px)` }}>
+          <div className="video-pane" style={{ height: `calc(${leftHorizontalSplit}% - 15px)` }}>
             {isVideoLoading ? (
               <p className="loading-video">Loading video...</p>
             ) : videoId ? (
@@ -1265,7 +1261,7 @@ const Sandbox = ({ setPageTitle }) => {
           </div>
           <div
             className="ai-assistant"
-            style={{ height: `calc(${100 - leftHorizontalSplit}% - 10px)` }}
+            style={{ height: `calc(${100 - leftHorizontalSplit}% - 15px)` }}
           >
             <div className="chat-context-bar">
               <CustomDropdown
@@ -1343,11 +1339,11 @@ const Sandbox = ({ setPageTitle }) => {
                 title="Debug: Analyze errors and fix code"
               >
                 {isDebugging ? (
-                  <span className="debug-spinner">...</span>
+                  <span className="spinner" />
                 ) : (
                   <svg
-                    width="16"
-                    height="16"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -1375,11 +1371,11 @@ const Sandbox = ({ setPageTitle }) => {
             <span />
           </div>
         </div>
-        <div className="right-pane" style={{ width: `calc(${100 - verticalSplit}% - 10px)` }}>
+        <div className="right-pane" style={{ width: `calc(${100 - verticalSplit}% - 15px)` }}>
           <div
             className="editor-pane"
             ref={editorContainerRef}
-            style={{ height: `calc(${rightHorizontalSplit}% - 10px)` }}
+            style={{ height: `calc(${rightHorizontalSplit}% - 15px)` }}
           >
             <div className="editor-header">
               <CustomDropdown
@@ -1424,7 +1420,7 @@ const Sandbox = ({ setPageTitle }) => {
           </div>
           <div
             className="terminal-pane"
-            style={{ height: `calc(${100 - rightHorizontalSplit}% - 10px)` }}
+            style={{ height: `calc(${100 - rightHorizontalSplit}% - 15px)` }}
           >
             <h3>Terminal</h3>
             <pre className="output-text">

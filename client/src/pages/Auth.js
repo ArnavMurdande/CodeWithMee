@@ -5,6 +5,17 @@ import { AuthContext } from '../context/AuthContext';
 import { resolveBackendUrl } from '../config/runtime';
 import { apiProblemCode } from '../lib/api';
 
+// React StrictMode intentionally replays effects in development. Verification tokens are
+// single-use, so both effect runs must observe the same request instead of consuming twice.
+const emailVerificationAttempts = new Map();
+
+function confirmEmailOnce(token, confirmEmailVerification) {
+  if (!emailVerificationAttempts.has(token)) {
+    emailVerificationAttempts.set(token, confirmEmailVerification(token));
+  }
+  return emailVerificationAttempts.get(token);
+}
+
 function authenticationMessage(error) {
   const code = apiProblemCode(error);
   const messages = {
@@ -37,7 +48,10 @@ const Auth = () => {
     ? 'reset'
     : searchParams.get('mode') === 'forgot'
       ? 'forgot'
-      : 'login';
+      : searchParams.get('mode') === 'verify-pending' ||
+          (auth.isAuthenticated && auth.user?.emailVerified !== true)
+        ? 'verify-pending'
+        : 'login';
   const [mode, setMode] = useState(initialMode);
   const [form, setForm] = useState({ displayName: '', email: '', password: '' });
   const [error, setError] = useState(
@@ -51,13 +65,57 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    if (
+      mode !== 'verify-pending' ||
+      !auth.isAuthenticated ||
+      auth.user?.emailVerified === true
+    ) {
+      return undefined;
+    }
+    let active = true;
+    let redirectTimer;
+    const checkVerification = async () => {
+      if (document.visibilityState === 'hidden') return;
+      try {
+        const currentUser = await auth.refreshCurrentUser();
+        if (active && currentUser.emailVerified) {
+          setVerifying(true);
+          redirectTimer = window.setTimeout(
+            () => navigate('/dashboard', { replace: true }),
+            900,
+          );
+        }
+      } catch {
+        // Keep waiting; transient connectivity should not sign the user out.
+      }
+    };
+    checkVerification();
+    const interval = window.setInterval(checkVerification, 4000);
+    const onVisible = () => checkVerification();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.clearTimeout(redirectTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [auth.isAuthenticated, auth.refreshCurrentUser, auth.user?.emailVerified, mode, navigate]);
+
+  useEffect(() => {
     if (!verificationToken) return;
     let active = true;
-    confirmEmailVerification(verificationToken)
+    confirmEmailOnce(verificationToken, confirmEmailVerification)
       .then(() => {
         if (!active) return;
-        setNotice('Email verified. You can now sign in or continue learning.');
         setSearchParams({}, { replace: true });
+        if (auth.isAuthenticated) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          setMode('login');
+          setNotice('Email verified. Sign in to open your dashboard.');
+        }
       })
       .catch((requestError) => {
         if (active) setError(authenticationMessage(requestError));
@@ -68,12 +126,13 @@ const Auth = () => {
     return () => {
       active = false;
     };
-  }, [confirmEmailVerification, setSearchParams, verificationToken]);
+  }, [auth.isAuthenticated, confirmEmailVerification, navigate, setSearchParams, verificationToken]);
 
   const heading = useMemo(() => {
     if (mode === 'register') return 'Create your account';
     if (mode === 'forgot') return 'Reset your password';
     if (mode === 'reset') return 'Choose a new password';
+    if (mode === 'verify-pending') return 'Check your email';
     return 'Welcome back';
   }, [mode]);
 
@@ -90,15 +149,20 @@ const Auth = () => {
     setSubmitting(true);
     try {
       if (mode === 'login') {
-        await auth.signIn({ email: form.email, password: form.password });
-        navigate('/dashboard', { replace: true });
+        const signedInUser = await auth.signIn({ email: form.email, password: form.password });
+        if (signedInUser.emailVerified) navigate('/dashboard', { replace: true });
+        else {
+          setMode('verify-pending');
+          setNotice('Open the verification email we sent to continue.');
+        }
       } else if (mode === 'register') {
         await auth.register({
           displayName: form.displayName,
           email: form.email,
           password: form.password,
         });
-        navigate('/dashboard', { replace: true });
+        setMode('verify-pending');
+        setNotice('We sent a verification email. Open it and select Verify Email to continue.');
       } else if (mode === 'forgot') {
         await auth.requestPasswordReset(form.email);
         setNotice('If the account is eligible, password-reset instructions have been queued.');
@@ -133,6 +197,59 @@ const Auth = () => {
           <p className="auth-status" role="status">
             Verifying your email…
           </p>
+        ) : mode === 'verify-pending' ? (
+          <section
+            aria-labelledby="verification-pending-title"
+            className="auth-verification-pending"
+          >
+            <h2 id="verification-pending-title">Verification email sent</h2>
+            <p className="auth-verification-copy">
+              We sent a secure link to your email address. Open the message from CodeWithMee and
+              select <strong>Verify Email</strong>.
+            </p>
+            <p className="auth-verification-hint">
+              You can verify on this device, another browser, or your phone. This page will detect
+              it and open your dashboard automatically.
+            </p>
+            {notice && (
+              <p className="success-message" role="status">
+                {notice}
+              </p>
+            )}
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="button-group auth-verification-actions">
+              <button
+                className="auth-button"
+                disabled={submitting}
+                onClick={async () => {
+                  setSubmitting(true);
+                  setError('');
+                  try {
+                    await auth.requestEmailVerification();
+                    setNotice('A new verification email has been sent.');
+                  } catch (requestError) {
+                    setError(authenticationMessage(requestError));
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                type="button"
+              >
+                {submitting ? 'Sendingâ€¦' : 'Resend verification email'}
+              </button>
+              <button
+                className="auth-button auth-button--secondary"
+                onClick={auth.logout}
+                type="button"
+              >
+                Sign out and use another account
+              </button>
+            </div>
+          </section>
         ) : (
           <form onSubmit={submit}>
             {mode === 'register' && (
@@ -285,7 +402,7 @@ const Auth = () => {
               </button>
             </>
           )}
-          {mode !== 'login' && mode !== 'reset' && (
+          {mode !== 'login' && mode !== 'reset' && mode !== 'verify-pending' && (
             <button className="switch-button" onClick={() => changeMode('login')} type="button">
               Back to sign in
             </button>

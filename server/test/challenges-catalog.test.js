@@ -38,11 +38,11 @@ function mockQuery(sql, params, challenges, versions, testCases) {
     const row = {
       id,
       title: params[0],
-      difficulty: params[2] || 'EASY',
+      difficulty: params[1] || 'EASY',
       status: 'PUBLISHED',
-      score: params[3],
+      score: params[2],
       tags: [],
-      created_by_user_id: params[4],
+      created_by_user_id: params[3],
       created_at: new Date(Date.now() - challenges.size * 1000),
       updated_at: new Date(),
     };

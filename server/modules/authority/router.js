@@ -70,6 +70,27 @@ function createAuthorityRouter({ config, identityService, service }) {
     },
   );
 
+  router.delete(
+    '/admin/users/:userId',
+    requireTrustedOrigin,
+    authenticate,
+    operationContract('deleteAuthorityUser'),
+    async (request, response, next) => {
+      try {
+        response.json(
+          await service.deleteUser(
+            request.identityAuthentication,
+            request.params.userId,
+            request.body,
+            requestAuthorityMetadata(request),
+          ),
+        );
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   router.patch(
     '/admin/users/:userId/status',
     requireTrustedOrigin,

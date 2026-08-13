@@ -148,6 +148,40 @@ function createMemoryAuthorityRepository(seed = {}) {
       return clone({ auditEvent, outcome: 'updated', revokedSessionCount, user });
     },
 
+    async deleteUser({ actorUserId, event, expectedRevision, targetUserId }) {
+      if (!currentActor(actorUserId)) return { outcome: 'actor_not_authorized' };
+      const target = users.get(targetUserId);
+      if (!target) return { outcome: 'user_not_found' };
+      if (actorUserId === targetUserId) return { outcome: 'self_change_denied' };
+      if (target.authorityRevision !== expectedRevision) return { outcome: 'revision_conflict' };
+      if (
+        target.platformRole === 'superadmin' &&
+        target.status === 'active' &&
+        activeSuperadminCount() <= 1
+      ) {
+        return { outcome: 'last_superadmin' };
+      }
+      const beforeState = {
+        authorityRevision: target.authorityRevision,
+        platformRole: target.platformRole,
+        status: target.status,
+      };
+      const revokedSessionCount = [...sessions.values()].filter(
+        (session) => session.userId === targetUserId && !session.revokedAt,
+      ).length;
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.userId === targetUserId) sessions.delete(sessionId);
+      }
+      users.delete(targetUserId);
+      const auditEvent = appendEvent(event, {
+        afterState: {},
+        beforeState,
+        organizationId: null,
+        targetUserId,
+      });
+      return clone({ auditEvent, deletedUserId: targetUserId, outcome: 'updated', revokedSessionCount });
+    },
+
     async changePlatformRole({ actorUserId, event, expectedRevision, platformRole, targetUserId }) {
       if (!currentActor(actorUserId)) return { outcome: 'actor_not_authorized' };
       const target = users.get(targetUserId);

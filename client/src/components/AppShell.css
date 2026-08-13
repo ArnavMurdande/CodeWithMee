@@ -98,3 +98,43 @@
     padding-bottom: 0;
   }
 }
+.mobile-optimization-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-optimization-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background: rgba(4, 7, 12, 0.86);
+    backdrop-filter: blur(12px);
+  }
+
+  .mobile-optimization-card {
+    width: min(100%, 28rem);
+    padding: 1.5rem;
+    border: 1px solid rgba(116, 245, 238, 0.35);
+    border-radius: 18px;
+    background: #11131c;
+    color: #f7f8ff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  }
+
+  .mobile-optimization-card h2 { margin: 0 0 0.75rem; }
+  .mobile-optimization-card p { color: #c8cad5; line-height: 1.55; }
+  .mobile-optimization-card button {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-radius: 12px;
+    background: #74f5ee;
+    color: #081012;
+    font: inherit;
+    font-weight: 700;
+  }
+}

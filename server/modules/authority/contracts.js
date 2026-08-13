@@ -1,6 +1,7 @@
 'use strict';
 
 const AUTHORITY_ACTION = Object.freeze({
+  ACCOUNT_DELETE: 'account_delete',
   ACCOUNT_STATUS_CHANGE: 'account_status_change',
   ORGANIZATION_OWNERSHIP_TRANSFER: 'organization_ownership_transfer',
   PLATFORM_ROLE_CHANGE: 'platform_role_change',

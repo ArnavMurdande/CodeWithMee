@@ -126,6 +126,7 @@ const CreateChallenge = () => {
             : `// Write your ${formData.solutionLanguage} solution here`,
         },
         difficulty: String(formData.difficulty || 'easy').toLowerCase(),
+        score: Number(formData.score),
         tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean),
         visibleTestCases: normalizedCases.filter((_testCase, index) => testCases[index].isExample),
         hiddenTestCases: normalizedCases.filter((_testCase, index) => !testCases[index].isExample),

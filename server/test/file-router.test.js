@@ -165,17 +165,11 @@ test('unconfigured file API and production local uploads fail closed', async () 
   );
 });
 
-test('legacy disk upload handlers gate before Multer and no longer create directories at import', () => {
+test('legacy disk upload handlers are retired and create no directories at import', () => {
   const userSource = readFileSync(path.join(__dirname, '..', 'routes', 'user.js'), 'utf8');
   const spaceSource = readFileSync(path.join(__dirname, '..', 'routes', 'space.js'), 'utf8');
-  assert.match(
-    userSource,
-    /'\/upload-picture',\s*authMiddleware,\s*requireLocalUploadCompatibility,\s*\(req, res\)/,
-  );
-  assert.match(
-    userSource,
-    /'\/notes\/:noteId\/upload',\s*authMiddleware,\s*requireLocalUploadCompatibility/,
-  );
+  assert.match(userSource, /legacy_user_api_retired/);
+  assert.doesNotMatch(userSource, /multer|upload-picture|notes\/:noteId\/upload/);
   assert.match(
     spaceSource,
     /retiredSpaceRoute/,

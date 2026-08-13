@@ -205,6 +205,12 @@ declare(['changeAccountStatus'], {
   permission: PERMISSION.PLATFORM_ACCOUNT_STATUS_MANAGE,
   scope: 'platform',
 });
+declare(['deleteAuthorityUser'], {
+  authorization: AUTHORIZATION_MODE.PLATFORM_PERMISSION,
+  exposure: 'authority_change',
+  permission: PERMISSION.PLATFORM_ACCOUNT_STATUS_MANAGE,
+  scope: 'platform',
+});
 declare(['transferOrganizationOwnership'], {
   authorization: AUTHORIZATION_MODE.ORGANIZATION_PERMISSION,
   exposure: 'ownership_change',

@@ -55,8 +55,8 @@ test('OpenAPI gate matches the committed artifact and reports the executable sur
       'utf8',
     ),
   });
-  assert.equal(result.paths, 72);
-  assert.equal(result.operations, 81);
+  assert.equal(result.paths, 73);
+  assert.equal(result.operations, 82);
 });
 
 test('OpenAPI gate rejects generated-contract drift', () => {

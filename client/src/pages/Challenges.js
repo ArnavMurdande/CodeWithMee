@@ -147,6 +147,19 @@ const Challenges = () => {
   };
 
   const handleVote = async (challengeId, voteType) => {
+    const userId = user?.id || user?._id;
+    let previous;
+    setChallenges((current) =>
+      current.map((challenge) => {
+        if (challenge._id !== challengeId) return challenge;
+        previous = challenge;
+        const likes = (challenge.likes || []).filter((id) => id !== userId);
+        const dislikes = (challenge.dislikes || []).filter((id) => id !== userId);
+        const wasActive = (voteType === 'like' ? challenge.likes : challenge.dislikes)?.includes(userId);
+        if (!wasActive) (voteType === 'like' ? likes : dislikes).push(userId);
+        return { ...challenge, likes, dislikes };
+      }),
+    );
     try {
       const res = await axios.post(`/api/v1/challenges/${challengeId}/reactions/${voteType}`, {});
 
@@ -156,6 +169,7 @@ const Challenges = () => {
         ),
       );
     } catch (err) {
+      if (previous) setChallenges((current) => current.map((challenge) => challenge._id === challengeId ? previous : challenge));
       console.error(`Error ${voteType}ing challenge:`, err);
       alert(`Failed to ${voteType} challenge.`);
     }
@@ -373,59 +387,61 @@ const ChallengeList = ({
                       </span>
                     </td>
                     <td className="score-col">{challenge.score}</td>
-                    <td className="actions-cell actions-col">
-                      <div className="vote-group-pill">
+                    <td className="actions-cell-td actions-col">
+                      <div className="actions-cell">
+                        <div className="vote-group-pill">
+                          <button
+                            className={`action-btn like-btn ${(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onVote(challenge._id, 'like');
+                            }}
+                          >
+                            <span>👍</span>
+                            <span>{(challenge.likes || []).length}</span>
+                          </button>
+
+                          <div className="pill-divider"></div>
+
+                          <button
+                            className={`action-btn dislike-btn ${(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onVote(challenge._id, 'dislike');
+                            }}
+                          >
+                            <span>👎</span>
+                            <span>{(challenge.dislikes || []).length}</span>
+                          </button>
+                        </div>
+
                         <button
-                          className={`action-btn like-btn ${(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
+                          aria-label={challenge.isSaved ? 'Remove saved challenge' : 'Save challenge'}
+                          className={`action-btn save-btn ${challenge.isSaved ? 'saved' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onVote(challenge._id, 'like');
+                            onSaveChallenge(challenge._id);
                           }}
                         >
-                          <span>👍</span>
-                          <span>{(challenge.likes || []).length}</span>
+                          <SaveIcon saved={challenge.isSaved} />
                         </button>
 
-                        <div className="pill-divider"></div>
-
                         <button
-                          className={`action-btn dislike-btn ${(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
+                          className="action-btn delete-btn"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onVote(challenge._id, 'dislike');
+                            if (isAuthor) {
+                              onDeleteChallenge(challenge._id);
+                            }
                           }}
+                          disabled={!isAuthor}
+                          title={
+                            isAuthor ? 'Delete challenge' : 'You can only delete your own challenges'
+                          }
                         >
-                          <span>👎</span>
-                          <span>{(challenge.dislikes || []).length}</span>
+                          <DeleteIcon />
                         </button>
                       </div>
-
-                      <button
-                        aria-label={challenge.isSaved ? 'Remove saved challenge' : 'Save challenge'}
-                        className={`action-btn save-btn ${challenge.isSaved ? 'saved' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSaveChallenge(challenge._id);
-                        }}
-                      >
-                        <SaveIcon saved={challenge.isSaved} />
-                      </button>
-
-                      <button
-                        className="action-btn delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isAuthor) {
-                            onDeleteChallenge(challenge._id);
-                          }
-                        }}
-                        disabled={!isAuthor}
-                        title={
-                          isAuthor ? 'Delete challenge' : 'You can only delete your own challenges'
-                        }
-                      >
-                        <DeleteIcon />
-                      </button>
                     </td>
                   </tr>
                 );

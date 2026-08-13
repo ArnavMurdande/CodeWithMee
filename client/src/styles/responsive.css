@@ -50,7 +50,6 @@
 }
 
 @media (max-width: 48rem) {
-  .dashboard-container,
   .pathways-container,
   .sandbox-page-container,
   .challenges-container,
@@ -66,6 +65,13 @@
     min-height: calc(100dvh - var(--cwm-header-offset) - var(--cwm-mobile-dock-offset));
     margin-inline: auto;
     padding: 1rem;
+  }
+
+  .dashboard-container {
+    width: 100%;
+    min-height: calc(100dvh - var(--cwm-header-offset) - var(--cwm-mobile-dock-offset));
+    margin-inline: auto;
+    padding: 5.5rem 1.25rem 7.5rem 1.25rem;
   }
 
   .auth-container {
@@ -188,8 +194,7 @@
 
   .space-page .post-form-footer,
   .space-page .post-actions,
-  .space-page .project-actions,
-  .admin-dashboard .admin-actions {
+  .space-page .project-actions {
     flex-wrap: wrap;
   }
 

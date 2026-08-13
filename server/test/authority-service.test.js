@@ -247,6 +247,26 @@ test('status changes revoke target sessions and cannot target the acting superad
   );
 });
 
+test('permanent user deletion removes the account and sessions while retaining an audit event', async () => {
+  const context = harness({
+    sessions: [{ id: 'target-session', revokedAt: null, userId: 'target' }],
+    users: [user('admin', { platformRole: 'superadmin' }), user('target')],
+  });
+
+  const result = await context.service.deleteUser(
+    authentication('admin', 'superadmin'),
+    'target',
+    { reason: 'Approved permanent account erasure request', revision: 1 },
+  );
+  const snapshot = context.repository.snapshot();
+
+  assert.equal(result.deletedUserId, 'target');
+  assert.equal(result.revokedSessionCount, 1);
+  assert.equal(snapshot.users.some((entry) => entry.id === 'target'), false);
+  assert.equal(snapshot.sessions.some((entry) => entry.userId === 'target'), false);
+  assert.equal(result.auditEvent.action, 'account_delete');
+});
+
 test('ownership transfer atomically changes owner, roles, revision, and audit state', async () => {
   const context = harness({
     memberships: [

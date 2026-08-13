@@ -124,9 +124,6 @@ const Pathways = () => {
     try {
       const keys = [
         getUserStorageKey(user?.id, 'saved_roadmaps'),
-        'cwm_saved_roadmaps',
-        'cwm_anon_saved_roadmaps',
-        'saved_roadmaps',
       ];
       const all = [];
       keys.forEach((k) => {
@@ -168,7 +165,6 @@ const Pathways = () => {
     try {
       const key = getStorageKey();
       localStorage.setItem(key, JSON.stringify(list));
-      localStorage.setItem('cwm_saved_roadmaps', JSON.stringify(list));
     } catch (err) {
       console.error('Could not cache roadmaps to localStorage', err);
     }

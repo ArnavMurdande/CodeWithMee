@@ -53,21 +53,33 @@ const Comment = ({ comment, challengeId, token, onAction, depth = 0 }) => {
   const [replyText, setReplyText] = useState('');
   const [showAwardPicker, setShowAwardPicker] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [reactionState, setReactionState] = useState({ likes: comment.likes || [], dislikes: comment.dislikes || [] });
 
-  const netScore = (comment.likes?.length || 0) - (comment.dislikes?.length || 0);
+  useEffect(() => {
+    setReactionState({ likes: comment.likes || [], dislikes: comment.dislikes || [] });
+  }, [comment.likes, comment.dislikes]);
+
+  const netScore = reactionState.likes.length - reactionState.dislikes.length;
   const currentUserId = user?.id || user?._id;
-  const hasUpvoted = comment.likes?.includes(currentUserId);
-  const hasDownvoted = comment.dislikes?.includes(currentUserId);
+  const hasUpvoted = reactionState.likes.includes(currentUserId);
+  const hasDownvoted = reactionState.dislikes.includes(currentUserId);
   const authorName = comment.author?.username || 'Unknown';
   const authorInitial = authorName.charAt(0).toUpperCase();
   const profilePic = comment.author?.profilePictureUrl;
 
   const handleVote = async (isLike) => {
     const route = isLike ? 'like' : 'dislike';
+    const previous = reactionState;
+    const likes = reactionState.likes.filter((id) => id !== currentUserId);
+    const dislikes = reactionState.dislikes.filter((id) => id !== currentUserId);
+    const wasActive = (isLike ? reactionState.likes : reactionState.dislikes).includes(currentUserId);
+    if (!wasActive) (isLike ? likes : dislikes).push(currentUserId);
+    setReactionState({ likes, dislikes });
     try {
       await axios.post(`/api/v1/challenges/${challengeId}/comments/${comment._id}/reactions/${route}`, {});
-      onAction();
+      onAction({ silent: true });
     } catch (error) {
+      setReactionState(previous);
       console.error('Failed to vote on comment', error);
     }
   };
@@ -416,17 +428,21 @@ const ChallengeSolver = () => {
     c: 'bool solve(int nums[], int numsSize, int target) {\n    // Your code here\n    return false;\n}',
   };
 
-  const fetchChallenge = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(false);
+  const fetchChallenge = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setIsLoading(true);
+      setLoadError(false);
+    }
     try {
       const res = await axios.get(`/api/v1/challenges/${id}`);
       setChallenge(res.data);
     } catch {
-      setLoadError(true);
-      setOutput('Error: Could not load the challenge.');
+      if (!silent) {
+        setLoadError(true);
+        setOutput('Error: Could not load the challenge.');
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [id, token]);
 
@@ -465,10 +481,20 @@ const ChallengeSolver = () => {
   const handleLikeChallenge = async (isLike) => {
     if (!user) return;
     const route = isLike ? 'like' : 'dislike';
+    const userId = user.id || user._id;
+    const previous = challenge;
+    setChallenge((current) => {
+      const likes = (current.likes || []).filter((value) => value !== userId);
+      const dislikes = (current.dislikes || []).filter((value) => value !== userId);
+      const wasActive = (isLike ? current.likes : current.dislikes)?.includes(userId);
+      if (!wasActive) (isLike ? likes : dislikes).push(userId);
+      return { ...current, likes, dislikes };
+    });
     try {
       const res = await axios.post(`/api/v1/challenges/${id}/reactions/${route}`, {});
       setChallenge((prev) => ({ ...prev, likes: res.data.likes, dislikes: res.data.dislikes }));
     } catch (error) {
+      setChallenge(previous);
       console.error('Failed to vote on challenge', error);
     }
   };
@@ -479,7 +505,7 @@ const ChallengeSolver = () => {
     try {
       await axios.post(`/api/v1/challenges/${id}/comments`, { text: newComment });
       setNewComment('');
-      fetchChallenge();
+      fetchChallenge({ silent: true });
     } catch (error) {
       console.error('Failed to post comment', error);
     }
@@ -584,18 +610,23 @@ const ChallengeSolver = () => {
               ))}
           </div>
 
-          <div className="challenge-feedback">
+          <div className="vote-group-pill">
             <button
+              type="button"
               onClick={() => handleLikeChallenge(true)}
-              className={(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}
+              className={`action-btn like-btn ${(challenge.likes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
             >
-              👍 {challenge.likes.length}
+              <span>👍</span>
+              <span>{(challenge.likes || []).length}</span>
             </button>
+            <div className="pill-divider" />
             <button
+              type="button"
               onClick={() => handleLikeChallenge(false)}
-              className={(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}
+              className={`action-btn dislike-btn ${(challenge.dislikes || []).includes(user?.id || user?._id) ? 'active' : ''}`}
             >
-              👎 {challenge.dislikes.length}
+              <span>👎</span>
+              <span>{(challenge.dislikes || []).length}</span>
             </button>
           </div>
         </div>
@@ -611,17 +642,25 @@ const ChallengeSolver = () => {
             </div>
             <div className="editor-wrapper">
               <Editor
-                height="400px"
+                height="420px"
                 theme="vs-dark"
                 language={language}
                 value={code}
                 onChange={updateCode}
                 options={{
                   ariaLabel: 'Challenge code editor',
-                  fontSize: 16,
+                  fontSize: 15,
                   minimap: { enabled: false },
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
+                  fixedOverflowWidgets: true,
+                  scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'auto',
+                    useShadows: false,
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10,
+                  },
                 }}
               />
             </div>
@@ -648,18 +687,33 @@ const ChallengeSolver = () => {
             <section className="submission-history" aria-labelledby="submission-history-title">
               <h3 id="submission-history-title">Submission history</h3>
               {submissions.length === 0 ? (
-                <p>No submissions yet.</p>
+                <p className="no-submissions">No submissions yet.</p>
               ) : (
                 <div className="table-scroll" tabIndex="0">
-                  <table>
-                    <thead><tr><th>Status</th><th>Language</th><th>Passed</th><th>Submitted</th></tr></thead>
+                  <table className="submission-history-table">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Language</th>
+                        <th>Passed</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       {submissions.map((submission) => (
                         <tr key={submission.id}>
-                          <td><button onClick={() => openSubmission(submission.id)} type="button">{submission.status}</button></td>
-                          <td>{submission.language}</td>
-                          <td>{submission.passCount}/{submission.totalCount}</td>
-                          <td>{new Date(submission.createdAt).toLocaleString()}</td>
+                          <td>
+                            <button
+                              className={`status-badge ${submission.status === 'ACCEPTED' ? 'accepted' : 'rejected'}`}
+                              onClick={() => openSubmission(submission.id)}
+                              type="button"
+                            >
+                              {submission.status}
+                            </button>
+                          </td>
+                          <td className="lang-tag">{submission.language}</td>
+                          <td className="pass-tag">{submission.passCount}/{submission.totalCount}</td>
+                          <td className="time-tag">{new Date(submission.createdAt).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -691,7 +745,7 @@ const ChallengeSolver = () => {
               comment={comment}
               challengeId={id}
               token={token}
-              onAction={fetchChallenge}
+              onAction={() => fetchChallenge({ silent: true })}
             />
           ))}
         </div>

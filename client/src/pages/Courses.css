@@ -95,7 +95,7 @@
   padding: 1rem;
 }
 
-.badge {
+.courses-container .badge {
   padding: 0.3rem 0.8rem;
   border-radius: 4px;
   font-weight: bold;
@@ -103,11 +103,11 @@
   letter-spacing: 1px;
 }
 
-.badge.green {
+.courses-container .badge.green {
   background: rgba(52, 168, 83, 0.9);
   color: white;
 }
-.badge.blue {
+.courses-container .badge.blue {
   background: rgba(66, 133, 244, 0.9);
   color: white;
 }
@@ -236,7 +236,7 @@
 }
 
 /* Neo button */
-.neo-button {
+.courses-container .neo-button {
   padding: 0.7rem 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -247,14 +247,14 @@
   transition: all 0.2s;
   width: 100%;
 }
-.neo-button:hover {
+.courses-container .neo-button:hover {
   background: rgba(255, 255, 255, 0.12);
 }
-.neo-button.primary {
+.courses-container .neo-button.primary {
   background: rgba(66, 133, 244, 0.3);
   border-color: rgba(66, 133, 244, 0.5);
 }
-.neo-button.primary:hover {
+.courses-container .neo-button.primary:hover {
   background: rgba(66, 133, 244, 0.5);
 }
 /* Course Viewer */

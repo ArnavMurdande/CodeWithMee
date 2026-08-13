@@ -40,7 +40,7 @@ function mockQuery(sql, params, challenges, versions, testCases, solves, submiss
     const row = {
       id,
       title: params[0],
-      difficulty: params[2] || 'EASY',
+      difficulty: params[1] || 'EASY',
       status: 'PUBLISHED',
       score: 100,
       tags: [],

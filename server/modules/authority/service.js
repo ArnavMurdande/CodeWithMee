@@ -137,6 +137,7 @@ function outcomeError(outcome) {
     revision_conflict: ['authority_revision_conflict', 409],
     self_change_denied: ['self_authority_change_denied', 409],
     target_ineligible: ['authority_target_ineligible', 409],
+    user_has_dependent_records: ['user_has_dependent_records', 409],
     user_not_found: ['user_not_found', 404],
   };
   const [code, status] = outcomes[outcome] || ['authority_change_failed', 409];
@@ -251,6 +252,29 @@ function createAuthorityService({
         auditEvent: auditEventDto(result.auditEvent),
         revokedSessionCount: result.revokedSessionCount,
         user: authorityUserDto(result.user),
+      });
+    },
+
+    async deleteUser(authentication, targetUserId, rawInput = {}, metadata = {}) {
+      requirePermission(PERMISSION.PLATFORM_ACCOUNT_STATUS_MANAGE, authentication);
+      assertExactKeys(rawInput, ['reason', 'revision']);
+      const result = await runRepository(() =>
+        repository.deleteUser({
+          actorUserId: authentication.principal.userId,
+          event: apiEvent(
+            authentication,
+            AUTHORITY_ACTION.ACCOUNT_DELETE,
+            rawInput.reason,
+            metadata,
+          ),
+          expectedRevision: validateRevision(rawInput.revision),
+          targetUserId,
+        }),
+      );
+      return Object.freeze({
+        auditEvent: auditEventDto(result.auditEvent),
+        deletedUserId: result.deletedUserId,
+        revokedSessionCount: result.revokedSessionCount,
       });
     },
 

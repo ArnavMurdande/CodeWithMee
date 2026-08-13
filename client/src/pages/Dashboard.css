@@ -1,159 +1,174 @@
 .dashboard-container {
   min-height: 100vh;
-  padding: 3rem 4rem;
+  padding: 3rem 2.5rem 6rem;
   box-sizing: border-box;
   color: white;
   width: 100%;
-  max-width: 100%;
+  max-width: 1240px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .dashboard-welcome {
-  font-size: 3.5rem;
-  font-weight: 700;
-  margin-bottom: 3rem;
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 2.5rem;
   text-align: left;
+  letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
 .dashboard-grid {
   display: grid;
-  /* --- FIX: Changed to a 2-column grid --- */
   grid-template-columns: repeat(2, 1fr);
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 .dashboard-card {
-  /* Enhanced Dark Card Effect - More Visible */
-  background: linear-gradient(145deg, rgba(15, 15, 20, 0), rgba(10, 10, 15, 0.95));
+  background: linear-gradient(145deg, rgba(20, 20, 24, 0.85), rgba(12, 12, 16, 0.95));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-  padding: 1.5rem 2rem;
-  min-height: 280px; /* Reduced from 350px */
+    0 12px 36px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 1.75rem 2rem;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dashboard-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-5px);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(99, 102, 241, 0.15);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Card Header */
 .card-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 1rem;
 }
 
+.card-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
 .card-header h3 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.card-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
 }
 
 .card-icon {
-  font-size: 2rem;
+  font-size: 1.6rem;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  flex-shrink: 0;
 }
 
 .card-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* Add small gap between elements */
+  gap: 0.75rem;
 }
 
-/* --- FIX: Improved alignment for empty cards --- */
 .card-content.empty {
   justify-content: center;
   align-items: center;
   text-align: center;
 }
 
-/* Stats section styling */
-.stat-number {
-  font-size: 3.5rem;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.card-loading-state {
+  opacity: 0.7;
+  padding: 1.5rem 0;
   text-align: center;
 }
 
-.stat-label {
-  font-size: 0.95rem;
-  color: #b0b0b0;
-  margin: 0 0 1rem 0;
-  text-align: center;
-}
-
-/* Divider between stats and list */
+/* Progress List */
 .progress-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
   margin-top: auto;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1.15rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .progress-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 110px 45px;
+  grid-template-columns: 1fr 130px 48px;
   align-items: center;
-  gap: 0.85rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  gap: 1rem;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
   color: inherit;
   background: transparent;
-  border: 0;
-  font: inherit;
+  border: 1px solid transparent;
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .progress-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .progress-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #e0e0e0;
-  font-weight: 500;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .dashboard-container .progress-bar-container {
   display: block;
   width: 100%;
   height: 8px;
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   overflow: hidden;
   position: relative;
@@ -162,104 +177,198 @@
 .dashboard-container .progress-bar {
   display: block;
   height: 100%;
-  background: #ffffff;
+  background: linear-gradient(90deg, var(--cwm-theme-primary, #6366f1), var(--cwm-theme-secondary, #8b5cf6));
   border-radius: 999px;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--cwm-theme-primary, #6366f1) 50%, transparent);
 }
 
 .dashboard-container .progress-percent {
   color: #ffffff;
   text-align: right;
   font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
+  font-size: 0.9rem;
 }
 
+/* Notes & Courses List */
 .notes-list {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .note-item {
-  background-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  margin: 0.5rem 0;
+  padding: 0.75rem 1.1rem;
+  border-radius: 12px;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.9rem;
-  color: #e0e0e0;
-  transition: background-color 0.2s ease;
+  font-size: 0.95rem;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.note-item.course-item {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
 }
 
 .note-item:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
+.course-company-tag {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 8px;
+}
+
+/* Motivational Quotes & Guidance */
 .motivational-quote {
   font-style: italic;
-  color: #ccc;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.05rem;
   line-height: 1.6;
-  margin-bottom: 2rem;
-  /* --- FIX: Ensure quote takes up space to push button down --- */
+  margin-bottom: 1.5rem;
   flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.card-guidance {
-  color: var(--cwm-color-text-muted);
-  line-height: 1.5;
   text-align: center;
 }
 
+.card-guidance {
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Card Buttons - Matches Pathways Pill Button Theme */
 .card-button {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: bold;
-  color: white;
-  background: linear-gradient(90deg, #a900ff, #00f8f1);
+  height: 44px;
+  padding: 0 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cwm-theme-primary, #6366f1);
+  background: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px; /* Curvy pill shape matching Pathways */
   cursor: pointer;
   text-decoration: none;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .card-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(169, 0, 255, 0.3);
+  background: linear-gradient(135deg, var(--cwm-theme-primary, #6366f1), var(--cwm-theme-secondary, #8b5cf6));
+  color: #ffffff;
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--cwm-theme-primary, #6366f1) 45%, transparent);
 }
 
 .card-button:disabled {
-  background: #555;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-/* --- FIX: Responsive Grid Layout --- */
-@media (max-width: 1200px) {
+/* ===================================
+   RESPONSIVE LAYOUT (Mobile & Tablet / iPad Mini)
+   =================================== */
+
+@media (min-width: 601px) and (max-width: 1024px) {
+  .dashboard-container {
+    padding: 3rem 1.5rem 6rem;
+    max-width: 100%;
+  }
+
+  .dashboard-welcome {
+    font-size: clamp(2rem, 4.5vw, 2.8rem);
+    margin-bottom: 2rem;
+  }
+
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .dashboard-card {
+    padding: 1.35rem 1.5rem;
+    min-height: 240px;
+  }
+
+  .card-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .progress-item {
+    grid-template-columns: 1fr 85px 40px;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .dashboard-container {
-    padding: 2rem 1rem;
+    padding: 5.5rem 1rem 7.5rem 1rem;
     width: 100%;
     box-sizing: border-box;
-    margin-left: auto;
-    margin-right: auto;
   }
+
   .dashboard-welcome {
-    font-size: 2.5rem;
-    text-align: left;
+    font-size: clamp(1.8rem, 6vw, 2.3rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .dashboard-card {
+    padding: 1.25rem 1.35rem;
+    min-height: auto;
+    border-radius: 18px;
+  }
+
+  .card-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .card-icon {
+    font-size: 1.4rem;
+  }
+
+  .motivational-quote {
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-button {
+    height: 42px;
+    padding: 0 1.4rem;
+    font-size: 0.88rem;
   }
 }

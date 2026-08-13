@@ -43,6 +43,7 @@ Every file below is reachable from `client/src/main.tsx`; `scripts/tests/client-
 | `Header`               | Active desktop/mobile navigation and timer/account composition.                                                                        |
 | `HeroSection`          | Active home presentation.                                                                                                              |
 | `LanguageNetwork`      | Active decorative home canvas; duplicate embedded CSS removed in favor of its imported stylesheet and static reduced-motion rendering. |
+| `MobileOptimizationNotice` | Active dismissible small-screen advisory; it warns without permanently blocking responsive routes.                              |
 | `NotesWidget`          | Active compatibility Notes workflow; fake Share action and obsolete mobile-warning CSS removed.                                        |
 | `PomodoroTimer`        | Active local timer with accessible settings/dialog behavior.                                                                           |
 | `ProfileDropdown`      | Active account menu.                                                                                                                   |
@@ -58,7 +59,7 @@ Every file below is reachable from `client/src/main.tsx`; `scripts/tests/client-
 Removed unreachable source:
 
 - `client/src/App.css`: never imported; duplicated global shell rules and would have hidden the system cursor.
-- `client/src/components/MobileWarningOverlay.{js,css}`: no active import after responsive routes stopped blocking mobile users.
+- `client/src/components/MobileWarningOverlay.{js,css}`: replaced by the accessible, session-dismissible `MobileOptimizationNotice` advisory.
 - `client/src/pages/company/CompanyDashboard.{js,css}`: no route/import, coupled to legacy `accountType`, and called company-course endpoints that already return `410`.
 - The unused PrismJS theme/import/package was removed after Monaco became the sole challenge editor.
 
@@ -108,6 +109,7 @@ The generated OpenAPI document remains canonical. All current operations are lis
 | `POST`   | `/organizations/{organizationId}/verification`       | `submitProviderVerification`      |
 | `GET`    | `/admin/audit-events`                                | `listAuthorityAuditEvents`        |
 | `GET`    | `/admin/users`                                       | `listAuthorityUsers`              |
+| `DELETE` | `/admin/users/{userId}`                              | `deleteAuthorityUser`             |
 | `PATCH`  | `/admin/users/{userId}/platform-role`                | `changePlatformRole`              |
 | `PATCH`  | `/admin/users/{userId}/status`                       | `changeAccountStatus`             |
 | `POST`   | `/organizations/{organizationId}/ownership-transfer` | `transferOrganizationOwnership`   |

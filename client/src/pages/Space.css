@@ -417,7 +417,7 @@
   background: #00f8f1;
 }
 
-/* Curved L-connector: connects parent thread line â†’ child avatar */
+/* Curved L-connector: connects parent thread line → child avatar */
 .reddit-comment.nested .comment-left-col {
   position: relative;
 }
@@ -426,9 +426,9 @@
   content: '';
   position: absolute;
   box-sizing: border-box;
-  left: -31px;
+  left: -30px;
   top: -10px;
-  width: 31px;
+  width: 46px;
   height: 32px;
   border-left: 2px solid rgba(255, 255, 255, 0.08);
   border-bottom: 2px solid rgba(255, 255, 255, 0.08);

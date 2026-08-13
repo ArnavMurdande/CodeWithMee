@@ -2,9 +2,6 @@
 
 const assert = require('node:assert/strict');
 const { createHash, randomUUID } = require('node:crypto');
-const { mkdtemp, rm } = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
 const { Pool } = require('pg');
 const { buildAuthorizationCatalog } = require('../../prisma/seed/authorization-catalog.cjs');
 const { FILE_SCAN_STATUS, FILE_VISIBILITY } = require('../modules/files/contracts');
@@ -432,46 +429,6 @@ async function main() {
     assert.equal(controls.rowCount, 2);
     assert.ok(controls.rows.every((row) => row.consumed_at === null));
 
-    const temporaryImportRoot = await mkdtemp(path.join(os.tmpdir(), 'codewithmee-p0c-s4-'));
-    let importSummary = null;
-    try {
-      // Legacy mongo snapshot import is retired.
-
-      const importedLearner = await client.query(
-        `SELECT id FROM users WHERE email_normalized = 'learner@example.test'`,
-      );
-      assert.equal(importedLearner.rowCount, 1);
-      await expectConstraint(
-        client,
-        `INSERT INTO social_relationships (source_user_id, target_user_id, status)
-         VALUES ($1, $1, 'following')`,
-        [importedLearner.rows[0].id],
-        /social_relationships_not_self_check/,
-      );
-
-      const beforeReplay = await client.query(
-        'SELECT count(*)::int AS count FROM import_records WHERE import_run_id = $1',
-        [importSummary.importRunId],
-      );
-      const replay = await importSnapshotToPostgres({
-        clock: () => new Date('2026-08-01T00:00:00.000Z'),
-        fingerprintKey,
-        pool,
-        snapshotLabel: snapshotPath,
-        source: snapshot,
-      });
-      assert.equal(replay.idempotentReplay, true);
-      assert.equal(replay.importRunId, importSummary.importRunId);
-      const afterReplay = await client.query(
-        'SELECT count(*)::int AS count FROM import_records WHERE import_run_id = $1',
-        [importSummary.importRunId],
-      );
-      assert.equal(afterReplay.rows[0].count, beforeReplay.rows[0].count);
-      await snapshot.close();
-    } finally {
-      await rm(temporaryImportRoot, { force: true, recursive: true });
-    }
-
     const identityRepository = createPostgresIdentityRepository(pool);
     const organizationRepository = createPostgresOrganizationRepository(pool);
     const authorityRepository = createPostgresAuthorityRepository(pool);
@@ -724,11 +681,12 @@ async function main() {
     );
     assert.equal(updatedFormerOwner.role, 'analyst');
 
+    const migrationDataset = Object.freeze({ sourceChecksum: 'f'.repeat(64), sourceRecords: 0 });
     const parityReport = await createParityReport(pool, {
       clock: () => new Date('2026-08-01T13:00:00.000Z'),
-      datasetSha256: importSummary.sourceChecksum,
+      datasetSha256: migrationDataset.sourceChecksum,
     });
-    assert.equal(parityReport.import.sourceRecords, importSummary.sourceRecords);
+    assert.equal(parityReport.import.sourceRecords, migrationDataset.sourceRecords);
     assert.equal(parityReport.domains.identity.readyForCutover, false);
     assert.ok(parityReport.domains.identity.quarantined > 0);
     assert.ok(parityReport.domains.challenges.adapterReady === false);
@@ -741,7 +699,7 @@ async function main() {
     const rollbackUntil = new Date('2035-01-01T00:00:00.000Z');
     const cutoverDomains = ['authority', 'identity', 'organizations'];
     const cutoverSafety = {
-      datasetSha256: importSummary.sourceChecksum,
+      datasetSha256: migrationDataset.sourceChecksum,
       deploymentEnvironment: 'test',
       domains: cutoverDomains,
       generation: cutoverGeneration,
@@ -768,7 +726,7 @@ async function main() {
         PERSISTENCE_ENVIRONMENT: 'test',
         PERSISTENCE_IDENTITY_STORE: 'postgres',
         PERSISTENCE_LEGACY_API_MODE: 'disabled',
-        PERSISTENCE_MIGRATION_DATASET_SHA256: importSummary.sourceChecksum,
+        PERSISTENCE_MIGRATION_DATASET_SHA256: migrationDataset.sourceChecksum,
         PERSISTENCE_ORGANIZATIONS_STORE: 'postgres',
         PERSISTENCE_PARITY_REPORT_SHA256: cutoverReportSha256,
         PERSISTENCE_ROLLBACK_REHEARSED: 'true',
@@ -810,13 +768,7 @@ async function main() {
         fileLifecycle: true,
         fileReconciliation: { clean: true, orphanBlocked: true },
         migration: migrations.rows.map((row) => row.migration_name),
-        normalizedImport: importSummary
-          ? {
-              counts: importSummary.counts,
-              idempotentReplay: true,
-              sourceRecords: importSummary.sourceRecords,
-            }
-          : null,
+        normalizedImport: null,
         persistenceCutover: {
           activated: true,
           domains: cutoverDomains,

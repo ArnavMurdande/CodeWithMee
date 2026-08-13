@@ -232,6 +232,59 @@ function createPostgresAuthorityRepository(pool) {
       });
     },
 
+    async deleteUser({ actorUserId, event, expectedRevision, targetUserId }) {
+      return withAuthorityTransaction(pool, async (client) => {
+        await lockPlatformAuthority(client);
+        if (!(await activeSuperadmin(client, actorUserId))) {
+          return { outcome: 'actor_not_authorized' };
+        }
+        const targetResult = await client.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [
+          targetUserId,
+        ]);
+        const target = targetResult.rows[0];
+        if (!target) return { outcome: 'user_not_found' };
+        if (actorUserId === targetUserId) return { outcome: 'self_change_denied' };
+        if (target.authority_revision !== expectedRevision) return { outcome: 'revision_conflict' };
+        if (
+          target.platform_role === 'superadmin' &&
+          target.status === 'active' &&
+          (await activeSuperadminCount(client)) <= 1
+        ) {
+          return { outcome: 'last_superadmin' };
+        }
+        const sessionCount = await client.query(
+          'SELECT COUNT(*)::integer AS count FROM sessions WHERE user_id = $1 AND revoked_at IS NULL',
+          [targetUserId],
+        );
+        await client.query('SAVEPOINT delete_platform_user');
+        try {
+          await client.query('DELETE FROM users WHERE id = $1 AND authority_revision = $2', [
+            targetUserId,
+            expectedRevision,
+          ]);
+          await client.query('RELEASE SAVEPOINT delete_platform_user');
+        } catch (error) {
+          if (error?.code === '23503') {
+            await client.query('ROLLBACK TO SAVEPOINT delete_platform_user');
+            return { outcome: 'user_has_dependent_records' };
+          }
+          throw error;
+        }
+        const auditEvent = await appendAuditEvent(client, event, {
+          afterState: {},
+          beforeState: authorityState(target),
+          organizationId: null,
+          targetUserId,
+        });
+        return {
+          auditEvent,
+          deletedUserId: targetUserId,
+          outcome: 'updated',
+          revokedSessionCount: sessionCount.rows[0].count,
+        };
+      });
+    },
+
     async changePlatformRole({ actorUserId, event, expectedRevision, platformRole, targetUserId }) {
       return withAuthorityTransaction(pool, async (client) => {
         await lockPlatformAuthority(client);

@@ -143,6 +143,11 @@ export const AuthProvider = ({ children }) => {
     () => apiClient.post('/api/v1/auth/email/verify/request'),
     [],
   );
+  const refreshCurrentUser = useCallback(async () => {
+    const response = await apiClient.get('/api/v1/me');
+    setUser(response.data.user);
+    return response.data.user;
+  }, []);
   const confirmEmailVerification = useCallback(async (verificationToken) => {
     const response = await apiClient.post('/api/v1/auth/email/verify/confirm', {
       token: verificationToken,
@@ -176,6 +181,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       logoutAll,
       refreshSession,
+      refreshCurrentUser,
       register,
       requestEmailVerification,
       requestPasswordReset,
@@ -193,6 +199,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       logoutAll,
       refreshSession,
+      refreshCurrentUser,
       register,
       requestEmailVerification,
       requestPasswordReset,

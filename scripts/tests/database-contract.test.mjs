@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import test from 'node:test';
@@ -313,15 +313,45 @@ test('database CI isolates, migrates, reseeds, tests, restores, and cleans Postg
   assert.equal(digest, migrationManifest.migration.sha256);
   assert.equal(Buffer.byteLength(migration), migrationManifest.migration.bytes);
   assert.equal(migrationManifest.prisma, '7.9.1');
+  const migrationDirectories = readdirSync(path.join(root, 'prisma', 'migrations'), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  for (const entry of migrationManifest.migrations) {
+    const contents = readFileSync(path.join(root, entry.path));
+    assert.equal(contents.byteLength, entry.bytes, `${entry.name} byte count`);
+    assert.equal(
+      createHash('sha256').update(contents).digest('hex'),
+      entry.sha256,
+      `${entry.name} checksum`,
+    );
+  }
   assert.deepEqual(
     migrationManifest.migrations.map((/** @type {{name: string}} */ entry) => entry.name),
-    [
+    migrationDirectories,
+  );
+  assert.deepEqual(migrationDirectories, [
       '20260801000100_core_baseline',
       '20260801000200_normalized_legacy_domains',
       '20260801000300_normalized_legacy_interactions',
       '20260801000400_persistence_cutover_runtime',
       '20260801000500_restricted_content_formats',
       '20260801000600_operation_reliability',
-    ],
-  );
+      '20260810000100_add_starter_templates',
+      '20260810000200_challenge_status_enum',
+      '20260810000300_add_challenge_submissions',
+      '20260810000400_add_lesson_progress',
+      '20260810000600_add_execution_jobs',
+      '20260810000700_add_course_publication_status',
+      '20260810000800_add_lesson_progress_lookup',
+      '20260810000900_align_execution_job_foreign_keys',
+      '20260810001000_bind_enrollments_to_course_versions',
+      '20260810001100_add_course_content_duration',
+      '20260810001200_complete_provider_lms',
+      '20260810001300_add_quiz_grading_feedback',
+      '20260810001400_add_course_uploaded_media',
+      '20260810001500_version_course_publication',
+  ]);
 });

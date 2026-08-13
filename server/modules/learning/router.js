@@ -38,15 +38,20 @@ function createLearningRouter(pool) {
   router.put('/notes/:noteId', async (req, res, next) => {
     try {
       if (!isUuid(req.params.noteId)) return res.status(404).json({ error: { code: 'note_not_found' } });
-      const document = req.body?.contentDocument
+      const hasContent = req.body?.contentDocument !== undefined || req.body?.content !== undefined;
+      const document = !hasContent ? null : req.body?.contentDocument
         ? readDocument(req.body.contentDocument, { maximumLength: 100000 })
-        : createDocument(req.body?.content || '', { format: CONTENT_FORMAT.PLAIN_TEXT, legacyHtml: true, maximumLength: 100000 });
+        : createDocument(req.body.content || '', { format: CONTENT_FORMAT.PLAIN_TEXT, legacyHtml: true, maximumLength: 100000 });
+      const formattingJson = req.body?.formatting === undefined ? null : JSON.stringify(req.body.formatting);
+      if (formattingJson && formattingJson.length > 500000) {
+        return res.status(413).json({ error: { code: 'note_formatting_too_large' } });
+      }
       const result = await pool.query(
-        `UPDATE learning_notes SET title=COALESCE($3,title),content=$4,content_format=$5,
+        `UPDATE learning_notes SET title=COALESCE($3,title),content=COALESCE($4,content),content_format=COALESCE($5,content_format),
          formatting=COALESCE($6::jsonb,formatting),canvas_data=COALESCE($7,canvas_data),updated_at=NOW()
          WHERE id=$1 AND user_id=$2 RETURNING *`,
-        [req.params.noteId, req.user.id, req.body?.title || null, document.text, document.format,
-          req.body?.formatting ? JSON.stringify(req.body.formatting) : null, req.body?.canvasData ?? null]);
+        [req.params.noteId, req.user.id, req.body?.title || null, document?.text ?? null, document?.format ?? null,
+          formattingJson, req.body?.canvasData ?? null]);
       if (!result.rowCount) return res.status(404).json({ error: { code: 'note_not_found' } });
       res.json(noteDto(result.rows[0]));
     } catch (error) { next(error); }
@@ -55,6 +60,45 @@ function createLearningRouter(pool) {
     try {
       const result = await pool.query('DELETE FROM learning_notes WHERE id=$1 AND user_id=$2', [req.params.noteId, req.user.id]);
       if (!result.rowCount) return res.status(404).json({ error: { code: 'note_not_found' } });
+      res.status(204).end();
+    } catch (error) { next(error); }
+  });
+  router.post('/notes/:noteId/attachments', async (req, res, next) => {
+    try {
+      if (!isUuid(req.params.noteId) || !isUuid(req.body?.fileId)) {
+        return res.status(400).json({ error: { code: 'invalid_note_attachment' } });
+      }
+      const file = await pool.query(
+        `SELECT id,original_name,detected_mime,declared_mime FROM files
+         WHERE id=$1 AND owner_user_id=$2 AND purpose='note_attachment'
+           AND state='ready'::"file_state" AND scan_status='clean'::"file_scan_status" AND deleted_at IS NULL`,
+        [req.body.fileId, req.user.id],
+      );
+      if (!file.rowCount) return res.status(404).json({ error: { code: 'note_attachment_not_found' } });
+      const note = await pool.query('SELECT id FROM learning_notes WHERE id=$1 AND user_id=$2', [req.params.noteId, req.user.id]);
+      if (!note.rowCount) return res.status(404).json({ error: { code: 'note_not_found' } });
+      const mime = file.rows[0].detected_mime || file.rows[0].declared_mime || '';
+      const kind = mime.startsWith('image/') ? 'image' : mime.startsWith('audio/') ? 'audio' : mime.startsWith('video/') ? 'video' : 'file';
+      const result = await pool.query(
+        `INSERT INTO learning_note_attachments (note_id,file_id,kind,original_name,created_at)
+         VALUES ($1,$2,$3,$4,NOW()) RETURNING id,file_id,kind,original_name`,
+        [req.params.noteId, req.body.fileId, kind, file.rows[0].original_name],
+      );
+      const row = result.rows[0];
+      res.status(201).json({ _id: row.id, id: row.id, fileId: row.file_id, fileType: row.kind, kind: row.kind, name: row.original_name });
+    } catch (error) { next(error); }
+  });
+  router.delete('/notes/:noteId/attachments/:attachmentId', async (req, res, next) => {
+    try {
+      if (!isUuid(req.params.noteId) || !isUuid(req.params.attachmentId)) {
+        return res.status(404).json({ error: { code: 'note_attachment_not_found' } });
+      }
+      const result = await pool.query(
+        `DELETE FROM learning_note_attachments a USING learning_notes n
+         WHERE a.id=$1 AND a.note_id=$2 AND n.id=a.note_id AND n.user_id=$3`,
+        [req.params.attachmentId, req.params.noteId, req.user.id],
+      );
+      if (!result.rowCount) return res.status(404).json({ error: { code: 'note_attachment_not_found' } });
       res.status(204).end();
     } catch (error) { next(error); }
   });

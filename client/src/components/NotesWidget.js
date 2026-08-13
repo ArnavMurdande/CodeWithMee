@@ -3,11 +3,11 @@ import axios, { assetUrl } from '../lib/api';
 import { AuthContext } from '../context/AuthContext';
 import { getUserStorageKey } from '../lib/cache-isolation';
 import {
-  escapeTextDownload,
   plainTextDocument,
   readRestrictedDocument,
   safeHttpUrl,
 } from '../lib/restricted-content';
+import { uploadSecureFile } from '../lib/secure-file-upload';
 import './NotesWidget.css';
 
 const API = '/api/v1/learning/notes';
@@ -23,25 +23,144 @@ const formatDate = (d) => {
 
 const noteText = (note) => readRestrictedDocument(note?.contentDocument, note?.content).text;
 
+function blobDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+const EDITOR_TAGS = new Set(['DIV', 'P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'SPAN', 'FONT', 'H1', 'H2', 'H3']);
+
+function serializeEditorNode(node) {
+  if (node.nodeType === Node.TEXT_NODE) return { type: 'text', value: node.textContent || '' };
+  if (node.nodeType !== Node.ELEMENT_NODE) return null;
+  if (node.classList.contains('nw-media-block')) {
+    return {
+      type: 'media',
+      attachmentId: node.dataset.attId || '',
+      style: {
+        float: node.style.float || '',
+        marginBottom: node.style.marginBottom || '',
+        marginLeft: node.style.marginLeft || '',
+        marginRight: node.style.marginRight || '',
+        width: node.style.width || '',
+      },
+    };
+  }
+  if (!EDITOR_TAGS.has(node.tagName)) return null;
+  const children = [...node.childNodes].map(serializeEditorNode).filter(Boolean);
+  return {
+    type: 'element',
+    tag: node.tagName.toLowerCase(),
+    style: {
+      color: node.style.color || node.getAttribute('color') || '',
+      fontSize: node.style.fontSize || '',
+      listStyleType: node.style.listStyleType || '',
+      textAlign: node.style.textAlign || '',
+    },
+    children,
+  };
+}
+
+function serializeEditorDocument(editor) {
+  return { version: 1, children: [...editor.childNodes].map(serializeEditorNode).filter(Boolean) };
+}
+
+function createMediaElement(att) {
+  const url = safeHttpUrl(assetUrl(att.url));
+  const fileType = att.fileType || att.kind;
+  if (!url || !['image', 'video', 'audio'].includes(fileType)) return null;
+  const block = document.createElement('div');
+  block.className = fileType === 'audio' ? 'nw-media-block nw-audio-block' : 'nw-media-block';
+  block.dataset.attId = String(att._id || att.id || '');
+  block.contentEditable = 'false';
+  block.draggable = true;
+  const media = document.createElement(fileType === 'image' ? 'img' : fileType);
+  if (fileType === 'image') media.alt = String(att.name || 'Note attachment');
+  else media.controls = true;
+  media.src = url;
+  block.appendChild(media);
+  if (fileType === 'audio') {
+    const label = document.createElement('div');
+    label.className = 'nw-media-label';
+    label.textContent = String(att.name || 'Audio attachment');
+    block.appendChild(label);
+  } else {
+    const resize = document.createElement('div');
+    resize.className = 'nw-media-resize-tri';
+    block.appendChild(resize);
+  }
+  const toolbar = document.createElement('div');
+  toolbar.className = 'nw-media-toolbar';
+  for (const [className, title, label] of [
+    ['nw-ma-left', 'Align left', '←'],
+    ['nw-ma-center', 'Center', '■'],
+    ['nw-ma-right', 'Align right', '→'],
+    ['nw-ma-delete', 'Delete', '×'],
+  ]) {
+    const button = document.createElement('button');
+    button.className = `nw-ma ${className}`;
+    button.title = title;
+    button.type = 'button';
+    button.textContent = label;
+    toolbar.appendChild(button);
+  }
+  block.appendChild(toolbar);
+  return block;
+}
+
+function restoreEditorNode(spec, attachments) {
+  if (!spec || typeof spec !== 'object') return null;
+  if (spec.type === 'text') return document.createTextNode(String(spec.value || '').slice(0, 100_000));
+  if (spec.type === 'media') {
+    const attachment = attachments.find((item) => String(item._id || item.id) === String(spec.attachmentId));
+    const block = attachment ? createMediaElement(attachment) : null;
+    if (block && spec.style) {
+      for (const property of ['float', 'marginBottom', 'marginLeft', 'marginRight', 'width']) {
+        const value = String(spec.style[property] || '');
+        if (/^[a-z0-9.%-]{0,24}$/i.test(value)) block.style[property] = value;
+      }
+    }
+    return block;
+  }
+  const tag = String(spec.tag || '').toUpperCase();
+  if (spec.type !== 'element' || !EDITOR_TAGS.has(tag)) return null;
+  const element = document.createElement(tag.toLowerCase());
+  const style = spec.style || {};
+  if (/^#[0-9a-f]{6}$|^rgb\([0-9, ]+\)$/i.test(style.color || '')) element.style.color = style.color;
+  if (/^(?:1[0-9]|2[0-9]|3[0-2])px$/.test(style.fontSize || '')) element.style.fontSize = style.fontSize;
+  if (['left', 'center', 'right', 'justify'].includes(style.textAlign)) element.style.textAlign = style.textAlign;
+  if (['lower-alpha', 'decimal', 'disc'].includes(style.listStyleType)) element.style.listStyleType = style.listStyleType;
+  for (const child of Array.isArray(spec.children) ? spec.children.slice(0, 5000) : []) {
+    const restored = restoreEditorNode(child, attachments);
+    if (restored) element.appendChild(restored);
+  }
+  return element;
+}
+
 const NotesWidget = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const [activeNoteId, setActiveNoteId] = useState(null);
+  const [notesLoadRevision, setNotesLoadRevision] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [_isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const isMobileRef = useRef(window.innerWidth <= 768);
+
 
   const [fabPos, setFabPos] = useState(() => {
     try {
       const s = localStorage.getItem('notesWidgetFabPos');
       if (s) {
         const parsed = JSON.parse(s);
-        if (parsed && typeof parsed.bottom === 'number' && parsed.bottom >= 60) {
-          return { bottom: 24, right: 24 };
+        if (parsed && typeof parsed.bottom === 'number' && typeof parsed.right === 'number') {
+          return parsed;
         }
-        return parsed || { bottom: 24, right: 24 };
       }
       return { bottom: 24, right: 24 };
     } catch {
@@ -52,7 +171,10 @@ const NotesWidget = () => {
   const [panelSize, setPanelSize] = useState({ width: 520, height: 580 });
 
   const editorRef = useRef(null);
+  const selectionRangeRef = useRef(null);
+  const pendingMediaRangeRef = useRef(null);
   const saveTimerRef = useRef(null);
+  const canvasSaveTimerRef = useRef(null);
 
   const [fmtState, setFmtState] = useState({
     bold: false,
@@ -82,10 +204,6 @@ const NotesWidget = () => {
   const [fontSize, setFontSize] = useState(14);
   const contentInnerRef = useRef(null);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-
   // Internal drag tracking
   const draggedMediaRef = useRef(null);
 
@@ -97,13 +215,56 @@ const NotesWidget = () => {
     setIsLoading(true);
     try {
       const res = await axios.get(API);
-      setNotes(res.data);
-      if (res.data.length > 0 && !activeNoteId) setActiveNoteId(res.data[0]._id);
+      const fetchedNotes = Array.isArray(res.data) ? res.data : [];
+      setNotes(fetchedNotes);
+      if (fetchedNotes.length > 0) {
+        setActiveNoteId((current) => current || fetchedNotes[0]._id || fetchedNotes[0].id);
+      }
+      const hydrated = await Promise.all(
+        fetchedNotes.map(async (note) => ({
+          ...note,
+          attachments: await Promise.all(
+            (note.attachments || []).map(async (attachment) => {
+              if (!attachment.fileId) return attachment;
+              try {
+                const download = await axios.post(`/api/v1/files/${attachment.fileId}/download`, {});
+                return {
+                  ...attachment,
+                  _id: attachment._id || attachment.id,
+                  fileType: attachment.fileType || attachment.kind,
+                  url: download.data.download.url,
+                };
+              } catch {
+                return attachment;
+              }
+            }),
+          ),
+        })),
+      );
+      setNotes(hydrated);
+      setNotesLoadRevision((revision) => revision + 1);
     } catch (err) {
       console.error('Fetch notes failed', err);
     }
     setIsLoading(false);
-  }, [isAuthenticated, activeNoteId]);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isOpen || !isAuthenticated) return;
+    if (notes.length === 0) {
+      try {
+        const cached = JSON.parse(
+          localStorage.getItem(getUserStorageKey(user?.id, 'saved_notes')) || '[]',
+        );
+        if (Array.isArray(cached) && cached.length > 0) {
+          setNotes(cached);
+          setActiveNoteId((current) => current || cached[0]._id || cached[0].id);
+        }
+      } catch {
+        /* ignore invalid cache */
+      }
+    }
+  }, [isOpen, isAuthenticated, notes.length, user?.id]);
 
   useEffect(() => {
     if (isOpen && isAuthenticated) fetchNotes();
@@ -194,7 +355,13 @@ const NotesWidget = () => {
   const saveNote = useCallback(async (noteId, data) => {
     try {
       const res = await axios.put(`${API}/${noteId}`, data);
-      setNotes((prev) => prev.map((n) => (n._id === noteId ? res.data : n)));
+      setNotes((prev) =>
+        prev.map((n) =>
+          n._id === noteId
+            ? { ...n, ...res.data, attachments: res.data.attachments?.length ? res.data.attachments : n.attachments }
+            : n,
+        ),
+      );
     } catch (err) {
       console.error(err);
     }
@@ -203,14 +370,18 @@ const NotesWidget = () => {
   const handleContentChange = useCallback(() => {
     if (!editorRef.current || !activeNoteId) return;
     const contentDocument = plainTextDocument(editorRef.current.innerText || '');
+    const formatting = {
+      ...(activeNote?.formatting || {}),
+      editorDocumentV1: serializeEditorDocument(editorRef.current),
+    };
     setNotes((prev) =>
       prev.map((n) =>
-        n._id === activeNoteId ? { ...n, content: contentDocument.text, contentDocument } : n,
+        n._id === activeNoteId ? { ...n, content: contentDocument.text, contentDocument, formatting } : n,
       ),
     );
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => saveNote(activeNoteId, { contentDocument }), 1500);
-  }, [activeNoteId, saveNote]);
+    saveTimerRef.current = setTimeout(() => saveNote(activeNoteId, { contentDocument, formatting }), 500);
+  }, [activeNote?.formatting, activeNoteId, saveNote]);
 
   const handleTitleSave = () => {
     if (!activeNoteId || !titleInput.trim()) {
@@ -224,6 +395,10 @@ const NotesWidget = () => {
   // ─── Detect formatting state ──────────
   const updateFmtState = useCallback(() => {
     try {
+      const selection = window.getSelection();
+      if (selection?.rangeCount && editorRef.current?.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+        selectionRangeRef.current = selection.getRangeAt(0).cloneRange();
+      }
       setFmtState({
         bold: document.queryCommandState('bold'),
         italic: document.queryCommandState('italic'),
@@ -240,7 +415,18 @@ const NotesWidget = () => {
     }
   }, []);
 
+  const restoreEditorSelection = () => {
+    const range = selectionRangeRef.current;
+    if (!range || !editorRef.current?.contains(range.commonAncestorContainer)) return false;
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return true;
+  };
+
   const execCmd = (cmd, val = null) => {
+    editorRef.current?.focus();
+    restoreEditorSelection();
     document.execCommand(cmd, false, val);
     editorRef.current?.focus();
     updateFmtState();
@@ -252,17 +438,55 @@ const NotesWidget = () => {
     if (!activeNoteId || !editorRef.current) return;
     saveNote(activeNoteId, {
       contentDocument: plainTextDocument(editorRef.current.innerText || ''),
+      formatting: {
+        ...(activeNote?.formatting || {}),
+        editorDocumentV1: serializeEditorDocument(editorRef.current),
+      },
     });
   };
 
-  const saveAsFile = () => {
-    if (!activeNote) return;
-    const textContent = `${escapeTextDownload(activeNote.title)}\n\n${noteText(activeNote)}`;
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+  const saveAsFile = async () => {
+    if (!activeNote || !editorRef.current) return;
+    const exportDocument = document.implementation.createHTMLDocument(activeNote.title);
+    const meta = exportDocument.createElement('meta');
+    meta.setAttribute('charset', 'utf-8');
+    exportDocument.head.appendChild(meta);
+    const style = exportDocument.createElement('style');
+    style.textContent = 'body{max-width:900px;margin:40px auto;padding:0 24px;font-family:system-ui,sans-serif;line-height:1.65;color:#191919} .note{white-space:pre-wrap} img,video{max-width:100%;height:auto} audio,video{display:block;margin:12px 0} ul,ol{white-space:normal}';
+    exportDocument.head.appendChild(style);
+    const title = exportDocument.createElement('h1');
+    title.textContent = activeNote.title;
+    exportDocument.body.appendChild(title);
+    const content = editorRef.current.cloneNode(true);
+    content.className = 'note';
+    content.removeAttribute('contenteditable');
+    content.style.removeProperty('color');
+    content.querySelectorAll('.nw-media-toolbar,.nw-media-resize-tri').forEach((node) => node.remove());
+    const originalMedia = [...editorRef.current.querySelectorAll('img,video,audio')];
+    const exportedMedia = [...content.querySelectorAll('img,video,audio')];
+    await Promise.all(exportedMedia.map(async (media, index) => {
+      try {
+        const response = await fetch(originalMedia[index].currentSrc || originalMedia[index].src);
+        if (response.ok) media.src = await blobDataUrl(await response.blob());
+      } catch {
+        // Keep the signed online URL when the storage provider disallows client-side embedding.
+      }
+      media.removeAttribute('controlslist');
+    }));
+    exportDocument.body.appendChild(exportDocument.importNode(content, true));
+    if (activeNote.canvasData) {
+      const drawingTitle = exportDocument.createElement('h2');
+      drawingTitle.textContent = 'Drawing';
+      const drawing = exportDocument.createElement('img');
+      drawing.alt = 'Note drawing';
+      drawing.src = activeNote.canvasData;
+      exportDocument.body.append(drawingTitle, drawing);
+    }
+    const blob = new Blob([`<!doctype html>${exportDocument.documentElement.outerHTML}`], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${activeNote.title.replace(/[^a-zA-Z0-9 ]/g, '') || 'note'}.txt`;
+    a.download = `${activeNote.title.replace(/[^a-zA-Z0-9 ]/g, '') || 'note'}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -272,6 +496,8 @@ const NotesWidget = () => {
   // ─── Per-selection font size (FIX #4) ──
   const applyFontSize = (sizeInPx) => {
     setFontSize(sizeInPx);
+    editorRef.current?.focus();
+    restoreEditorSelection();
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
@@ -341,26 +567,40 @@ const NotesWidget = () => {
 
   // ─── Media upload ──────────────────────
   const uploadMedia = useCallback(
-    async (file) => {
+    async (file, insertionRange = pendingMediaRangeRef.current?.cloneRange()) => {
       if (!activeNoteId) return;
-      const formData = new FormData();
-      formData.append('noteMedia', file);
       try {
-        const res = await axios.post(`${API}/${activeNoteId}/upload`, formData);
-        const att = res.data;
+        const fileId = await uploadSecureFile(file, 'note_attachment');
+        const linked = await axios.post(`${API}/${activeNoteId}/attachments`, { fileId });
+        const download = await axios.post(`/api/v1/files/${fileId}/download`, {});
+        const att = { ...linked.data, url: download.data.download.url };
         setNotes((prev) =>
           prev.map((n) =>
             n._id === activeNoteId ? { ...n, attachments: [...(n.attachments || []), att] } : n,
           ),
         );
+        if (insertionRange && editorRef.current?.contains(insertionRange.commonAncestorContainer)) {
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(insertionRange);
+        }
         insertMediaInline(att);
+        pendingMediaRangeRef.current = null;
       } catch (err) {
         console.error('Upload failed', err);
-        alert('Upload failed: ' + (err.response?.data?.msg || err.message));
+        alert('Upload failed: ' + (err.response?.data?.error?.code || err.message));
       }
     },
     [activeNoteId],
   );
+
+  const captureMediaInsertionPoint = () => {
+    const selection = window.getSelection();
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : selectionRangeRef.current;
+    if (range && editorRef.current?.contains(range.commonAncestorContainer)) {
+      pendingMediaRangeRef.current = range.cloneRange();
+    }
+  };
 
   const insertMediaInline = (att) => {
     if (!editorRef.current) return;
@@ -425,7 +665,10 @@ const NotesWidget = () => {
     }
     range.collapse(false);
     range.insertNode(block);
-    range.setStartAfter(block);
+    const paragraph = document.createElement('p');
+    paragraph.appendChild(document.createElement('br'));
+    block.after(paragraph);
+    range.setStart(paragraph, 0);
     range.collapse(true);
     selection?.removeAllRanges();
     selection?.addRange(range);
@@ -585,13 +828,22 @@ const NotesWidget = () => {
       // External file drop
       if (e.dataTransfer.files?.length > 0) {
         e.preventDefault();
+        let dropRange = null;
+        if (document.caretRangeFromPoint) {
+          dropRange = document.caretRangeFromPoint(e.clientX, e.clientY);
+        } else if (document.caretPositionFromPoint) {
+          const position = document.caretPositionFromPoint(e.clientX, e.clientY);
+          dropRange = document.createRange();
+          dropRange.setStart(position.offsetNode, position.offset);
+          dropRange.collapse(true);
+        }
         Array.from(e.dataTransfer.files).forEach((file) => {
           if (
             file.type.startsWith('image/') ||
             file.type.startsWith('video/') ||
             file.type.startsWith('audio/')
           )
-            uploadMedia(file);
+            uploadMedia(file, dropRange?.cloneRange());
         });
       }
     },
@@ -599,30 +851,6 @@ const NotesWidget = () => {
   );
 
   // ─── Audio recording ──────────────────
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
-        await uploadMedia(file);
-      };
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
-    } catch {
-      alert('Microphone access is required');
-    }
-  };
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
-    setIsRecording(false);
-  };
-
   // ─── Canvas ───────────────────────────
   const canvasReadyRef = useRef(false);
 
@@ -657,7 +885,7 @@ const NotesWidget = () => {
         img.src = src;
       }
       canvasReadyRef.current = true;
-      canvasHistoryRef.current = [];
+      if (!isResize) canvasHistoryRef.current = [];
     },
     [activeNote?.canvasData],
   );
@@ -782,6 +1010,8 @@ const NotesWidget = () => {
     }
     isDrawingRef.current = false;
     if (eraserIndicatorRef.current) eraserIndicatorRef.current.style.display = 'none';
+    if (canvasSaveTimerRef.current) clearTimeout(canvasSaveTimerRef.current);
+    canvasSaveTimerRef.current = setTimeout(saveCanvasData, 300);
   };
 
   // Save canvas data to DB when exiting draw mode
@@ -816,49 +1046,87 @@ const NotesWidget = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (prev) {
       const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0);
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        saveCanvasData();
+      };
       img.src = prev;
+    } else {
+      saveCanvasData();
     }
   };
 
-  // ─── FAB drag ─────────────────────────
+  // ─── FAB drag (Supports Desktop, Tablet, and Mobile) ─────────────────────────
   const handleFabMouseDown = (e) => {
-    // On mobile, skip the drag logic entirely to make the tap instant
-    if (window.matchMedia('(max-width: 768px)').matches) return;
+    if (e.type === 'mousedown' && e.button && e.button !== 0) return;
 
-    if (e.button && e.button !== 0) return;
-    // Removed preventDefault here so we don't block the native onClick fallback
-    const startX = e.clientX || e.touches?.[0]?.clientX;
-    const startY = e.clientY || e.touches?.[0]?.clientY;
+    const getCoords = (event) => {
+      if (event.touches && event.touches.length > 0) {
+        return { cx: event.touches[0].clientX, cy: event.touches[0].clientY };
+      }
+      if (event.changedTouches && event.changedTouches.length > 0) {
+        return { cx: event.changedTouches[0].clientX, cy: event.changedTouches[0].clientY };
+      }
+      return { cx: event.clientX, cy: event.clientY };
+    };
+
+    const { cx: startX, cy: startY } = getCoords(e);
+    if (startX === undefined || startY === undefined) return;
+
     const startPos = { ...fabPos };
     let moved = false;
+
     const onMove = (ev) => {
-      const cx = ev.clientX || ev.touches?.[0]?.clientX;
-      const cy = ev.clientY || ev.touches?.[0]?.clientY;
-      // Increased drag threshold from 3 to 15 to prevent accidental jiggles from registering as drags on touch devices
-      if (Math.abs(cx - startX) > 15 || Math.abs(cy - startY) > 15) moved = true;
+      const { cx, cy } = getCoords(ev);
+      if (cx === undefined || cy === undefined) return;
+
+      const deltaX = cx - startX;
+      const deltaY = cy - startY;
+
+      if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+        moved = true;
+        if (ev.cancelable) ev.preventDefault();
+      }
+
+      const maxRight = Math.max(10, window.innerWidth - 65);
+      const maxBottom = Math.max(10, window.innerHeight - 65);
+
       setFabPos({
-        right: Math.max(0, startPos.right - (cx - startX)),
-        bottom: Math.max(0, startPos.bottom - (cy - startY)),
+        right: Math.min(maxRight, Math.max(10, startPos.right - deltaX)),
+        bottom: Math.min(maxBottom, Math.max(10, startPos.bottom - deltaY)),
       });
     };
-    const onUp = () => {
+
+    const onUp = (ev) => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
+      document.removeEventListener('touchcancel', onUp);
+
       if (!moved) {
-        setIsOpen((prev) => !prev);
+        setIsOpen((prev) => {
+          if (prev && drawMode) saveCanvasData();
+          return !prev;
+        });
+      } else {
+        if (ev && ev.cancelable) ev.preventDefault();
+        setFabPos((prev) => {
+          try {
+            localStorage.setItem('notesWidgetFabPos', JSON.stringify(prev));
+          } catch {
+            // ignore storage quota errors
+          }
+          return prev;
+        });
       }
-      setFabPos((prev) => {
-        localStorage.setItem('notesWidgetFabPos', JSON.stringify(prev));
-        return prev;
-      });
     };
+
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
     document.addEventListener('touchmove', onMove, { passive: false });
     document.addEventListener('touchend', onUp);
+    document.addEventListener('touchcancel', onUp);
   };
 
   const handlePanelDragStart = (e) => {
@@ -942,11 +1210,23 @@ const NotesWidget = () => {
   // Sync editor — also re-sync when panel reopens
   useEffect(() => {
     if (editorRef.current && activeNote) {
-      const content = noteText(activeNote);
-      if (editorRef.current.innerText !== content) editorRef.current.textContent = content;
+      const structured = activeNote.formatting?.editorDocumentV1;
+      if (structured?.version === 1 && Array.isArray(structured.children)) {
+        const nodes = structured.children
+          .slice(0, 5000)
+          .map((spec) => restoreEditorNode(spec, activeNote.attachments || []))
+          .filter(Boolean);
+        editorRef.current.replaceChildren(...nodes);
+      } else {
+        editorRef.current.textContent = noteText(activeNote);
+        for (const attachment of activeNote.attachments || []) {
+          const block = createMediaElement({ ...attachment, fileType: attachment.fileType || attachment.kind });
+          if (block) editorRef.current.appendChild(block);
+        }
+      }
     }
     setDrawMode(false);
-  }, [activeNoteId, isOpen]);
+  }, [activeNoteId, isOpen, notesLoadRevision]);
 
   if (!isAuthenticated) return null;
 
@@ -962,11 +1242,7 @@ const NotesWidget = () => {
         style={{ bottom: fabPos.bottom, right: fabPos.right }}
         onMouseDown={handleFabMouseDown}
         onTouchStart={handleFabMouseDown}
-        onClick={() => {
-          if (isMobile || window.matchMedia('(max-width: 768px)').matches) {
-            setIsOpen((previous) => !previous);
-          }
-        }}
+        onClick={(e) => e.preventDefault()}
         title="Notes"
         type="button"
       >
@@ -1031,7 +1307,10 @@ const NotesWidget = () => {
                 </svg>
               </button>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  if (drawMode) saveCanvasData();
+                  setIsOpen(false);
+                }}
                 title="Close"
                 className="nw-tb-btn nw-close-btn"
               >
@@ -1267,8 +1546,9 @@ const NotesWidget = () => {
                         value={textColor}
                         onChange={(e) => {
                           setTextColor(e.target.value);
-                          document.execCommand('foreColor', false, e.target.value);
                           editorRef.current?.focus();
+                          restoreEditorSelection();
+                          document.execCommand('foreColor', false, e.target.value);
                           handleContentChange();
                         }}
                         title="Text color"
@@ -1582,7 +1862,7 @@ const NotesWidget = () => {
 
                   {/* Media bar */}
                   <div className="nw-mediabar">
-                    <label className="nw-mediabtn" title="Upload image">
+                    <label className="nw-mediabtn" title="Upload image" onMouseDown={captureMediaInsertionPoint}>
                       <svg
                         width="16"
                         height="16"
@@ -1598,7 +1878,7 @@ const NotesWidget = () => {
                       <span>Image</span>
                       <input type="file" accept="image/*" hidden onChange={handleFileUpload} />
                     </label>
-                    <label className="nw-mediabtn" title="Upload video">
+                    <label className="nw-mediabtn" title="Upload video" onMouseDown={captureMediaInsertionPoint}>
                       <svg
                         width="16"
                         height="16"
@@ -1613,7 +1893,7 @@ const NotesWidget = () => {
                       <span>Video</span>
                       <input type="file" accept="video/*" hidden onChange={handleFileUpload} />
                     </label>
-                    <label className="nw-mediabtn" title="Upload audio">
+                    <label className="nw-mediabtn" title="Upload audio" onMouseDown={captureMediaInsertionPoint}>
                       <svg
                         width="16"
                         height="16"
@@ -1629,36 +1909,6 @@ const NotesWidget = () => {
                       <span>Audio</span>
                       <input type="file" accept="audio/*" hidden onChange={handleFileUpload} />
                     </label>
-                    <div className="nw-msep" />
-                    {isRecording ? (
-                      <button
-                        className="nw-mediabtn recording"
-                        onClick={stopRecording}
-                        title="Stop recording"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <rect x="6" y="6" width="12" height="12" rx="2" />
-                        </svg>
-                        <span className="rec-dot" /> Stop
-                      </button>
-                    ) : (
-                      <button className="nw-mediabtn" onClick={startRecording} title="Record audio">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                          <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                          <line x1="12" y1="19" x2="12" y2="23" />
-                          <line x1="8" y1="23" x2="16" y2="23" />
-                        </svg>
-                        <span>Record</span>
-                      </button>
-                    )}
                   </div>
                 </>
               ) : (
